@@ -149,6 +149,25 @@
                     </div>
                 </div>
 
+                <!-- PRONÓSTICO MAÑANA -->
+                <div id="tomorrow-forecast-card" class="mt-3 p-4 rounded-lg border-2 transition-all duration-300 hidden cursor-pointer hover:shadow-xl" onclick="openTomorrowModal()">
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🪁</span>
+                            <h3 class="font-bold text-sm uppercase tracking-wide">Pronóstico Mañana</h3>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                    
+                    <div id="tomorrow-forecast-content" class="space-y-2">
+                        <!-- Contenido dinámico -->
+                    </div>
+                    
+                    <p class="text-xs text-gray-500 mt-2 text-center">Toca para ver detalles por hora</p>
+                </div>
+
                 <div id="error-message" class="hidden mt-6 p-4 bg-red-600 text-white rounded-lg text-center">Error al cargar los datos del clima.</div>
             </div>
 
@@ -217,25 +236,6 @@
                     <li class="flex justify-between items-center"><span class="text-gray-600 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12H.75m.386-6.364l1.591 1.591M12 12a2.25 2.25 0 00-2.25 2.25c0 .543.19 1.04.5 1.414.31.374.724.665 1.184.876.46.211.956.314 1.466.314.51 0 1.006-.103 1.466-.314.46-.211.874-.502 1.184-.876.31-.374.5-1.04.5-1.414A2.25 2.25 0 0012 12z" /></svg>Índice UV:</span><div id="uvi-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-gray-900 data-content" id="uvi-data">Cargando...</span></li>
                 </ul>
                 <div class="mt-4 pt-4 border-t border-gray-300 text-right"><p id="last-updated" class="text-xs text-gray-500">Actualizando datos...</p></div>
-            </div>
-
-            <!-- PRONÓSTICO MAÑANA -->
-            <div id="tomorrow-forecast-card" class="mt-6 lg:mt-8 p-4 rounded-lg border-2 transition-all duration-300 hidden cursor-pointer hover:shadow-xl" onclick="openTomorrowModal()">
-                <div class="flex items-center justify-between gap-2 mb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-2xl">🪁</span>
-                        <h3 class="font-bold text-sm uppercase tracking-wide">Pronóstico Mañana</h3>
-                    </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </div>
-                
-                <div id="tomorrow-forecast-content" class="space-y-2">
-                    <!-- Contenido dinámico -->
-                </div>
-                
-                <p class="text-xs text-gray-500 mt-2 text-center">Toca para ver detalles por hora</p>
             </div>
 
             <!-- ESCUELAS DE KITE - CARRUSEL -->
