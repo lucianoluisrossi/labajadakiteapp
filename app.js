@@ -962,6 +962,24 @@ try {
     setInterval(fetchWeatherData, 30000);
     setInterval(updateTimeAgo, 5000);
 
+    // ========================================
+    // REFRESCAR DATOS AL VOLVER DEL BACKGROUND
+    // ========================================
+    // Detectar cuando la app vuelve a estar visible (usuario vuelve a la app)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            // La app volvió al frente (foreground)
+            console.log('🔄 App visible de nuevo - Actualizando datos...');
+            fetchWeatherData();
+        }
+    });
+
+    // También detectar cuando la ventana/pestaña recupera el foco
+    window.addEventListener('focus', () => {
+        console.log('🔄 App recuperó el foco - Actualizando datos...');
+        fetchWeatherData();
+    });
+
     // --- SPONSOR CAROUSEL ---
     const sponsorTrack = document.getElementById('sponsor-track');
     const sponsorDots = document.querySelectorAll('.sponsor-dot');
