@@ -979,6 +979,179 @@ try {
     setInterval(updateTimeAgo, 5000);
 
     // ========================================
+    // PRONÓSTICO DE MAÑANA
+    // ========================================
+    async function fetchTomorrowForecast() {
+        try {
+            const tomorrowCard = document.getElementById('tomorrow-forecast-card');
+            const tomorrowContent = document.getElementById('tomorrow-forecast-content');
+            
+            if (!tomorrowCard || !tomorrowContent) return;
+
+            // Obtener datos de Windguru (spot 1312667 = Claromecó)
+            // Usamos el mismo endpoint que usa el widget
+            const response = await fetch('https://www.windguru.cz/int/iapi.php?q=forecast&id_spot=1312667&units_wind=kts&units_temp=c');
+            
+            if (!response.ok) {
+                console.warn('No se pudo obtener pronóstico de mañana');
+                tomorrowCard.classList.add('hidden');
+                return;
+            }
+
+            const data = await response.json();
+            
+            // Analizar pronóstico de mañana (9am - 8pm)
+            const tomorrow = analyzeTomorrowForecast(data);
+            
+            if (tomorrow.hasGoodConditions) {
+                // Mostrar card con buenas condiciones
+                tomorrowCard.classList.remove('hidden', 'bg-red-50', 'border-red-300');
+                tomorrowCard.classList.add('bg-green-50', 'border-green-500');
+                
+                tomorrowContent.innerHTML = `
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-green-600 font-bold text-lg">✅ Buenas condiciones esperadas</span>
+                    </div>
+                    <div class="text-sm text-gray-700 space-y-1">
+                        <p><strong>Viento:</strong> ${tomorrow.windRange} kts | <strong>Dirección:</strong> ${tomorrow.direction}</p>
+                        <p><strong>Mejor horario:</strong> ${tomorrow.bestTime}</p>
+                    </div>
+                `;
+            } else if (tomorrow.analyzed) {
+                // Mostrar card con malas condiciones
+                tomorrowCard.classList.remove('hidden', 'bg-green-50', 'border-green-500');
+                tomorrowCard.classList.add('bg-red-50', 'border-red-300');
+                
+                tomorrowContent.innerHTML = `
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-red-600 font-bold text-lg">❌ Condiciones no ideales</span>
+                    </div>
+                    <div class="text-sm text-gray-600 space-y-1">
+                        <p><strong>Viento:</strong> ${tomorrow.windRange} kts | <strong>Dirección:</strong> ${tomorrow.direction}</p>
+                        <p class="text-xs italic">${tomorrow.reason}</p>
+                    </div>
+                `;
+            } else {
+                // No hay datos suficientes
+                tomorrowCard.classList.add('hidden');
+            }
+            
+        } catch (error) {
+            console.error('Error obteniendo pronóstico de mañana:', error);
+            const tomorrowCard = document.getElementById('tomorrow-forecast-card');
+            if (tomorrowCard) tomorrowCard.classList.add('hidden');
+        }
+    }
+
+    function analyzeTomorrowForecast(data) {
+        try {
+            // Obtener timestamps y datos de viento
+            const timestamps = data.fcst?.WINDSPD?.hours || [];
+            const windSpeeds = data.fcst?.WINDSPD?.values || [];
+            const windDirs = data.fcst?.SMER?.values || [];
+            
+            if (timestamps.length === 0) {
+                return { analyzed: false };
+            }
+
+            // Encontrar datos de mañana entre 9am y 20pm (9-20 horas)
+            const now = new Date();
+            const tomorrowStart = new Date(now);
+            tomorrowStart.setDate(now.getDate() + 1);
+            tomorrowStart.setHours(9, 0, 0, 0);
+            
+            const tomorrowEnd = new Date(now);
+            tomorrowEnd.setDate(now.getDate() + 1);
+            tomorrowEnd.setHours(20, 0, 0, 0);
+
+            const tomorrowStartTimestamp = Math.floor(tomorrowStart.getTime() / 1000);
+            const tomorrowEndTimestamp = Math.floor(tomorrowEnd.getTime() / 1000);
+
+            // Filtrar datos de mañana
+            const tomorrowData = [];
+            for (let i = 0; i < timestamps.length; i++) {
+                const ts = parseInt(timestamps[i]);
+                if (ts >= tomorrowStartTimestamp && ts <= tomorrowEndTimestamp) {
+                    const windSpeed = parseInt(windSpeeds[i]) || 0;
+                    const windDir = parseInt(windDirs[i]) || 0;
+                    const time = new Date(ts * 1000);
+                    
+                    tomorrowData.push({
+                        time: time,
+                        hour: time.getHours(),
+                        windSpeed: windSpeed,
+                        windDir: windDir
+                    });
+                }
+            }
+
+            if (tomorrowData.length === 0) {
+                return { analyzed: false };
+            }
+
+            // Verificar si hay buenas condiciones
+            // Buenas condiciones: viento > 15kts Y dirección NO offshore (67.5° - 292.5°)
+            const goodHours = tomorrowData.filter(d => {
+                const isGoodWind = d.windSpeed >= 15;
+                const isNotOffshore = d.windDir > 67.5 && d.windDir <= 292.5;
+                return isGoodWind && isNotOffshore;
+            });
+
+            const hasGoodConditions = goodHours.length > 0;
+            
+            // Calcular estadísticas
+            const allWindSpeeds = tomorrowData.map(d => d.windSpeed);
+            const minWind = Math.min(...allWindSpeeds);
+            const maxWind = Math.max(...allWindSpeeds);
+            const windRange = `${minWind}-${maxWind}`;
+
+            // Dirección predominante
+            const avgDir = tomorrowData.reduce((sum, d) => sum + d.windDir, 0) / tomorrowData.length;
+            const direction = convertDegreesToCardinal(avgDir);
+
+            if (hasGoodConditions) {
+                // Encontrar mejor horario
+                const bestHour = goodHours[0];
+                const lastHour = goodHours[goodHours.length - 1];
+                const bestTime = goodHours.length === 1 
+                    ? `${bestHour.hour}hs`
+                    : `${bestHour.hour}hs - ${lastHour.hour}hs`;
+
+                return {
+                    analyzed: true,
+                    hasGoodConditions: true,
+                    windRange: windRange,
+                    direction: direction,
+                    bestTime: bestTime
+                };
+            } else {
+                // Determinar razón
+                const hasGoodWind = tomorrowData.some(d => d.windSpeed >= 15);
+                const reason = !hasGoodWind 
+                    ? 'Viento insuficiente para navegar'
+                    : 'Dirección offshore (peligroso)';
+
+                return {
+                    analyzed: true,
+                    hasGoodConditions: false,
+                    windRange: windRange,
+                    direction: direction,
+                    reason: reason
+                };
+            }
+            
+        } catch (error) {
+            console.error('Error analizando pronóstico:', error);
+            return { analyzed: false };
+        }
+    }
+
+    // Cargar pronóstico de mañana al iniciar
+    fetchTomorrowForecast();
+    // Actualizar cada 2 horas
+    setInterval(fetchTomorrowForecast, 2 * 60 * 60 * 1000);
+
+    // ========================================
     // REFRESCAR DATOS AL VOLVER DEL BACKGROUND
     // ========================================
     // Detectar cuando la app vuelve a estar visible (usuario vuelve a la app)
