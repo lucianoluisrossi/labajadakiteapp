@@ -15,29 +15,25 @@ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 // ========================================
-// SOLUCIÓN DEFINITIVA: Service Worker SOLO en Android/Desktop
+// CORRECCIÓN: Service Worker habilitado en TODOS los dispositivos
 // ========================================
-// iOS Safari tiene problemas con SW interceptando fetch
-// Solución: SW activo en Android/Desktop, desactivado en iOS
-if (!isIOS && 'serviceWorker' in navigator) {
-    // Registrar SW solo en Android/Desktop (NO en iOS)
+// El Service Worker es necesario para caching y PWA en iOS también
+// Solo las notificaciones push no funcionan en iOS Safari
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(registration => {
-                console.log('✅ Service Worker registrado (Android/Desktop):', registration.scope);
+                console.log('✅ Service Worker registrado:', registration.scope);
+                if (isIOS) {
+                    console.log('📱 iOS: Service Worker activo, Web Push no disponible');
+                }
             })
             .catch(error => {
                 console.error('❌ Error registrando Service Worker:', error);
             });
     });
-} else if (isIOS && 'serviceWorker' in navigator) {
-    // En iOS: desregistrar cualquier SW que pueda estar activo
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(reg => {
-            reg.unregister();
-        });
-    });
-    console.log('📱 iOS: Service Worker desactivado (no compatible)');
+} else {
+    console.warn('⚠️ Service Workers no soportados en este navegador');
 }
 
 const firebaseConfig = {
@@ -69,21 +65,35 @@ try {
     galleryCollection = collection(db, "daily_gallery_meta");
     classifiedsCollection = collection(db, "classifieds");
 
-    // Inicializar pushManager (desactivado en iOS)
-    if (!isIOS) {
+    // ========================================
+    // INICIALIZAR PUSH MANAGER CON DETECCIÓN PRECISA
+    // ========================================
+    // Solo desactivar Push Manager si REALMENTE no está soportado
+    // iOS Safari NO soporta Web Push API en el navegador (solo en PWA iOS 16.4+)
+    const hasPushSupport = 'Notification' in window && 
+                          'serviceWorker' in navigator && 
+                          'PushManager' in window;
+    
+    if (hasPushSupport && !isIOS) {
+        // Android, Desktop Chrome/Firefox/Edge - Push disponible
         pushManager = new PushNotificationManager(app);
         window.pushManager = pushManager;
-        console.log("✅ PushManager inicializado (Android/Desktop)");
+        console.log("✅ PushManager inicializado - Web Push disponible");
     } else {
+        // iOS Safari - Web Push no disponible en navegador
         window.pushManager = null;
-        console.log("📱 PushManager no inicializado (iOS)");
-        // Ocultar UI de notificaciones en iOS
-        const notifCard = document.getElementById('notifications-card');
-        const notifBtn = document.getElementById('notifications-settings-btn');
-        const welcomeModal = document.getElementById('welcome-clasificados-modal');
-        if (notifCard) notifCard.style.display = 'none';
-        if (notifBtn) notifBtn.style.display = 'none';
-        if (welcomeModal) welcomeModal.style.display = 'none';
+        console.log("📱 PushManager no disponible en este navegador");
+        
+        // Solo ocultar UI de notificaciones en iOS
+        if (isIOS) {
+            const notifCard = document.getElementById('notifications-card');
+            const notifBtn = document.getElementById('notifications-settings-btn');
+            const welcomeModal = document.getElementById('welcome-clasificados-modal');
+            if (notifCard) notifCard.style.display = 'none';
+            if (notifBtn) notifBtn.style.display = 'none';
+            if (welcomeModal) welcomeModal.style.display = 'none';
+            console.log("📱 iOS Safari: UI de notificaciones push oculta");
+        }
     }
 
     console.log("✅ Firebase inicializado.");
