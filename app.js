@@ -1100,23 +1100,49 @@ try {
         btnWelcomeClasificadosClose.addEventListener('click', async () => {
             welcomeClasificadosModal.classList.add('hidden');
             
-            // Intentar activar notificaciones
-            if (window.pushManager) {
-                const granted = await window.pushManager.requestPermission();
-                if (granted) {
-                    console.log('✅ Notificaciones activadas desde el modal');
-                    // Marcar como no volver a mostrar si activa
-                    localStorage.setItem(WELCOME_CLASIFICADOS_DISABLED, 'true');
-                    
-                    // Scroll al panel de notificaciones para mostrar la configuración
-                    setTimeout(() => {
-                        const notificationsCard = document.getElementById('notifications-card');
-                        if (notificationsCard) {
-                            notificationsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }, 500);
+            // Scroll al panel de notificaciones PRIMERO
+            const notificationsCard = document.getElementById('notifications-card');
+            const notificationsContent = document.getElementById('notifications-content');
+            const expandIcon = document.getElementById('expand-icon');
+            
+            if (notificationsCard) {
+                // Hacer scroll al card
+                notificationsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Expandir el contenido de notificaciones
+                if (notificationsContent) {
+                    notificationsContent.classList.remove('hidden');
                 }
+                if (expandIcon) {
+                    expandIcon.style.transform = 'rotate(180deg)';
+                }
+                
+                // Resaltar en violeta con animación
+                notificationsCard.style.transition = 'all 0.3s ease';
+                notificationsCard.style.backgroundColor = '#e9d5ff'; // bg-purple-200
+                notificationsCard.style.borderColor = '#a855f7'; // border-purple-500
+                notificationsCard.style.boxShadow = '0 0 0 4px rgba(168, 85, 247, 0.2)';
+                
+                // Quitar el resaltado después de 3 segundos
+                setTimeout(() => {
+                    notificationsCard.style.backgroundColor = '';
+                    notificationsCard.style.borderColor = '';
+                    notificationsCard.style.boxShadow = '';
+                }, 3000);
             }
+            
+            // Intentar activar notificaciones después del scroll
+            setTimeout(async () => {
+                const pushManager = window.labajadaPushManager || window.pushManager;
+                if (pushManager) {
+                    const granted = await pushManager.requestPermission();
+                    if (granted) {
+                        console.log('✅ Notificaciones activadas desde el modal');
+                        // Marcar como no volver a mostrar si activa
+                        localStorage.setItem(WELCOME_CLASIFICADOS_DISABLED, 'true');
+                    }
+                }
+            }, 800); // Esperar a que termine el scroll
         });
     }
 
