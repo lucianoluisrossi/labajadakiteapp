@@ -981,6 +981,8 @@ try {
     // ========================================
     // PRONÓSTICO DE MAÑANA
     // ========================================
+    let tomorrowForecastData = null; // Guardar datos para el modal
+
     async function fetchTomorrowForecast() {
         try {
             const tomorrowCard = document.getElementById('tomorrow-forecast-card');
@@ -989,7 +991,6 @@ try {
             if (!tomorrowCard || !tomorrowContent) return;
 
             // Obtener datos de Windguru (spot 1312667 = Claromecó)
-            // Usamos el mismo endpoint que usa el widget
             const response = await fetch('https://www.windguru.cz/int/iapi.php?q=forecast&id_spot=1312667&units_wind=kts&units_temp=c');
             
             if (!response.ok) {
@@ -1002,6 +1003,9 @@ try {
             
             // Analizar pronóstico de mañana (9am - 8pm)
             const tomorrow = analyzeTomorrowForecast(data);
+            
+            // Guardar datos para el modal
+            tomorrowForecastData = tomorrow;
             
             if (tomorrow.hasGoodConditions) {
                 // Mostrar card con buenas condiciones
@@ -1090,7 +1094,6 @@ try {
             }
 
             // Verificar si hay buenas condiciones
-            // Buenas condiciones: viento > 15kts Y dirección NO offshore (67.5° - 292.5°)
             const goodHours = tomorrowData.filter(d => {
                 const isGoodWind = d.windSpeed >= 15;
                 const isNotOffshore = d.windDir > 67.5 && d.windDir <= 292.5;
@@ -1122,7 +1125,8 @@ try {
                     hasGoodConditions: true,
                     windRange: windRange,
                     direction: direction,
-                    bestTime: bestTime
+                    bestTime: bestTime,
+                    hourlyData: tomorrowData // Guardar datos por hora para el modal
                 };
             } else {
                 // Determinar razón
@@ -1136,7 +1140,8 @@ try {
                     hasGoodConditions: false,
                     windRange: windRange,
                     direction: direction,
-                    reason: reason
+                    reason: reason,
+                    hourlyData: tomorrowData
                 };
             }
             
@@ -1145,6 +1150,64 @@ try {
             return { analyzed: false };
         }
     }
+
+    // Funciones del modal
+    window.openTomorrowModal = function() {
+        const modal = document.getElementById('tomorrow-modal');
+        const modalContent = document.getElementById('tomorrow-modal-content');
+        
+        if (!modal || !modalContent || !tomorrowForecastData) return;
+        
+        // Generar contenido por hora
+        let html = '';
+        
+        if (tomorrowForecastData.hasGoodConditions) {
+            html += `
+                <div class="bg-green-50 border-2 border-green-500 rounded-lg p-4 mb-4">
+                    <p class="text-green-700 font-bold text-lg text-center">✅ Buenas Condiciones Mañana</p>
+                    <p class="text-sm text-gray-700 text-center mt-2">
+                        <strong>Mejor horario:</strong> ${tomorrowForecastData.bestTime}
+                    </p>
+                </div>
+            `;
+        }
+        
+        html += '<h3 class="font-bold text-gray-800 mb-3">Pronóstico por Hora:</h3>';
+        html += '<div class="space-y-2">';
+        
+        tomorrowForecastData.hourlyData.forEach(hour => {
+            const isGoodWind = hour.windSpeed >= 15;
+            const isNotOffshore = hour.windDir > 67.5 && hour.windDir <= 292.5;
+            const isNavigable = isGoodWind && isNotOffshore;
+            
+            const bgColor = isNavigable ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-300';
+            const icon = isNavigable ? '✅' : '⚠️';
+            
+            html += `
+                <div class="border-2 ${bgColor} rounded-lg p-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${icon}</span>
+                            <span class="font-bold text-gray-800">${hour.hour}:00 hs</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-gray-900">${hour.windSpeed} kts</p>
+                            <p class="text-xs text-gray-600">${convertDegreesToCardinal(hour.windDir)}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        modalContent.innerHTML = html;
+        modal.classList.remove('hidden');
+    };
+
+    window.closeTomorrowModal = function() {
+        const modal = document.getElementById('tomorrow-modal');
+        if (modal) modal.classList.add('hidden');
+    };
 
     // Cargar pronóstico de mañana al iniciar
     fetchTomorrowForecast();
