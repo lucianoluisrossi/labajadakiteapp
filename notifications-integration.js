@@ -8,11 +8,6 @@ console.log('🔔 Inicializando sistema de notificaciones...');
 const _isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-// Función helper para obtener pushManager de forma segura
-function getPushManager() {
-    return window.labajadaPushManager || window.pushManager || null;
-}
-
 if (_isIOS) {
     console.log('📱 iOS detectado: sistema de notificaciones desactivado');
 } else {
@@ -21,9 +16,7 @@ let _initRetries = 0;
 const _maxRetries = 50;
 
 function initializeNotificationsUI() {
-    const pushManager = getPushManager();
-    
-    if (!pushManager) {
+    if (!window.pushManager) {
         _initRetries++;
         if (_initRetries > _maxRetries) {
             console.warn('⚠️ pushManager no disponible tras 5s, abortando');
@@ -35,7 +28,7 @@ function initializeNotificationsUI() {
     
     console.log('✅ pushManager disponible, inicializando UI...');
     
-    pushManager.loadPreferences();
+    window.pushManager.loadPreferences();
 
     const statusIndicator = document.getElementById('status-indicator');
     const statusText = document.getElementById('status-text');
@@ -52,10 +45,7 @@ function initializeNotificationsUI() {
     const maxWindValue = document.getElementById('max-wind-value');
 
     function updateNotificationsUI() {
-        const pushManager = getPushManager();
-        if (!pushManager) return;
-        
-        const status = pushManager.getStatus();
+        const status = window.pushManager.getStatus();
         
         if (status.enabled && status.pushSubscribed) {
             statusIndicator.classList.remove('bg-gray-400', 'bg-yellow-400');
@@ -116,16 +106,13 @@ function initializeNotificationsUI() {
 
     if (enableNotificationsBtn) {
         enableNotificationsBtn.addEventListener('click', async () => {
-            const pushManager = getPushManager();
-            if (!pushManager) return;
-            
             enableNotificationsBtn.disabled = true;
             enableNotificationsBtn.innerHTML = '<span>Activando...</span>';
             
-            const granted = await pushManager.requestPermission();
+            const granted = await window.pushManager.requestPermission();
             if (granted) {
                 updateNotificationsUI();
-                pushManager.savePreferences();
+                window.pushManager.savePreferences();
             } else {
                 alert('No se pudo activar las notificaciones. Verifica los permisos del navegador.');
                 enableNotificationsBtn.disabled = false;
@@ -136,14 +123,11 @@ function initializeNotificationsUI() {
 
     if (testNotificationBtn) {
         testNotificationBtn.addEventListener('click', () => {
-            const pushManager = getPushManager();
-            if (!pushManager) return;
-            
-            if (pushManager.permission !== 'granted') {
+            if (window.pushManager.permission !== 'granted') {
                 alert('Primero debes activar las notificaciones');
                 return;
             }
-            pushManager.sendNotification({
+            window.pushManager.sendNotification({
                 title: '🪁 Notificación de Prueba',
                 body: 'Todo funciona correctamente. Te avisaremos cuando haya viento!',
                 tag: 'test-notification',
@@ -156,10 +140,8 @@ function initializeNotificationsUI() {
             minWindValue.textContent = e.target.value;
         });
         minWindSlider.addEventListener('change', (e) => {
-            const pushManager = getPushManager();
-            if (!pushManager) return;
-            pushManager.setConfig({ minNavigableWind: parseInt(e.target.value) });
-            pushManager.savePreferences();
+            window.pushManager.setConfig({ minNavigableWind: parseInt(e.target.value) });
+            window.pushManager.savePreferences();
         });
     }
 
@@ -168,25 +150,20 @@ function initializeNotificationsUI() {
             maxWindValue.textContent = e.target.value;
         });
         maxWindSlider.addEventListener('change', (e) => {
-            const pushManager = getPushManager();
-            if (!pushManager) return;
-            pushManager.setConfig({ maxGoodWind: parseInt(e.target.value) });
-            pushManager.savePreferences();
+            window.pushManager.setConfig({ maxGoodWind: parseInt(e.target.value) });
+            window.pushManager.savePreferences();
         });
     }
 
     if (saveConfigBtn) {
         saveConfigBtn.addEventListener('click', () => {
-            const pushManager = getPushManager();
-            if (!pushManager) return;
-            
             const newConfig = {
                 minNavigableWind: parseInt(minWindSlider.value),
                 maxGoodWind: parseInt(maxWindSlider.value)
             };
             
-            pushManager.setConfig(newConfig);
-            pushManager.savePreferences();
+            window.pushManager.setConfig(newConfig);
+            window.pushManager.savePreferences();
             
             saveConfigBtn.textContent = '✓ Guardado';
             saveConfigBtn.classList.add('bg-green-500', 'text-white');
@@ -199,14 +176,11 @@ function initializeNotificationsUI() {
     }
 
     // Cargar config en sliders
-    const pushManager = getPushManager();
-    if (pushManager) {
-        const config = pushManager.config;
-        if (minWindSlider) minWindSlider.value = config.minNavigableWind || 15;
-        if (minWindValue) minWindValue.textContent = config.minNavigableWind || 15;
-        if (maxWindSlider) maxWindSlider.value = config.maxGoodWind || 27;
-        if (maxWindValue) maxWindValue.textContent = config.maxGoodWind || 27;
-    }
+    const config = window.pushManager.config;
+    if (minWindSlider) minWindSlider.value = config.minNavigableWind || 15;
+    if (minWindValue) minWindValue.textContent = config.minNavigableWind || 15;
+    if (maxWindSlider) maxWindSlider.value = config.maxGoodWind || 27;
+    if (maxWindValue) maxWindValue.textContent = config.maxGoodWind || 27;
 
     updateNotificationsUI();
     setTimeout(() => updateNotificationsUI(), 2000);

@@ -77,27 +77,11 @@ try {
     if (hasPushSupport && !isIOS) {
         // Android, Desktop Chrome/Firefox/Edge - Push disponible
         pushManager = new PushNotificationManager(app);
-        
-        // Usar una propiedad personalizada para evitar conflictos con window.pushManager nativo
-        try {
-            window.labajadaPushManager = pushManager;
-            // Intentar también window.pushManager para compatibilidad hacia atrás
-            if (!window.hasOwnProperty('pushManager')) {
-                window.pushManager = pushManager;
-            }
-        } catch (e) {
-            // Si falla, solo usar la propiedad custom
-            window.labajadaPushManager = pushManager;
-        }
-        
+        window.pushManager = pushManager;
         console.log("✅ PushManager inicializado - Web Push disponible");
     } else {
         // iOS Safari - Web Push no disponible en navegador
-        pushManager = null;
-        
-        // Usar propiedad custom en lugar de window.pushManager
-        window.labajadaPushManager = null;
-        
+        window.pushManager = null;
         console.log("📱 PushManager no disponible en este navegador");
         
         // Solo ocultar UI de notificaciones en iOS
