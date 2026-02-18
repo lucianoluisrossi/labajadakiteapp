@@ -21,7 +21,7 @@ let _initRetries = 0;
 const _maxRetries = 50;
 
 function initializeNotificationsUI() {
-    const pushManager = getPushManager();
+    let pushManager = getPushManager();
     
     if (!pushManager) {
         _initRetries++;
@@ -52,7 +52,7 @@ function initializeNotificationsUI() {
     const maxWindValue = document.getElementById('max-wind-value');
 
     function updateNotificationsUI() {
-        const pushManager = getPushManager();
+        pushManager = getPushManager();
         if (!pushManager) return;
         
         const status = pushManager.getStatus();
@@ -116,7 +116,7 @@ function initializeNotificationsUI() {
 
     if (enableNotificationsBtn) {
         enableNotificationsBtn.addEventListener('click', async () => {
-            const pushManager = getPushManager();
+            pushManager = getPushManager();
             if (!pushManager) return;
             
             enableNotificationsBtn.disabled = true;
@@ -136,7 +136,7 @@ function initializeNotificationsUI() {
 
     if (testNotificationBtn) {
         testNotificationBtn.addEventListener('click', () => {
-            const pushManager = getPushManager();
+            pushManager = getPushManager();
             if (!pushManager) return;
             
             if (pushManager.permission !== 'granted') {
@@ -156,7 +156,7 @@ function initializeNotificationsUI() {
             minWindValue.textContent = e.target.value;
         });
         minWindSlider.addEventListener('change', (e) => {
-            const pushManager = getPushManager();
+            pushManager = getPushManager();
             if (!pushManager) return;
             pushManager.setConfig({ minNavigableWind: parseInt(e.target.value) });
             pushManager.savePreferences();
@@ -168,7 +168,7 @@ function initializeNotificationsUI() {
             maxWindValue.textContent = e.target.value;
         });
         maxWindSlider.addEventListener('change', (e) => {
-            const pushManager = getPushManager();
+            pushManager = getPushManager();
             if (!pushManager) return;
             pushManager.setConfig({ maxGoodWind: parseInt(e.target.value) });
             pushManager.savePreferences();
@@ -177,7 +177,7 @@ function initializeNotificationsUI() {
 
     if (saveConfigBtn) {
         saveConfigBtn.addEventListener('click', () => {
-            const pushManager = getPushManager();
+            pushManager = getPushManager();
             if (!pushManager) return;
             
             const newConfig = {
@@ -199,7 +199,7 @@ function initializeNotificationsUI() {
     }
 
     // Cargar config en sliders
-    const pushManager = getPushManager();
+    pushManager = getPushManager();
     if (pushManager) {
         const config = pushManager.config;
         if (minWindSlider) minWindSlider.value = config.minNavigableWind || 15;
