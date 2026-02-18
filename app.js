@@ -1113,6 +1113,15 @@ try {
         windguruDetails.addEventListener('toggle', () => {
             if (windguruDetails.open && !windguruLoaded) {
                 windguruLoaded = true;
+                
+                // Mostrar indicador de carga
+                windguruContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-8 gap-3">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        <p class="text-gray-600 font-medium">Cargando pronóstico...</p>
+                    </div>
+                `;
+                
                 // Crear el widget con un ID único basado en timestamp
                 const uid = 'wg_fwdg_1312667_29_' + Date.now();
                 const arg = [
@@ -1134,24 +1143,27 @@ try {
                     "p=WINDSPD,GUST,MWINDSPD,SMER,TMPE,FLHGT,CDC,APCP1s,RATING"
                 ];
                 
-                // Limpiar contenedor y agregar wrapper con scroll optimizado
-                windguruContainer.innerHTML = '<div class="windguru-scroll-wrapper" style="overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;"><script id="' + uid + '"></script></div>';
-                
-                // Cargar el widget
-                const script = document.createElement('script');
-                script.async = true;
-                script.src = 'https://www.windguru.cz/js/widget.php?' + arg.join('&');
-                document.head.appendChild(script);
-                
-                // Aplicar estilos al contenido generado después de cargar
-                script.onload = () => {
-                    setTimeout(() => {
-                        const tables = windguruContainer.querySelectorAll('table');
-                        tables.forEach(t => {
-                            t.style.touchAction = 'pan-x pan-y';
-                        });
-                    }, 500);
-                };
+                // Cargar el widget después de un breve delay para que se vea el loading
+                setTimeout(() => {
+                    // Limpiar contenedor y agregar wrapper con scroll optimizado
+                    windguruContainer.innerHTML = '<div class="windguru-scroll-wrapper" style="overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;"><script id="' + uid + '"></script></div>';
+                    
+                    // Cargar el widget
+                    const script = document.createElement('script');
+                    script.async = true;
+                    script.src = 'https://www.windguru.cz/js/widget.php?' + arg.join('&');
+                    document.head.appendChild(script);
+                    
+                    // Aplicar estilos al contenido generado después de cargar
+                    script.onload = () => {
+                        setTimeout(() => {
+                            const tables = windguruContainer.querySelectorAll('table');
+                            tables.forEach(t => {
+                                t.style.touchAction = 'pan-x pan-y';
+                            });
+                        }, 500);
+                    };
+                }, 300); // Delay de 300ms para mostrar el loading spinner
             }
         });
     }
