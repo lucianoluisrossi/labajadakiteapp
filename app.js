@@ -1069,17 +1069,27 @@ function analyzeForecast72h(data) {
         let bestDay = null;
         let bestDayData = null;
         
+        // Debug: Ver qué encuentra en cada día
+        console.log('📊 Análisis 72hs:');
         for (const day of allDaysData) {
             const goodHours = day.data.filter(d => {
                 return d.windSpeed >= 15 && d.windDir > 67.5 && d.windDir <= 292.5;
             });
             
+            console.log(`${day.label}: ${goodHours.length} horas navegables de ${day.data.length} totales`);
             if (goodHours.length > 0) {
+                console.log(`  Viento: ${Math.min(...goodHours.map(h => h.windSpeed))}-${Math.max(...goodHours.map(h => h.windSpeed))} kts`);
+                console.log(`  Horarios: ${goodHours[0].hour}hs - ${goodHours[goodHours.length-1].hour}hs`);
+            }
+            
+            if (goodHours.length > 0 && !bestDay) {
                 bestDay = day.label;
                 bestDayData = day.data;
-                break;
             }
         }
+        
+        console.log(`Mejor día seleccionado: ${bestDay || 'Ninguno'}`);
+
 
         const allHours = allDaysData.flatMap(d => d.data);
         const allWindSpeeds = allHours.map(d => d.windSpeed);
