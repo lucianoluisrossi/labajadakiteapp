@@ -1020,12 +1020,18 @@ async function fetchForecast72h() {
 }
 
 function analyzeForecast72h(data) {
+    console.log('🔍 Iniciando analyzeForecast72h con data:', data);
     try {
         const timestamps = data.fcst?.WINDSPD?.hours || [];
         const windSpeeds = data.fcst?.WINDSPD?.values || [];
         const windDirs = data.fcst?.SMER?.values || [];
         
-        if (timestamps.length === 0) return { analyzed: false };
+        console.log('Timestamps:', timestamps.length, 'WindSpeeds:', windSpeeds.length, 'WindDirs:', windDirs.length);
+        
+        if (timestamps.length === 0) {
+            console.warn('⚠️ No hay timestamps disponibles');
+            return { analyzed: false };
+        }
 
         const now = new Date();
         const days = [
@@ -1048,9 +1054,13 @@ function analyzeForecast72h(data) {
 
         let allDaysData = [];
         
+        console.log('📅 Procesando', days.length, 'días...');
+        
         for (const day of days) {
             const startTs = Math.floor(day.start.getTime() / 1000);
             const endTs = Math.floor(day.end.getTime() / 1000);
+            
+            console.log(`Buscando datos para ${day.label}: ${day.start.toLocaleString()} - ${day.end.toLocaleString()}`);
             
             const dayData = [];
             for (let i = 0; i < timestamps.length; i++) {
@@ -1067,11 +1077,19 @@ function analyzeForecast72h(data) {
             }
             
             if (dayData.length > 0) {
+                console.log(`  ✅ ${day.label}: ${dayData.length} horas encontradas`);
                 allDaysData.push({ label: day.label, data: dayData });
+            } else {
+                console.log(`  ⚠️ ${day.label}: Sin datos`);
             }
         }
 
-        if (allDaysData.length === 0) return { analyzed: false };
+        console.log('Total días con datos:', allDaysData.length);
+
+        if (allDaysData.length === 0) {
+            console.warn('⚠️ No hay datos para ningún día');
+            return { analyzed: false };
+        }
 
         let bestDay = null;
         let bestDayData = null;
@@ -1135,7 +1153,8 @@ function analyzeForecast72h(data) {
         }
         
     } catch (error) {
-        console.error('Error analizando pronóstico 72hs:', error);
+        console.error('❌ Error analizando pronóstico 72hs:', error);
+        console.error('Stack:', error.stack);
         return { analyzed: false };
     }
 }
