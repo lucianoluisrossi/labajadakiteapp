@@ -957,13 +957,18 @@ try {
 let forecastData = null;
 
 async function fetchForecast72h() {
+    console.log('🪁 Iniciando fetchForecast72h...');
     try {
         const forecastCard = document.getElementById('tomorrow-forecast-card');
         const forecastContent = document.getElementById('tomorrow-forecast-content');
         
+        console.log('Card encontrado:', !!forecastCard, 'Content encontrado:', !!forecastContent);
+        
         if (!forecastCard || !forecastContent) return;
 
         const response = await fetch('https://www.windguru.cz/int/iapi.php?q=forecast&id_spot=1312667&units_wind=kts&units_temp=c');
+        
+        console.log('Response status:', response.status, response.ok);
         
         if (!response.ok) {
             console.warn('No se pudo obtener pronóstico 72hs');
@@ -972,6 +977,8 @@ async function fetchForecast72h() {
         }
 
         const data = await response.json();
+        console.log('Datos recibidos de Windguru:', data);
+        
         const forecast = analyzeForecast72h(data);
         forecastData = forecast;
         
