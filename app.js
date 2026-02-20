@@ -979,11 +979,285 @@ try {
     setInterval(updateTimeAgo, 5000);
 
     // ========================================
-    // PRONÓSTICO 48 HORAS
+    // PRONÓSTICO 72 HORAS
     // ========================================
     let forecastData = null; // Guardar datos para el modal
 
-    async function fetchForecast48h() {
+    async function fetchForecast72h() {
+        try {
+            const forecastCard = document.getElementById('tomorrow-forecast-card');
+            const forecastContent = document.getElementById('tomorrow-forecast-content');
+            
+            if (!forecastCard || !forecastContent) return;
+
+            // Obtener datos de Windguru (spot 1312667 = Claromecó)
+            const response = await fetch('https://www.windguru.cz/int/iapi.php?q=forecast&id_spot=1312667&units_wind=kts&units_temp=c');
+            
+            if (!response.ok) {
+                console.warn('No se pudo obtener pronóstico 72hs');
+                forecastCard.classList.add('hidden');
+                return;
+            }
+
+            const data = await response.json();
+            
+            // Analizar pronóstico próximas 72 horas (9am - 8pm cada día)
+            const forecast = analyzeForecast72h(data);
+            
+            // Guardar datos para el modal
+            forecastData = forecast;
+            
+            if (forecast.hasGoodConditions) {
+                // Mostrar card con buenas condiciones
+                forecastCard.classList.remove('hidden', 'bg-red-50', 'border-red-300');
+                forecastCard.classList.add('bg-green-50', 'border-green-500');
+                
+                forecastContent.innerHTML = `
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-green-600 font-bold text-lg">✅ Buenas condiciones próximas 72hs</span>
+                    </div>
+                    <div class="text-sm text-gray-700 space-y-1">
+                        <p><strong>${forecast.bestDay}:</strong> ${forecast.windRange} kts | ${forecast.direction}</p>
+                        <p><strong>Mejor horario:</strong> ${forecast.bestTime}</p>
+                    </div>
+                `;
+            } else if (forecast.analyzed) {
+                // Mostrar card con malas condiciones
+                forecastCard.classList.remove('hidden', 'bg-green-50', 'border-green-500');
+                forecastCard.classList.add('bg-red-50', 'border-red-300');
+                
+                forecastContent.innerHTML = `
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-red-600 font-bold text-lg">❌ Condiciones no ideales 72hs</span>
+                    </div>
+                    <div class="text-sm text-gray-600 space-y-1">
+                        <p><strong>Viento:</strong> ${forecast.windRange} kts | <strong>Dirección:</strong> ${forecast.direction}</p>
+                        <p class="text-xs italic">${forecast.reason}</p>
+                    </div>
+                `;
+            } else {
+                // No hay datos suficientes
+                forecastCard.classList.add('hidden');
+            }
+            
+        } catch (error) {
+            console.error('Error obteniendo pronóstico 72hs:', error);
+            const forecastCard = document.getElementById('tomorrow-forecast-card');
+            if (forecastCard) forecastCard.classList.add('hidden');
+        }
+    }
+
+    function analyzeForecast72h(data) {
+        try {
+            // Obtener timestamps y datos de viento
+            const timestamps = data.fcst?.WINDSPD?.hours || [];
+            const windSpeeds = data.fcst?.WINDSPD?.values || [];
+            const windDirs = data.fcst?.SMER?.values || [];
+            
+            if (timestamps.length === 0) {
+                return { analyzed: false };
+            }
+
+            const now = new Date();
+            
+            // Definir rangos para los próximos 3 días (9am - 8pm cada día)
+            const tomorrow = {
+                start: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 0, 0),
+                end: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 20, 0, 0),
+                label: 'Mañana'
+            };
+            
+            const day2 = {
+                start: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 9, 0, 0),
+                end: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2, 20, 0, 0),
+                label: 'Pasado mañana'
+            };
+
+            const day3 = {
+                start: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 9, 0, 0),
+                end: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 3, 20, 0, 0),
+                label: 'En 3 días'
+            };
+
+            const days = [tomorrow, day2, day3];
+            let allDaysData = [];
+            
+            // Procesar cada día
+            for (const day of days) {
+                const startTs = Math.floor(day.start.getTime() / 1000);
+                const endTs = Math.floor(day.end.getTime() / 1000);
+                
+                const dayData = [];
+                for (let i = 0; i < timestamps.length; i++) {
+                    const ts = parseInt(timestamps[i]);
+                    if (ts >= startTs && ts <= endTs) {
+                        const windSpeed = parseInt(windSpeeds[i]) || 0;
+                        const windDir = parseInt(windDirs[i]) || 0;
+                        const time = new Date(ts * 1000);
+                        
+                        dayData.push({
+                            time: time,
+                            hour: time.getHours(),
+                            windSpeed: windSpeed,
+                            windDir: windDir,
+                            dayLabel: day.label
+                        });
+                    }
+                }
+                
+                if (dayData.length > 0) {
+                    allDaysData.push({
+                        label: day.label,
+                        data: dayData
+                    });
+                }
+            }
+
+            if (allDaysData.length === 0) {
+                return { analyzed: false };
+            }
+
+            // Buscar el mejor día con buenas condiciones
+            let bestDay = null;
+            let bestDayData = null;
+            
+            for (const day of allDaysData) {
+                const goodHours = day.data.filter(d => {
+                    const isGoodWind = d.windSpeed >= 15;
+                    const isNotOffshore = d.windDir > 67.5 && d.windDir <= 292.5;
+                    return isGoodWind && isNotOffshore;
+                });
+                
+                if (goodHours.length > 0) {
+                    bestDay = day.label;
+                    bestDayData = day.data;
+                    break; // Tomar el primer día con buenas condiciones
+                }
+            }
+
+            // Calcular estadísticas generales de todos los días
+            const allHours = allDaysData.flatMap(d => d.data);
+            const allWindSpeeds = allHours.map(d => d.windSpeed);
+            const minWind = Math.min(...allWindSpeeds);
+            const maxWind = Math.max(...allWindSpeeds);
+            const windRange = `${minWind}-${maxWind}`;
+            
+            // Dirección promedio
+            const avgDir = allHours.reduce((sum, d) => sum + d.windDir, 0) / allHours.length;
+            const direction = convertDegreesToCardinal(avgDir);
+
+            if (bestDay && bestDayData) {
+                // Hay buenas condiciones
+                const goodHours = bestDayData.filter(d => {
+                    const isGoodWind = d.windSpeed >= 15;
+                    const isNotOffshore = d.windDir > 67.5 && d.windDir <= 292.5;
+                    return isGoodWind && isNotOffshore;
+                });
+                
+                const bestHour = goodHours[0];
+                const lastHour = goodHours[goodHours.length - 1];
+                const bestTime = goodHours.length === 1 
+                    ? `${bestHour.hour}hs`
+                    : `${bestHour.hour}hs - ${lastHour.hour}hs`;
+
+                return {
+                    analyzed: true,
+                    hasGoodConditions: true,
+                    bestDay: bestDay,
+                    windRange: windRange,
+                    direction: direction,
+                    bestTime: bestTime,
+                    daysData: allDaysData // Guardar todos los días para el modal
+                };
+            } else {
+                // No hay buenas condiciones en ningún día
+                const hasGoodWind = allHours.some(d => d.windSpeed >= 15);
+                const reason = !hasGoodWind 
+                    ? 'Viento insuficiente para navegar'
+                    : 'Dirección offshore en los 3 días';
+
+                return {
+                    analyzed: true,
+                    hasGoodConditions: false,
+                    windRange: windRange,
+                    direction: direction,
+                    reason: reason,
+                    daysData: allDaysData
+                };
+            }
+            
+        } catch (error) {
+            console.error('Error analizando pronóstico 72hs:', error);
+            return { analyzed: false };
+        }
+    }
+
+    // Funciones del modal
+    window.openTomorrowModal = function() {
+        const modal = document.getElementById('tomorrow-modal');
+        const modalContent = document.getElementById('tomorrow-modal-content');
+        
+        if (!modal || !modalContent || !forecastData) return;
+        
+        // Generar contenido por día y hora
+        let html = '';
+        
+        if (forecastData.hasGoodConditions) {
+            html += `
+                <div class="bg-green-50 border-2 border-green-500 rounded-lg p-4 mb-4">
+                    <p class="text-green-700 font-bold text-lg text-center">✅ Buenas Condiciones en 72hs</p>
+                    <p class="text-sm text-gray-700 text-center mt-2">
+                        <strong>${forecastData.bestDay}:</strong> ${forecastData.bestTime}
+                    </p>
+                </div>
+            `;
+        }
+        
+        // Mostrar cada día
+        forecastData.daysData.forEach(day => {
+            html += `<h3 class="font-bold text-gray-800 mb-2 mt-4 text-lg">${day.label}:</h3>`;
+            html += '<div class="space-y-2">';
+            
+            day.data.forEach(hour => {
+                const isGoodWind = hour.windSpeed >= 15;
+                const isNotOffshore = hour.windDir > 67.5 && hour.windDir <= 292.5;
+                const isNavigable = isGoodWind && isNotOffshore;
+                
+                const bgColor = isNavigable ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-300';
+                const icon = isNavigable ? '✅' : '⚠️';
+                
+                html += `
+                    <div class="border-2 ${bgColor} rounded-lg p-3">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xl">${icon}</span>
+                                <span class="font-bold text-gray-800">${hour.hour}:00 hs</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-gray-900">${hour.windSpeed} kts</p>
+                                <p class="text-xs text-gray-600">${convertDegreesToCardinal(hour.windDir)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+        });
+        
+        modalContent.innerHTML = html;
+        modal.classList.remove('hidden');
+    };
+
+    window.closeTomorrowModal = function() {
+        const modal = document.getElementById('tomorrow-modal');
+        if (modal) modal.classList.add('hidden');
+    };
+
+    // Cargar pronóstico 72hs al iniciar
+    fetchForecast72h();
+    // Actualizar cada 2 horas
+    setInterval(fetchForecast72h, 2 * 60 * 60 * 1000);
         try {
             const forecastCard = document.getElementById('tomorrow-forecast-card');
             const forecastContent = document.getElementById('tomorrow-forecast-content');
@@ -1476,11 +1750,6 @@ try {
         const modal = document.getElementById('tomorrow-modal');
         if (modal) modal.classList.add('hidden');
     };
-
-    // Cargar pronóstico de mañana al iniciar
-    fetchTomorrowForecast();
-    // Actualizar cada 2 horas
-    setInterval(fetchTomorrowForecast, 2 * 60 * 60 * 1000);
 
     // ========================================
     // REFRESCAR DATOS AL VOLVER DEL BACKGROUND
