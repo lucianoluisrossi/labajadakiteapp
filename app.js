@@ -979,10 +979,15 @@ try {
     setInterval(updateTimeAgo, 5000);
 
     // ========================================
+<<<<<<< HEAD
     // PRONÓSTICO 72 HORAS
+=======
+    // PRONÓSTICO DE MAÑANA
+>>>>>>> parent of 3df5480 (kj)
     // ========================================
-    let forecastData = null; // Guardar datos para el modal
+    let tomorrowForecastData = null; // Guardar datos para el modal
 
+<<<<<<< HEAD
     async function fetchForecast72h() {
         try {
             const forecastCard = document.getElementById('tomorrow-forecast-card');
@@ -1526,6 +1531,9 @@ try {
     fetchForecast48h();
     // Actualizar cada 2 horas
     setInterval(fetchForecast48h, 2 * 60 * 60 * 1000);
+=======
+    async function fetchTomorrowForecast() {
+>>>>>>> parent of 3df5480 (kj)
         try {
             const tomorrowCard = document.getElementById('tomorrow-forecast-card');
             const tomorrowContent = document.getElementById('tomorrow-forecast-content');
