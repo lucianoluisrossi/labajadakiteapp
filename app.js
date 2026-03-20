@@ -1,44 +1,33 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-// ⭐ SISTEMA DE NOTIFICACIONES PUSH
-import { PushNotificationManager } from './notifications.js';
-import './notifications-integration.js';
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, deleteDoc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ⭐ MEJORAS UX/UI
 import './ux-improvements.js';
 
-// ⭐ DETECCIÓN iOS
+// ⭐ DETECCIÓN iOS (solo para analytics)
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 // ========================================
-// SOLUCIÓN DEFINITIVA: Service Worker SOLO en Android/Desktop
+// ANALYTICS: Detectar tipo de dispositivo
 // ========================================
-// iOS Safari tiene problemas con SW interceptando fetch
-// Solución: SW activo en Android/Desktop, desactivado en iOS
-if (!isIOS && 'serviceWorker' in navigator) {
-    // Registrar SW solo en Android/Desktop (NO en iOS)
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-                console.log('✅ Service Worker registrado (Android/Desktop):', registration.scope);
-            })
-            .catch(error => {
-                console.error('❌ Error registrando Service Worker:', error);
-            });
-    });
-} else if (isIOS && 'serviceWorker' in navigator) {
-    // En iOS: desregistrar cualquier SW que pueda estar activo
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(reg => {
-            reg.unregister();
-        });
-    });
-    console.log('📱 iOS: Service Worker desactivado (no compatible)');
-}
+const deviceType = isIOS ? 'iOS' : 
+                  /Android/.test(navigator.userAgent) ? 'Android' : 
+                  'Desktop';
+
+const browserName = /Chrome/.test(navigator.userAgent) && !/Edge/.test(navigator.userAgent) ? 'Chrome' :
+                   /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent) ? 'Safari' :
+                   /Firefox/.test(navigator.userAgent) ? 'Firefox' :
+                   /Edge/.test(navigator.userAgent) ? 'Edge' :
+                   'Other';
+
+console.log('📊 ========== DEVICE INFO ==========');
+console.log('📱 Dispositivo:', deviceType);
+console.log('🌐 Navegador:', browserName);
+console.log('📏 Viewport:', window.innerWidth + 'x' + window.innerHeight);
+console.log('📊 ==================================');
 
 const firebaseConfig = {
   apiKey: "AIzaSyDitwwF3Z5F9KCm9mP0LsXWDuflGtXCFcw",
@@ -57,7 +46,6 @@ let messagesCollection;
 let galleryCollection;
 let classifiedsCollection;
 let currentUser = null;
-let pushManager;
 const googleProvider = new GoogleAuthProvider();
 
 try {
@@ -69,24 +57,83 @@ try {
     galleryCollection = collection(db, "daily_gallery_meta");
     classifiedsCollection = collection(db, "classifieds");
 
-    // Inicializar pushManager (desactivado en iOS)
-    if (!isIOS) {
-        pushManager = new PushNotificationManager(app);
-        window.pushManager = pushManager;
-        console.log("✅ PushManager inicializado (Android/Desktop)");
+    console.log("✅ Firebase inicializado.");
+
+    // ========================================
+    // ANALYTICS: ID único por dispositivo + Datos de usuario
+    // ========================================
+    // Generar o recuperar ID único del dispositivo
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+        deviceId = 'device_' + 
+                   Date.now() + '_' + 
+                   Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('device_id', deviceId);
+        console.log('📱 Nuevo dispositivo detectado, ID:', deviceId);
     } else {
-        window.pushManager = null;
-        console.log("📱 PushManager no inicializado (iOS)");
-        // Ocultar UI de notificaciones en iOS
-        const notifCard = document.getElementById('notifications-card');
-        const notifBtn = document.getElementById('notifications-settings-btn');
-        const welcomeModal = document.getElementById('welcome-clasificados-modal');
-        if (notifCard) notifCard.style.display = 'none';
-        if (notifBtn) notifBtn.style.display = 'none';
-        if (welcomeModal) welcomeModal.style.display = 'none';
+        console.log('📱 Dispositivo conocido, ID:', deviceId);
     }
 
-    console.log("✅ Firebase inicializado.");
+    // Función para actualizar analytics (se llama en login y al cargar)
+    async function updateDeviceAnalytics(user) {
+        const deviceData = {
+            deviceType: deviceType,
+            browser: browserName,
+            viewport: {
+                width: window.innerWidth,
+                height: window.innerHeight
+            },
+            userAgent: navigator.userAgent,
+            language: navigator.language,
+            lastSeen: serverTimestamp(),
+            online: navigator.onLine
+        };
+
+        // Si el usuario está logueado, agregar sus datos
+        if (user) {
+            deviceData.userId = user.uid;
+            deviceData.email = user.email;
+            deviceData.displayName = user.displayName || 'Anónimo';
+            deviceData.photoURL = user.photoURL || null;
+            deviceData.lastLogin = serverTimestamp();
+            console.log('👤 Usuario logueado:', user.email);
+        } else {
+            // Si no está logueado, marcar como null
+            deviceData.userId = null;
+            deviceData.email = null;
+            deviceData.displayName = null;
+            deviceData.photoURL = null;
+        }
+
+        const deviceRef = doc(db, "app_devices", deviceId);
+        
+        try {
+            const deviceDoc = await getDoc(deviceRef);
+            
+            if (deviceDoc.exists()) {
+                // Actualizar dispositivo existente
+                const updates = {
+                    ...deviceData,
+                    sessionCount: deviceDoc.data().sessionCount + 1
+                };
+                
+                await updateDoc(deviceRef, updates);
+                console.log('📊 Analytics actualizado. Sesión #' + updates.sessionCount);
+            } else {
+                // Nuevo dispositivo
+                deviceData.firstSeen = serverTimestamp();
+                deviceData.sessionCount = 1;
+                
+                await setDoc(deviceRef, deviceData);
+                console.log('📊 Nuevo dispositivo registrado');
+            }
+        } catch (err) {
+            console.log('📊 Analytics error (no crítico):', err.message);
+        }
+    }
+
+    // Actualizar analytics al inicio (sin usuario todavía)
+    updateDeviceAnalytics(null);
 
     // --- FUNCIONES DE LOGIN/LOGOUT ---
     async function loginWithGoogle() {
@@ -179,6 +226,7 @@ try {
     // --- LISTENER DE ESTADO DE AUTENTICACIÓN (dentro de DOMContentLoaded) ---
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
+		updateDeviceAnalytics(user);
         updateAuthUI(user);
     });
     console.log("🚀 App iniciada.");
@@ -951,57 +999,6 @@ try {
     fetchWeatherData();
     setInterval(fetchWeatherData, 30000);
     setInterval(updateTimeAgo, 5000);
-// ========================================
-// CARD DE PRONÓSTICO - VERSIÓN SIMPLIFICADA
-// Hace scroll al widget de Windguru existente
-// ========================================
-
-// Agregar este código después de setInterval(updateTimeAgo, 5000);
-
-// Función para abrir Windguru y hacer scroll
-window.openWindguruForecast = function() {
-    const windguruDetails = document.querySelector('details.group'); // El acordeón de Windguru
-    const windguruCard = windguruDetails?.closest('.bg-gray-100.rounded-xl');
-    
-    if (windguruDetails && windguruCard) {
-        // Abrir el acordeón si está cerrado
-        if (!windguruDetails.open) {
-            windguruDetails.open = true;
-        }
-        
-        // Hacer scroll al widget
-        setTimeout(() => {
-            windguruCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Resaltar temporalmente
-            windguruCard.style.transition = 'all 0.3s ease';
-            windguruCard.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.5)';
-            
-            setTimeout(() => {
-                windguruCard.style.boxShadow = '';
-            }, 2000);
-        }, 300);
-    }
-};
-
-// Mostrar el card de pronóstico siempre
-const forecastCard = document.getElementById('tomorrow-forecast-card');
-if (forecastCard) {
-    forecastCard.classList.remove('hidden', 'bg-red-50', 'border-red-300', 'bg-green-50', 'border-green-500');
-    forecastCard.classList.add('bg-blue-50', 'border-blue-500');
-    
-    const forecastContent = document.getElementById('tomorrow-forecast-content');
-    if (forecastContent) {
-        forecastContent.innerHTML = `
-            <div class="flex items-center gap-2 mb-1">
-                <span class="text-blue-600 font-bold text-lg">📊 Revisá el pronóstico completo</span>
-            </div>
-            <div class="text-sm text-gray-700">
-                <p>Consultá las condiciones para los próximos días en el pronóstico de Windguru</p>
-            </div>
-        `;
-    }
-}
 
     // --- SPONSOR CAROUSEL ---
     const sponsorTrack = document.getElementById('sponsor-track');
@@ -1332,7 +1329,7 @@ if (forecastCard) {
                 ${c.photoURL ? `<img src="${c.photoURL}" alt="${c.title}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0 cursor-pointer ${isVendido ? 'grayscale' : ''}" onclick="document.getElementById('modal-img').src='${c.photoURL}';document.getElementById('image-modal').classList.remove('hidden');">` : '<div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center text-gray-300 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>'}
                 <div class="flex-grow min-w-0">
                     <div class="flex items-start justify-between gap-2">
-                        <h4 class="font-bold text-gray-800 text-sm truncate ${isVendido ? 'line-through' : ''}">${c.title}</h4>
+                        <h4 class="font-bold text-gray-800 text-sm ${isVendido ? 'line-through' : ''}">${c.title}</h4>
                         <div class="flex gap-1 flex-shrink-0">
                             <span class="text-xs px-2 py-0.5 rounded-full ${statusColors[status]} font-medium">${statusLabels[status]}</span>
                             <span class="text-xs px-2 py-0.5 rounded-full ${categoryColors[c.category] || 'bg-orange-100 text-orange-700'} font-medium">${categoryLabels[c.category] || c.category}</span>
@@ -1654,6 +1651,46 @@ if (forecastCard) {
 
     // Iniciar carga de clasificados
     loadClassifieds();
+
+    // ============================================
+    // TABS GALERÍA: FOTOS / VIDEOS
+    // ============================================
+    const tabFotos = document.getElementById('tab-fotos');
+    const tabVideos = document.getElementById('tab-videos');
+    const contentFotos = document.getElementById('content-fotos');
+    const contentVideos = document.getElementById('content-videos');
+
+    if (tabFotos && tabVideos && contentFotos && contentVideos) {
+        // Función para cambiar de tab
+        function switchTab(tab) {
+            // Resetear todos los tabs
+            [tabFotos, tabVideos].forEach(t => {
+                t.classList.remove('border-blue-600', 'text-blue-600');
+                t.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Ocultar todo el contenido
+            [contentFotos, contentVideos].forEach(c => c.classList.add('hidden'));
+            
+            // Activar tab seleccionado
+            if (tab === 'fotos') {
+                tabFotos.classList.remove('border-transparent', 'text-gray-500');
+                tabFotos.classList.add('border-blue-600', 'text-blue-600');
+                contentFotos.classList.remove('hidden');
+            } else if (tab === 'videos') {
+                tabVideos.classList.remove('border-transparent', 'text-gray-500');
+                tabVideos.classList.add('border-blue-600', 'text-blue-600');
+                contentVideos.classList.remove('hidden');
+            }
+        }
+
+        // Event listeners
+        tabFotos.addEventListener('click', () => switchTab('fotos'));
+        tabVideos.addEventListener('click', () => switchTab('videos'));
+        
+        // Por defecto mostrar fotos
+        switchTab('fotos');
+    }
 
     // ============================================
     // SCROLL AUTOMÁTICO AL VENIR DE NOTIFICACIÓN
