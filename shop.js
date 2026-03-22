@@ -51,56 +51,6 @@ const KITELOOK_PRODUCTS = [
         description: "Cierre completo. Logo en espalda full size.",
         badge: "ÚLTIMOS"
     },
-    {
-        id: 6,
-        name: "Gorra KiteLook Snapback",
-        category: "gorras",
-        price: 8500,
-        currency: "ARS",
-        sizes: ["Única"],
-        description: "Snapback regulable. Logo bordado frontal.",
-        badge: null
-    },
-    {
-        id: 7,
-        name: "Bucket Hat Kite",
-        category: "gorras",
-        price: 9500,
-        currency: "ARS",
-        sizes: ["Única"],
-        description: "Protección UV50+. Ideal playa y agua.",
-        badge: "NUEVO"
-    },
-    {
-        id: 8,
-        name: "Lycra KiteLook Pro",
-        category: "accesorios",
-        price: 19000,
-        currency: "ARS",
-        sizes: ["XS", "S", "M", "L"],
-        description: "Anti-UV. Secado ultrarrápido. Para el agua.",
-        badge: null
-    },
-    {
-        id: 9,
-        name: "Bolso Beach KiteLook",
-        category: "accesorios",
-        price: 12500,
-        currency: "ARS",
-        sizes: ["Única"],
-        description: "Interior impermeable. Bolsillo separador.",
-        badge: null
-    },
-    {
-        id: 10,
-        name: "Medias KiteLook x3",
-        category: "accesorios",
-        price: 5500,
-        currency: "ARS",
-        sizes: ["37-40", "41-45"],
-        description: "Pack x3 pares. Diseños exclusivos kiteros.",
-        badge: "PACK"
-    }
 ];
 
 // Gradientes por categoría (placeholder de imagen)
