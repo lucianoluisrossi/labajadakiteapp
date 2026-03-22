@@ -278,31 +278,28 @@ try {
 
     function switchView(viewName) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-
+        
         // Ocultar todas las vistas
         if(viewDashboard) viewDashboard.classList.add('hidden');
         if(viewCommunity) viewCommunity.classList.add('hidden');
         if(viewClassifieds) viewClassifieds.classList.add('hidden');
-
-        // Actualizar tab activo del bottom nav
-        ['nav-clima', 'nav-comunidad', 'nav-clasificados'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('nav-tab-active');
-        });
-
+        
         if (viewName === 'dashboard') {
             if(viewDashboard) viewDashboard.classList.remove('hidden');
-            const navClima = document.getElementById('nav-clima');
-            if (navClima) navClima.classList.add('nav-tab-active');
+            // Mostrar FABs de comunidad y clasificados, ocultar boton volver
+            if(fabContainer) fabContainer.classList.remove('hidden');
+            if(fabBackWeather) fabBackWeather.classList.add('hidden');
         } else if (viewName === 'community') {
             if(viewCommunity) viewCommunity.classList.remove('hidden');
-            const navComunidad = document.getElementById('nav-comunidad');
-            if (navComunidad) navComunidad.classList.add('nav-tab-active');
+            // Ocultar FABs, mostrar boton volver verde
+            if(fabContainer) fabContainer.classList.add('hidden');
+            if(fabBackWeather) fabBackWeather.classList.remove('hidden');
             markMessagesAsRead();
         } else if (viewName === 'classifieds') {
             if(viewClassifieds) viewClassifieds.classList.remove('hidden');
-            const navClasificados = document.getElementById('nav-clasificados');
-            if (navClasificados) navClasificados.classList.add('nav-tab-active');
+            // Ocultar FABs, mostrar boton volver verde
+            if(fabContainer) fabContainer.classList.add('hidden');
+            if(fabBackWeather) fabBackWeather.classList.remove('hidden');
             markClassifiedsAsRead();
         }
     }
@@ -323,14 +320,6 @@ try {
     if (fabCommunity) fabCommunity.addEventListener('click', () => switchView('community'));
     if (fabClasificados) fabClasificados.addEventListener('click', () => switchView('classifieds'));
     if (fabBackWeather) fabBackWeather.addEventListener('click', () => switchView('dashboard'));
-
-    // Bottom nav tabs
-    const navClima = document.getElementById('nav-clima');
-    const navComunidad = document.getElementById('nav-comunidad');
-    const navClasificados = document.getElementById('nav-clasificados');
-    if (navClima) navClima.addEventListener('click', () => switchView('dashboard'));
-    if (navComunidad) navComunidad.addEventListener('click', () => switchView('community'));
-    if (navClasificados) navClasificados.addEventListener('click', () => switchView('classifieds'));
     if (newMessageToast) newMessageToast.addEventListener('click', () => switchView('community'));
     if (newClassifiedToast) newClassifiedToast.addEventListener('click', () => switchView('classifieds'));
     if (newPhotoToast) {
@@ -533,7 +522,7 @@ try {
     function markMessagesAsRead() {
         const now = Date.now();
         localStorage.setItem('lastReadTime', now);
-        const badge = document.getElementById('community-badge');
+        const badge = document.getElementById('notification-badge');
         if (badge) badge.classList.add('hidden');
         if (newMessageToast) newMessageToast.classList.add('hidden');
     }
@@ -614,7 +603,7 @@ try {
                 if (newestMessageTime > lastReadTime && lastReadTime > 0) {
                     if (viewCommunity.classList.contains('hidden')) {
                         if(newMessageToast) newMessageToast.classList.remove('hidden');
-                        const badge = document.getElementById('community-badge');
+                        const badge = document.getElementById('notification-badge');
                         if(badge) badge.classList.remove('hidden');
                     } else { markMessagesAsRead(); }
                 } else if (lastReadTime === 0 && newestMessageTime > 0) {
@@ -941,9 +930,6 @@ try {
                 const [verdictText, verdictColors] = getSpotVerdict(windSpeedValue, windGustValue, windDirDegrees);
                 updateCardColors(verdictCardEl, verdictColors);
                 verdictDataEl.textContent = verdictText;
-                if (window.updateStickyBar) {
-                    window.updateStickyBar(verdictText, convertDegreesToCardinal(windDirDegrees), windSpeedValue, verdictColors);
-                }
                 
                 if (windArrowEl && windDirDegrees !== null) {
                     windArrowEl.dataset.degrees = windDirDegrees;

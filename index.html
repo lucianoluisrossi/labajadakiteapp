@@ -10,7 +10,7 @@
     <title>La Bajada</title>
     
     <!-- Configuración PWA y Manifiesto -->
-    <meta name="theme-color" content="#091520">
+    <meta name="theme-color" content="#1f2937">
     <link rel="manifest" href="manifest.json">
 
     <!-- Tailwind CSS -->
@@ -20,162 +20,16 @@
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+        
         /* Estilo para quitar el triángulo por defecto del details */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
-
-        /* === DARK OCEAN THEME === */
-        body {
-            background: linear-gradient(160deg, #091520 0%, #0c1e3a 55%, #0a2840 100%);
-            background-attachment: fixed;
-        }
-        /* Override Tailwind grays for dark theme */
-        .text-gray-900 { color: #f1f5f9 !important; }
-        .text-gray-800 { color: #e2e8f0 !important; }
-        .text-gray-700 { color: #cbd5e1 !important; }
-        .text-gray-600 { color: #94a3b8 !important; }
-        .text-gray-500 { color: #64748b !important; }
-        .bg-white { background-color: rgba(15, 35, 64, 0.85) !important; }
-        .bg-gray-50 { background-color: rgba(9, 22, 40, 0.7) !important; }
-        .bg-gray-100 { background-color: rgba(15, 35, 64, 0.85) !important; }
-        .bg-gray-200 { background-color: rgba(20, 45, 80, 0.8) !important; }
-        .bg-gray-300 { background-color: rgba(30, 55, 95, 0.8) !important; }
-        .border-gray-300 { border-color: rgba(30, 58, 95, 0.7) !important; }
-        .border-gray-200 { border-color: rgba(30, 58, 95, 0.5) !important; }
-        .skeleton-loader { background-color: rgba(30, 58, 95, 0.6) !important; }
-        input, select, textarea {
-            background-color: rgba(9, 22, 40, 0.9) !important;
-            border-color: rgba(30, 58, 95, 0.7) !important;
-            color: #e2e8f0 !important;
-        }
-        input::placeholder, textarea::placeholder { color: #475569 !important; }
-        /* Keep some amber/red/yellow alert elements readable */
-        .bg-amber-100 { background-color: #fef3c7 !important; }
-        .text-amber-800 { color: #92400e !important; }
-        .border-amber-400 { border-color: #fbbf24 !important; }
-        /* Keep emergency section legible */
-        .bg-red-50, .from-red-50, .to-red-100 { background-color: rgba(127, 29, 29, 0.3) !important; }
-        .border-red-200 { border-color: rgba(248, 113, 113, 0.4) !important; }
-        .text-red-700 { color: #fca5a5 !important; }
-        /* Auth section tweaks */
-        .bg-yellow-50 { background-color: rgba(120, 90, 0, 0.25) !important; }
-        .border-yellow-200 { border-color: rgba(251, 191, 36, 0.4) !important; }
-        .text-yellow-800 { color: #fde68a !important; }
-        /* Footer */
-        footer { border-color: rgba(30, 58, 95, 0.5) !important; }
-
-        /* === STICKY WIND BAR === */
-        #sticky-wind-bar {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 100;
-            background: rgba(9, 22, 40, 0.96);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(30, 58, 95, 0.8);
-            transform: translateY(-100%);
-            transition: transform 0.3s ease;
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        #sticky-wind-bar.visible {
-            transform: translateY(0);
-        }
-        #sticky-verdict-badge {
-            padding: 3px 14px;
-            border-radius: 999px;
-            font-weight: 900;
-            font-size: 0.7rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            background: rgba(30, 58, 95, 0.8);
-            color: #94a3b8;
-        }
-
-        /* === BOTTOM NAV === */
-        #bottom-nav {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            z-index: 50;
-            background: rgba(9, 22, 40, 0.97);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(30, 58, 95, 0.8);
-            height: 64px;
-            display: flex;
-            align-items: stretch;
-        }
-        .nav-tab {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 3px;
-            color: #475569;
-            transition: color 0.2s, background 0.2s;
-            font-size: 0.6rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            position: relative;
-            border: none;
-            background: none;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            padding: 0;
-        }
-        .nav-tab:active { background: rgba(30, 58, 95, 0.4); }
-        .nav-tab.nav-tab-active { color: #38bdf8 !important; }
-        .nav-tab svg { width: 22px; height: 22px; }
-        .nav-tab-badge {
-            position: absolute;
-            top: 8px;
-            right: calc(50% - 18px);
-            background: #ef4444;
-            color: white;
-            font-size: 0.55rem;
-            font-weight: 900;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid rgba(9, 22, 40, 0.97);
-        }
-
-        /* === VERDICT HERO === */
-        #verdict-card {
-            border-radius: 12px;
-            margin-bottom: 12px;
-        }
-        #verdict-data {
-            font-size: 2rem !important;
-            line-height: 1.1 !important;
-            letter-spacing: -0.02em;
-        }
-        @media (min-width: 768px) {
-            #verdict-data { font-size: 2.5rem !important; }
-        }
     </style>
 </head>
-<body class="text-gray-100 min-h-screen p-4 md:p-8 relative overflow-x-hidden">
-
-    <!-- STICKY WIND BAR -->
-    <div id="sticky-wind-bar">
-        <span id="sticky-verdict-badge">Calculando...</span>
-        <div class="flex items-center gap-3">
-            <span class="text-gray-400 text-xs font-bold" id="sticky-direction">--</span>
-            <span class="text-white font-black text-lg" id="sticky-speed">-- kts</span>
-        </div>
-    </div>
+<body class="bg-white text-gray-900 min-h-screen p-4 md:p-8 relative overflow-x-hidden">
 
     <div class="max-w-6xl mx-auto">
-
+        
         <!-- ENCABEZADO PRINCIPAL -->
         <div class="relative flex justify-center items-start mb-6 mt-4 md:mt-8">
 
@@ -224,16 +78,16 @@
                     <span class="absolute -top-1 -right-1 bg-white text-red-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">!</span>
                 </button>
                 
-                <!-- 1. Veredicto HERO -->
-                <div id="verdict-card" class="mb-3 py-4 px-4 rounded-xl border border-gray-300 transition-colors duration-300">
-                    <p class="text-gray-600 text-xs font-bold text-center uppercase tracking-widest mb-1">Estado del Spot</p>
-                    <div id="verdict-data-loader" class="skeleton-loader mx-auto rounded-lg" style="width: 60%; height: 3rem;"></div>
-                    <p id="verdict-data" class="data-content font-black text-gray-900 text-center">Calculando...</p>
-                </div>
-
-                <!-- 2. LiveCam -->
+                <!-- 1. LiveCam -->
                 <div class="bg-black rounded-lg overflow-hidden shadow-lg mb-3 border border-gray-400">
                     <iframe id="live-camera" class="w-full aspect-video" src="https://www.youtube.com/embed/SzveEm5Y4oc?autoplay=1&mute=1&controls=0" title="YouTube Live Camera" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+
+                <!-- 2. Veredicto -->
+                <div id="verdict-card" class="mb-3 py-2 px-3 rounded-lg border border-gray-300 transition-colors duration-300">
+                    <p class="text-gray-600 text-[10px] font-medium text-center uppercase">Status del Spot</p>
+                    <div id="verdict-data-loader" class="skeleton-loader skeleton-text-xl mx-auto" style="width: 70%;"></div>
+                    <p id="verdict-data" class="data-content text-lg font-extrabold text-gray-900 text-center">Calculando...</p>
                 </div>
                 
                 <!-- 3. TARJETA DE VIENTO UNIFICADA (con Estabilidad) -->
@@ -241,8 +95,8 @@
                     <div class="flex flex-row items-center justify-between">
                         <!-- Columna Dirección (35%) -->
                         <div class="flex flex-col items-center justify-center w-[35%] border-r border-gray-400/30 pr-2">
-                            <p class="text-gray-600 text-xs uppercase font-bold mb-1">Dirección</p>
-                            <button id="wind-view-toggle" class="px-2 py-0.5 mb-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition-all active:scale-95 select-none" title="Cambiar vista de la flecha">📷 Vista cámara</button>
+                            <p class="text-gray-600 text-[10px] uppercase font-bold mb-1">Dirección</p>
+                            <button id="wind-view-toggle" class="px-2 py-0.5 mb-1 text-[9px] font-bold uppercase tracking-wider rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition-all active:scale-95 select-none" title="Cambiar vista de la flecha">📷 Vista cámara</button>
                             <div class="flex flex-col items-center justify-center">
                                 <!-- FLECHA: Borde ajustado a 0.5px -->
                                 <svg id="wind-arrow" class="w-20 h-20 text-gray-900 transition-transform duration-500 drop-shadow-md" style="stroke: black; stroke-width: 0.5px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L6 8h3v12h6V8h3l-6-6z"/></svg>
@@ -255,7 +109,7 @@
                         <!-- Columna Velocidad (65%) -->
                         <div class="flex flex-col items-center justify-center w-[65%] pl-2">
                             <div class="flex flex-col items-center w-full">
-                                <p class="text-gray-600 text-xs uppercase font-bold">Velocidad Prom.</p>
+                                <p class="text-gray-600 text-[10px] uppercase font-bold">Velocidad Prom.</p>
                                 <div id="highlight-wind-speed-data-loader" class="skeleton-loader skeleton-text-4xl w-24 mt-1"></div>
                                 <div class="flex items-center gap-2">
                                     <p class="text-5xl font-black text-gray-900 data-content leading-none tracking-tight" id="highlight-wind-speed-data">N/A</p>
@@ -269,7 +123,7 @@
                                              style="width: 0%">
                                         </div>
                                     </div>
-                                    <div class="flex justify-between text-[10px] text-gray-500 mt-1 px-1">
+                                    <div class="flex justify-between text-[8px] text-gray-500 mt-1 px-1">
                                         <span>0kts</span>
                                         <span id="wind-percentage" class="font-bold">--%</span>
                                         <span>30kts</span>
@@ -293,7 +147,7 @@
                     
                     <!-- Timestamp última actualización -->
                     <div class="mt-2 text-center">
-                        <p class="text-xs text-gray-500 data-content">
+                        <p class="text-[9px] text-gray-500 data-content">
                             🕐 Actualizado hace <span id="time-since-update" class="font-semibold">--</span>
                         </p>
                     </div>
@@ -327,7 +181,7 @@
 
             <!-- SPONSOR CAROUSEL -->
             <div class="text-center mt-6 lg:mt-8">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-2">Sponsors oficiales del Spot</p>
+                <p class="text-[11px] text-gray-500 uppercase tracking-wider mb-2">Sponsors oficiales del Spot</p>
                 <div id="sponsor-carousel" class="relative overflow-hidden">
                     <div id="sponsor-track" class="flex transition-transform duration-500 ease-in-out">
                         <!-- Sponsor 1: Maccarone -->
@@ -784,36 +638,22 @@
             </div>
         </div>
 
-        <!-- BOTTOM NAV BAR -->
-        <nav id="bottom-nav">
-            <!-- Clima -->
-            <button class="nav-tab nav-tab-active" id="nav-clima">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                </svg>
-                <span>Clima</span>
+        <!-- FLOATERS - Centrados abajo, uno al lado del otro -->
+        <div id="fab-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-40 flex gap-3">
+            <button id="fab-community" class="bg-blue-600 text-white p-3.5 rounded-full shadow-2xl hover:bg-blue-700 transition-transform hover:scale-110 active:scale-95 border-2 border-white relative">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full hidden border border-white animate-bounce">!</span>
             </button>
-            <!-- Comunidad -->
-            <button class="nav-tab" id="nav-comunidad">
-                <div style="position:relative; display:inline-flex;">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
-                    </svg>
-                    <span id="community-badge" class="nav-tab-badge hidden">!</span>
-                </div>
-                <span>Comunidad</span>
+            <button id="fab-clasificados" class="bg-orange-500 text-white p-3.5 rounded-full shadow-2xl hover:bg-orange-600 transition-transform hover:scale-110 active:scale-95 border-2 border-white relative">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                <span id="clasificados-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full hidden border border-white animate-bounce">!</span>
             </button>
-            <!-- Clasificados -->
-            <button class="nav-tab" id="nav-clasificados">
-                <div style="position:relative; display:inline-flex;">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                    </svg>
-                    <span id="clasificados-badge" class="nav-tab-badge hidden">!</span>
-                </div>
-                <span>Clasificados</span>
-            </button>
-        </nav>
+        </div>
+
+        <!-- FAB Volver al Clima - Solo visible en Comunidad/Clasificados -->
+        <button id="fab-back-weather" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-40 bg-green-600 text-white p-3.5 rounded-full shadow-2xl hover:bg-green-700 transition-transform hover:scale-110 active:scale-95 border-2 border-white hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+        </button>
 
         <div id="new-message-toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 hidden cursor-pointer transition-all duration-300 w-max">
             <div class="bg-blue-600 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 border border-blue-400 text-sm font-bold">
