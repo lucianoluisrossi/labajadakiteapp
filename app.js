@@ -235,12 +235,9 @@ try {
     const viewDashboard = document.getElementById('view-dashboard');
     const viewCommunity = document.getElementById('view-community');
     const viewClassifieds = document.getElementById('view-classifieds');
+    const viewShop = document.getElementById('view-shop');
     const backToHomeBtn = document.getElementById('back-to-home');
     const backToHomeClassifieds = document.getElementById('back-to-home-classifieds');
-    const fabContainer = document.getElementById('fab-container');
-    const fabCommunity = document.getElementById('fab-community');
-    const fabClasificados = document.getElementById('fab-clasificados');
-    const fabBackWeather = document.getElementById('fab-back-weather');
     const newMessageToast = document.getElementById('new-message-toast');
     const newPhotoToast = document.getElementById('new-photo-toast');
     const newClassifiedToast = document.getElementById('new-classified-toast');
@@ -276,31 +273,44 @@ try {
         console.log('PWA instalada correctamente');
     });
 
+    // Mapa vista → id del botón de nav
+    const NAV_MAP = {
+        dashboard:   'nav-spot',
+        community:   'nav-community',
+        shop:        'nav-shop',
+        classifieds: 'nav-clasificados'
+    };
+
+    function setActiveNav(viewName) {
+        Object.values(NAV_MAP).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.classList.remove('nav-active'); el.classList.add('nav-btn'); }
+        });
+        const active = document.getElementById(NAV_MAP[viewName]);
+        if (active) active.classList.add('nav-active');
+    }
+
     function switchView(viewName) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
         // Ocultar todas las vistas
-        if(viewDashboard) viewDashboard.classList.add('hidden');
-        if(viewCommunity) viewCommunity.classList.add('hidden');
+        if(viewDashboard)  viewDashboard.classList.add('hidden');
+        if(viewCommunity)  viewCommunity.classList.add('hidden');
         if(viewClassifieds) viewClassifieds.classList.add('hidden');
-        
+        if(viewShop)       viewShop.classList.add('hidden');
+
+        setActiveNav(viewName);
+
         if (viewName === 'dashboard') {
             if(viewDashboard) viewDashboard.classList.remove('hidden');
-            // Mostrar FABs de comunidad y clasificados, ocultar boton volver
-            if(fabContainer) fabContainer.classList.remove('hidden');
-            if(fabBackWeather) fabBackWeather.classList.add('hidden');
         } else if (viewName === 'community') {
             if(viewCommunity) viewCommunity.classList.remove('hidden');
-            // Ocultar FABs, mostrar boton volver verde
-            if(fabContainer) fabContainer.classList.add('hidden');
-            if(fabBackWeather) fabBackWeather.classList.remove('hidden');
             markMessagesAsRead();
         } else if (viewName === 'classifieds') {
             if(viewClassifieds) viewClassifieds.classList.remove('hidden');
-            // Ocultar FABs, mostrar boton volver verde
-            if(fabContainer) fabContainer.classList.add('hidden');
-            if(fabBackWeather) fabBackWeather.classList.remove('hidden');
             markClassifiedsAsRead();
+        } else if (viewName === 'shop') {
+            if(viewShop) viewShop.classList.remove('hidden');
         }
     }
     
@@ -315,11 +325,19 @@ try {
 
     // --- LISTENERS DE NAVEGACIÓN ---
 
+    // Bottom nav
+    const navSpot        = document.getElementById('nav-spot');
+    const navCommunity   = document.getElementById('nav-community');
+    const navShop        = document.getElementById('nav-shop');
+    const navClasificados = document.getElementById('nav-clasificados');
+    if (navSpot)         navSpot.addEventListener('click', () => switchView('dashboard'));
+    if (navCommunity)    navCommunity.addEventListener('click', () => switchView('community'));
+    if (navShop)         navShop.addEventListener('click', () => switchView('shop'));
+    if (navClasificados) navClasificados.addEventListener('click', () => switchView('classifieds'));
+
+    // Botones "Volver" (redundantes con el nav, pero se mantienen)
     if (backToHomeBtn) backToHomeBtn.addEventListener('click', () => switchView('dashboard'));
     if (backToHomeClassifieds) backToHomeClassifieds.addEventListener('click', () => switchView('dashboard'));
-    if (fabCommunity) fabCommunity.addEventListener('click', () => switchView('community'));
-    if (fabClasificados) fabClasificados.addEventListener('click', () => switchView('classifieds'));
-    if (fabBackWeather) fabBackWeather.addEventListener('click', () => switchView('dashboard'));
     if (newMessageToast) newMessageToast.addEventListener('click', () => switchView('community'));
     if (newClassifiedToast) newClassifiedToast.addEventListener('click', () => switchView('classifieds'));
     if (newPhotoToast) {
@@ -522,7 +540,7 @@ try {
     function markMessagesAsRead() {
         const now = Date.now();
         localStorage.setItem('lastReadTime', now);
-        const badge = document.getElementById('notification-badge');
+        const badge = document.getElementById('nav-community-badge');
         if (badge) badge.classList.add('hidden');
         if (newMessageToast) newMessageToast.classList.add('hidden');
     }
@@ -603,7 +621,7 @@ try {
                 if (newestMessageTime > lastReadTime && lastReadTime > 0) {
                     if (viewCommunity.classList.contains('hidden')) {
                         if(newMessageToast) newMessageToast.classList.remove('hidden');
-                        const badge = document.getElementById('notification-badge');
+                        const badge = document.getElementById('nav-community-badge');
                         if(badge) badge.classList.remove('hidden');
                     } else { markMessagesAsRead(); }
                 } else if (lastReadTime === 0 && newestMessageTime > 0) {

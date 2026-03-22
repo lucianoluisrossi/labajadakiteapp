@@ -20,10 +20,24 @@
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
+
         /* Estilo para quitar el triángulo por defecto del details */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
+
+        /* Bottom Nav */
+        #bottom-nav { padding-bottom: env(safe-area-inset-bottom); }
+        .nav-btn { color: #9ca3af; transition: color 0.15s; }
+        .nav-btn.nav-active { color: #2563eb; }
+        .nav-btn.nav-active .nav-label { color: #2563eb; }
+        .nav-btn svg { transition: transform 0.15s; }
+        .nav-btn.nav-active svg { transform: scale(1.1); }
+
+        /* Shop */
+        .shop-product-card { transition: transform 0.15s, box-shadow 0.15s; }
+        .shop-product-card:active { transform: scale(0.97); }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="bg-white text-gray-900 min-h-screen p-4 md:p-8 relative overflow-x-hidden">
@@ -638,22 +652,47 @@
             </div>
         </div>
 
-        <!-- FLOATERS - Centrados abajo, uno al lado del otro -->
-        <div id="fab-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-40 flex gap-3">
-            <button id="fab-community" class="bg-blue-600 text-white p-3.5 rounded-full shadow-2xl hover:bg-blue-700 transition-transform hover:scale-110 active:scale-95 border-2 border-white relative">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
-                <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full hidden border border-white animate-bounce">!</span>
-            </button>
-            <button id="fab-clasificados" class="bg-orange-500 text-white p-3.5 rounded-full shadow-2xl hover:bg-orange-600 transition-transform hover:scale-110 active:scale-95 border-2 border-white relative">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                <span id="clasificados-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full hidden border border-white animate-bounce">!</span>
-            </button>
-        </div>
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
+            <div class="flex items-stretch h-16 max-w-lg mx-auto">
 
-        <!-- FAB Volver al Clima - Solo visible en Comunidad/Clasificados -->
-        <button id="fab-back-weather" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-40 bg-green-600 text-white p-3.5 rounded-full shadow-2xl hover:bg-green-700 transition-transform hover:scale-110 active:scale-95 border-2 border-white hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
-        </button>
+                <!-- Spot -->
+                <button id="nav-spot" class="nav-btn nav-active flex-1 flex flex-col items-center justify-center gap-0.5 px-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/>
+                    </svg>
+                    <span class="nav-label text-[10px] font-bold">Spot</span>
+                </button>
+
+                <!-- Comunidad -->
+                <button id="nav-community" class="nav-btn flex-1 flex flex-col items-center justify-center gap-0.5 px-1 relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                    </svg>
+                    <span class="nav-label text-[10px] font-bold">Comunidad</span>
+                    <span id="nav-community-badge" class="absolute top-2 right-3 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full hidden border border-white">!</span>
+                </button>
+
+                <!-- Shop KiteLook -->
+                <button id="nav-shop" class="nav-btn flex-1 flex flex-col items-center justify-center gap-0.5 px-1 relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                    </svg>
+                    <span class="nav-label text-[10px] font-bold">Shop</span>
+                    <span class="absolute top-1.5 right-3.5 w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
+                </button>
+
+                <!-- Clasificados -->
+                <button id="nav-clasificados" class="nav-btn flex-1 flex flex-col items-center justify-center gap-0.5 px-1 relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <span class="nav-label text-[10px] font-bold">Clasificados</span>
+                    <span id="clasificados-badge" class="absolute top-2 right-3 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full hidden border border-white">!</span>
+                </button>
+
+            </div>
+        </nav>
 
         <div id="new-message-toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 hidden cursor-pointer transition-all duration-300 w-max">
             <div class="bg-blue-600 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 border border-blue-400 text-sm font-bold">
@@ -678,6 +717,56 @@
             <button class="absolute top-4 right-4 text-white text-4xl font-bold focus:outline-none">&times;</button>
         </div>
 
+        <!-- VISTA SHOP - KITELOOK -->
+        <div id="view-shop" class="hidden fade-in mt-6 pb-4">
+
+            <!-- Hero KiteLook -->
+            <div class="relative rounded-2xl overflow-hidden mb-5 shadow-2xl" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0c4a6e 100%);">
+                <!-- Patrón decorativo -->
+                <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.05) 40px);"></div>
+                <div class="relative px-6 py-8 text-center">
+                    <div class="flex items-center justify-center gap-3 mb-2">
+                        <span class="text-4xl">🪁</span>
+                        <h1 class="text-4xl font-black text-white tracking-tight">KiteLook</h1>
+                    </div>
+                    <p class="text-blue-200 text-sm font-medium tracking-widest uppercase">Ropa con identidad kitera</p>
+                    <div class="flex justify-center gap-4 mt-4">
+                        <span class="text-xs text-blue-300 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-700">Envíos a todo el país</span>
+                        <span class="text-xs text-blue-300 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-700">Stock limitado</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros de categoría -->
+            <div class="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-hide px-0.5">
+                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-blue-600 text-white border border-blue-600 transition-all active:scale-95" data-category="all">Todo</button>
+                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 hover:border-gray-300 transition-all active:scale-95" data-category="remeras">Remeras</button>
+                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 hover:border-gray-300 transition-all active:scale-95" data-category="buzos">Buzos</button>
+                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 hover:border-gray-300 transition-all active:scale-95" data-category="gorras">Gorras</button>
+                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-200 hover:border-gray-300 transition-all active:scale-95" data-category="accesorios">Accesorios</button>
+            </div>
+
+            <!-- Contador de resultados -->
+            <p id="shop-results-count" class="text-xs text-gray-400 mb-3 font-medium">8 productos</p>
+
+            <!-- Grid de productos -->
+            <div id="shop-products-grid" class="grid grid-cols-2 gap-3">
+                <!-- Renderizado por shop.js -->
+            </div>
+
+            <!-- Contacto mayorista -->
+            <div class="mt-6 p-5 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border border-blue-100 text-center">
+                <p class="text-sm font-bold text-gray-800 mb-1">¿Revendedor o pedido especial?</p>
+                <p class="text-xs text-gray-500 mb-3">Personalizaciones, talles especiales y precios mayoristas</p>
+                <a href="https://wa.me/5492983500324?text=Hola!%20Me%20interesa%20info%20de%20KiteLook%20mayorista." target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md active:scale-95">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.096.543 4.07 1.497 5.786L0 24l6.387-1.47A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
+                    Contactar por WhatsApp
+                </a>
+            </div>
+
+        </div>
+
         <!-- FOOTER -->
         <footer class="mt-8 pt-4 pb-24 border-t border-gray-300">
             <div class="text-center text-xs text-gray-500">
@@ -696,4 +785,5 @@
     
     <script src="/_vercel/insights/script.js"></script>
     <script type="module" src="/app.js?v=3"></script>
+    <script type="module" src="/shop.js"></script>
 </body>
