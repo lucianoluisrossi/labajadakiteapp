@@ -748,11 +748,11 @@ try {
         if (speed === null || gust === null || speed <= 0) return { factor: null, text: 'N/A', color: ['bg-slate-800', 'border-slate-700'] };
         const MIN_KITE_WIND = 12; 
         if (speed < MIN_KITE_WIND) return { factor: null, text: 'N/A', color: ['bg-slate-800', 'border-slate-700'] };
-        if (gust <= speed) return { factor: 0, text: 'Ultra Estable', color: ['bg-green-400', 'border-green-600'] };
-        const factor = (1 - (speed / gust)) * 100; 
-        if (factor <= 15) return { factor, text: 'Estable', color: ['bg-green-300', 'border-green-500'] }; 
-        else if (factor <= 30) return { factor, text: 'Racheado', color: ['bg-yellow-300', 'border-yellow-500'] }; 
-        else return { factor, text: 'Muy Racheado', color: ['bg-red-400', 'border-red-600'] }; 
+        if (gust <= speed) return { factor: 0, text: 'Ultra Estable', color: ['bg-green-700', 'border-green-600'] };
+        const factor = (1 - (speed / gust)) * 100;
+        if (factor <= 15) return { factor, text: 'Estable', color: ['bg-green-700', 'border-green-600'] };
+        else if (factor <= 30) return { factor, text: 'Racheado', color: ['bg-yellow-700', 'border-yellow-600'] };
+        else return { factor, text: 'Muy Racheado', color: ['bg-red-700', 'border-red-600'] };
     }
     
     function getSpotVerdict(speed, gust, degrees) {
@@ -767,32 +767,49 @@ try {
         // Si está en condición épica pero aún no sostenida, mostrar que se está formando
         if (isEpicCondition(speed, degrees) && epicConsecutiveCount > 0) {
             const minutesLeft = Math.ceil((EPIC_SUSTAINED_READINGS - epicConsecutiveCount) * 30 / 60);
-            return ["ÉPICO en " + minutesLeft + "min...", ['bg-gradient-to-r', 'from-yellow-200', 'to-amber-300', 'border-yellow-400']];
+            return ["ÉPICO en " + minutesLeft + "min...", ['bg-gradient-to-r', 'from-yellow-600', 'to-amber-700', 'border-yellow-500']];
         }
 
         // Offshore siempre peligroso
-        if (degrees !== null && (degrees > 292.5 || degrees <= 67.5)) return ["VIENTO OFFSHORE!", ['bg-red-400', 'border-red-600']];
+        if (degrees !== null && (degrees > 292.5 || degrees <= 67.5)) return ["VIENTO OFFSHORE!", ['bg-red-700', 'border-red-600']];
         if (speed === null) return ["Calculando...", ['bg-slate-800', 'border-slate-700']];
-        if (speed <= 14) return ["FLOJO...", ['bg-blue-200', 'border-blue-400']];
-        else if (speed <= 16) return ["ACEPTABLE", ['bg-cyan-300', 'border-cyan-500']];
-        else if (speed <= 19) return ["¡IDEAL!", ['bg-green-300', 'border-green-500']];
-        else if (speed <= 22) return ["¡MUY BUENO!", ['bg-yellow-300', 'border-yellow-500']];
-        else if (speed <= 27) return ["¡FUERTE!", ['bg-orange-300', 'border-orange-500']];
-        else if (speed > 33) return ["¡DEMASIADO FUERTE!", ['bg-purple-400', 'border-purple-600']];
-        else return ["¡MUY FUERTE!", ['bg-red-400', 'border-red-600']];
+        if (speed <= 14) return ["FLOJO...", ['bg-blue-800', 'border-blue-700']];
+        else if (speed <= 16) return ["ACEPTABLE", ['bg-cyan-800', 'border-cyan-700']];
+        else if (speed <= 19) return ["¡IDEAL!", ['bg-green-700', 'border-green-600']];
+        else if (speed <= 22) return ["¡MUY BUENO!", ['bg-yellow-700', 'border-yellow-600']];
+        else if (speed <= 27) return ["¡FUERTE!", ['bg-orange-700', 'border-orange-600']];
+        else if (speed > 33) return ["¡DEMASIADO FUERTE!", ['bg-purple-700', 'border-purple-600']];
+        else return ["¡MUY FUERTE!", ['bg-red-700', 'border-red-600']];
     }
 
     const allColorClasses = [
-        'bg-slate-800', 'border-slate-700', 'bg-blue-200', 'border-blue-400', 'bg-green-300', 'border-green-500',
-        'bg-yellow-300', 'border-yellow-500', 'bg-orange-300', 'border-orange-500', 'bg-red-400', 'border-red-600', 'bg-cyan-300', 'border-cyan-500',
-        'bg-purple-400', 'border-purple-600', 'text-red-600', 'text-green-600', 'text-yellow-600', 'text-slate-100',
-        'bg-green-400', 'border-green-600', 'bg-slate-900/60', 'bg-slate-700/20', 'bg-slate-700/30',
+        // Fondos base
+        'bg-slate-800', 'border-slate-700', 'bg-slate-700', 'border-slate-600', 'bg-slate-600', 'border-slate-500',
+        // Viento — dark variants
+        'bg-blue-800', 'border-blue-700',
+        'bg-cyan-800', 'border-cyan-700',
+        'bg-green-700', 'border-green-600',
+        'bg-yellow-700', 'border-yellow-600',
+        'bg-orange-700', 'border-orange-600',
+        'bg-red-700', 'border-red-600',
+        'bg-purple-700', 'border-purple-600',
+        'bg-amber-800', 'border-amber-700',
+        // Épico
         'bg-gradient-to-r', 'from-yellow-400', 'to-amber-500', 'border-yellow-600', 'shadow-xl',
-        'bg-orange-500', 'bg-cyan-500', 'border-cyan-500', 'hover:bg-cyan-600', 'bg-slate-700', 'border-slate-600', 'text-slate-300', 'text-slate-400', 'text-slate-500',
+        'from-yellow-600', 'to-amber-700', 'border-yellow-500',
+        // Texto dinámico
+        'text-red-600', 'text-green-600', 'text-yellow-600', 'text-slate-100',
+        // Acentos
+        'bg-orange-500', 'bg-cyan-500', 'border-cyan-500', 'hover:bg-cyan-600', 'text-cyan-400',
+        // Texts
+        'text-slate-300', 'text-slate-400', 'text-slate-500', 'text-slate-200',
+        // Clasificados
         'bg-green-900/50', 'text-green-400', 'bg-yellow-900/50', 'text-yellow-400', 'bg-orange-900/50', 'text-orange-400',
-        'bg-red-950/30', 'border-red-700', 'bg-green-950/30', 'border-green-700', 'text-cyan-400',
-        'bg-amber-900/50', 'border-amber-600', 'text-amber-300', 'bg-slate-600', 'border-slate-500',
-        'from-red-950/80', 'to-red-900/50', 'border-red-800', 'border-red-900', 'text-slate-200'
+        'bg-red-950/30', 'border-red-700', 'bg-green-950/30', 'border-green-700',
+        // Misc
+        'bg-amber-900/50', 'border-amber-600', 'text-amber-300',
+        'bg-slate-900/60', 'bg-slate-700/20', 'bg-slate-700/30',
+        'from-red-950/80', 'to-red-900/50', 'border-red-800', 'border-red-900',
     ];
 
     function updateCardColors(element, newClasses) {
@@ -813,13 +830,13 @@ try {
     
         // 2. Escala Kitera (Igualada a Veredicto)
         if (speedInKnots !== null && !isNaN(speedInKnots)) {
-            if (speedInKnots <= 14) return ['bg-blue-200', 'border-blue-400'];       // Flojo
-            else if (speedInKnots <= 16) return ['bg-cyan-300', 'border-cyan-500'];  // Aceptable
-            else if (speedInKnots <= 19) return ['bg-green-300', 'border-green-500'];// Ideal
-            else if (speedInKnots <= 22) return ['bg-yellow-300', 'border-yellow-500']; // Muy Bueno
-            else if (speedInKnots <= 27) return ['bg-orange-300', 'border-orange-500']; // Fuerte
-            else if (speedInKnots <= 33) return ['bg-red-400', 'border-red-600'];    // Muy Fuerte
-            else return ['bg-purple-400', 'border-purple-600'];                      // Demasiado Fuerte
+            if (speedInKnots <= 14) return ['bg-blue-800', 'border-blue-700'];       // Flojo
+            else if (speedInKnots <= 16) return ['bg-cyan-800', 'border-cyan-700'];  // Aceptable
+            else if (speedInKnots <= 19) return ['bg-green-700', 'border-green-600'];// Ideal
+            else if (speedInKnots <= 22) return ['bg-yellow-700', 'border-yellow-600']; // Muy Bueno
+            else if (speedInKnots <= 27) return ['bg-orange-700', 'border-orange-600']; // Fuerte
+            else if (speedInKnots <= 33) return ['bg-red-700', 'border-red-600'];    // Muy Fuerte
+            else return ['bg-purple-700', 'border-purple-600'];                      // Demasiado Fuerte
         }
         
         return ['bg-slate-800', 'border-slate-700']; 
@@ -829,12 +846,12 @@ try {
 
     function getWindyColorClasses(speedInKnots) {
         if (speedInKnots !== null && !isNaN(speedInKnots)) {
-            if (speedInKnots <= 10) return ['bg-blue-200', 'border-blue-400']; 
-            else if (speedInKnots <= 16) return ['bg-green-300', 'border-green-500']; 
-            else if (speedInKnots <= 21) return ['bg-yellow-300', 'border-yellow-500']; 
-            else if (speedInKnots <= 27) return ['bg-orange-300', 'border-orange-500']; 
-            else if (speedInKnots <= 33) return ['bg-red-400', 'border-red-600']; 
-            else return ['bg-purple-400', 'border-purple-600']; 
+            if (speedInKnots <= 10) return ['bg-blue-800', 'border-blue-700'];
+            else if (speedInKnots <= 16) return ['bg-green-700', 'border-green-600'];
+            else if (speedInKnots <= 21) return ['bg-yellow-700', 'border-yellow-600'];
+            else if (speedInKnots <= 27) return ['bg-orange-700', 'border-orange-600'];
+            else if (speedInKnots <= 33) return ['bg-red-700', 'border-red-600'];
+            else return ['bg-purple-700', 'border-purple-600'];
         }
         return ['bg-slate-800', 'border-slate-700']; 
     }
@@ -1007,7 +1024,7 @@ try {
                     }
                 }
                 
-                updateCardColors(verdictCardEl, ['bg-amber-300', 'border-amber-500']);
+                updateCardColors(verdictCardEl, ['bg-amber-800', 'border-amber-700']);
                 verdictDataEl.textContent = 'SIN DATOS';
             }
         } catch (error) {
