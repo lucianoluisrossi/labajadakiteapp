@@ -68,7 +68,7 @@ const CAT_ICON = {
     accesorios: '🏄'
 };
 
-const WHATSAPP_NUMBER = '5492983500324';
+const WHATSAPP_NUMBER = '5492983595133';
 
 let currentFilter = 'all';
 
