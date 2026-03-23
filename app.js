@@ -290,22 +290,6 @@ try {
         if (active) active.classList.add('nav-active');
     }
 
-    const logoPalmera   = document.getElementById('logo-palmera');
-    const logoPrincipal = document.getElementById('logo-principal');
-    const mainHeader    = document.getElementById('main-header');
-
-    function setHeaderSize(small) {
-        if (small) {
-            if (logoPalmera)   { logoPalmera.classList.remove('h-32', 'md:h-40'); logoPalmera.classList.add('h-10'); }
-            if (logoPrincipal) { logoPrincipal.classList.remove('h-28', 'md:h-36'); logoPrincipal.classList.add('h-8'); }
-            if (mainHeader)    { mainHeader.classList.remove('mb-6', 'mt-4', 'md:mt-8'); mainHeader.classList.add('mb-2', 'mt-2'); }
-        } else {
-            if (logoPalmera)   { logoPalmera.classList.remove('h-10'); logoPalmera.classList.add('h-32', 'md:h-40'); }
-            if (logoPrincipal) { logoPrincipal.classList.remove('h-8'); logoPrincipal.classList.add('h-28', 'md:h-36'); }
-            if (mainHeader)    { mainHeader.classList.remove('mb-2', 'mt-2'); mainHeader.classList.add('mb-6', 'mt-4', 'md:mt-8'); }
-        }
-    }
-
     function switchView(viewName) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -316,7 +300,6 @@ try {
         if(viewShop)       viewShop.classList.add('hidden');
 
         setActiveNav(viewName);
-        setHeaderSize(viewName === 'shop');
 
         if (viewName === 'dashboard') {
             if(viewDashboard) viewDashboard.classList.remove('hidden');

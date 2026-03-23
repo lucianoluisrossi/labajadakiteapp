@@ -50,8 +50,8 @@
         </div>
         <!-- FIN TEST ENV BANNER -->
 
-        <!-- ENCABEZADO PRINCIPAL -->
-        <div id="main-header" class="relative flex justify-center items-start mb-6 mt-4 md:mt-8 transition-all duration-300">
+        <!-- ENCABEZADO PRINCIPAL — oculto (logo movido al bottom nav) -->
+        <div id="main-header" class="hidden">
 
             <!-- LOGOS CENTRALES -->
             <div class="flex flex-col items-center z-10">
@@ -660,6 +660,13 @@
 
         <!-- BOTTOM NAVIGATION BAR -->
         <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
+
+            <!-- Logo watermark — firma de marca discreta -->
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-white rounded-full px-2.5 py-0.5 border border-gray-100 shadow-sm pointer-events-none select-none">
+                <img src="logo_palmera.png" alt="" class="h-5 w-auto opacity-50" onerror="this.style.display='none'">
+                <img src="logo2.png" alt="" class="h-4 w-auto opacity-50" onerror="this.style.display='none'">
+            </div>
+
             <div class="flex items-stretch h-16 max-w-lg mx-auto">
 
                 <!-- Spot -->
