@@ -153,11 +153,11 @@ function initShop() {
             currentFilter = btn.dataset.category;
 
             filterBtns.forEach(b => {
-                b.classList.remove('bg-orange-500', 'text-white', 'border-orange-500');
+                b.classList.remove('bg-cyan-500', 'text-white', 'border-cyan-500');
                 b.classList.add('bg-slate-700', 'text-slate-300', 'border-slate-600');
             });
             btn.classList.remove('bg-slate-700', 'text-slate-300', 'border-slate-600');
-            btn.classList.add('bg-orange-500', 'text-white', 'border-orange-500');
+            btn.classList.add('bg-cyan-500', 'text-white', 'border-cyan-500');
 
             renderProducts(currentFilter);
         });

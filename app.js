@@ -788,7 +788,7 @@ try {
         'bg-purple-400', 'border-purple-600', 'text-red-600', 'text-green-600', 'text-yellow-600', 'text-slate-100',
         'bg-green-400', 'border-green-600', 'bg-slate-900/60', 'bg-slate-700/20', 'bg-slate-700/30',
         'bg-gradient-to-r', 'from-yellow-400', 'to-amber-500', 'border-yellow-600', 'shadow-xl',
-        'bg-orange-500', 'border-orange-500', 'bg-slate-700', 'border-slate-600', 'text-slate-300', 'text-slate-400', 'text-slate-500',
+        'bg-orange-500', 'bg-cyan-500', 'border-cyan-500', 'hover:bg-cyan-600', 'bg-slate-700', 'border-slate-600', 'text-slate-300', 'text-slate-400', 'text-slate-500',
         'bg-green-900/50', 'text-green-400', 'bg-yellow-900/50', 'text-yellow-400', 'bg-orange-900/50', 'text-orange-400',
         'bg-red-950/30', 'border-red-700', 'bg-green-950/30', 'border-green-700', 'text-cyan-400',
         'bg-amber-900/50', 'border-amber-600', 'text-amber-300', 'bg-slate-600', 'border-slate-500',
@@ -1035,7 +1035,7 @@ try {
             sponsorTrack.style.transform = `translateX(-${index * 100}%)`;
         }
         sponsorDots.forEach((dot, i) => {
-            dot.classList.toggle('bg-orange-500', i === index);
+            dot.classList.toggle('bg-cyan-500', i === index);
             dot.classList.toggle('bg-slate-600', i !== index);
         });
     }
@@ -1068,7 +1068,7 @@ try {
             escuelasTrack.style.transform = `translateX(-${index * 100}%)`;
         }
         escuelasDots.forEach((dot, i) => {
-            dot.classList.toggle('bg-orange-500', i === index);
+            dot.classList.toggle('bg-cyan-500', i === index);
             dot.classList.toggle('bg-slate-600', i !== index);
         });
     }

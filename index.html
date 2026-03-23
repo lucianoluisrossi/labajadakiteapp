@@ -28,8 +28,8 @@
         /* Bottom Nav */
         #bottom-nav { padding-bottom: env(safe-area-inset-bottom); }
         .nav-btn { color: #475569; transition: color 0.15s; }
-        .nav-btn.nav-active { color: #f97316; }
-        .nav-btn.nav-active .nav-label { color: #f97316; }
+        .nav-btn.nav-active { color: #06b6d4; }
+        .nav-btn.nav-active .nav-label { color: #06b6d4; }
         .nav-btn svg { transition: transform 0.15s; }
         .nav-btn.nav-active svg { transform: scale(1.1); }
 
@@ -400,7 +400,7 @@
                 <form id="kiter-board-form" class="mb-6 bg-slate-900/60 p-4 rounded-lg border border-slate-700 shadow-inner hidden">
                     <div class="flex gap-2">
                         <input type="text" id="message-text" placeholder="Escribe un mensaje..." maxlength="140" class="flex-grow p-2 rounded border border-slate-700 text-sm focus:outline-none focus:border-cyan-500 bg-slate-700 text-slate-100 placeholder-slate-500" required>
-                        <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded font-bold text-sm hover:bg-orange-600 transition-colors shadow-md">Enviar</button>
+                        <button type="submit" class="bg-cyan-500 text-white px-4 py-2 rounded font-bold text-sm hover:bg-cyan-600 transition-colors shadow-md">Enviar</button>
                     </div>
                 </form>
                 <!-- Mensaje si no está logueado -->
@@ -424,7 +424,7 @@
                 <div class="p-6 border-t border-slate-700">
                     <!-- TABS: Fotos / Videos -->
                     <div class="flex gap-2 mb-4 border-b border-slate-700">
-                        <button id="tab-fotos" class="px-4 py-2 font-bold text-sm transition-colors border-b-2 border-orange-500 text-cyan-400">
+                        <button id="tab-fotos" class="px-4 py-2 font-bold text-sm transition-colors border-b-2 border-cyan-500 text-cyan-400">
                             📸 Fotos
                         </button>
                         <button id="tab-videos" class="px-4 py-2 font-bold text-sm transition-colors border-b-2 border-transparent text-slate-400 hover:text-slate-300">
@@ -436,7 +436,7 @@
                     <div id="content-fotos" class="tab-content">
                         <!-- Botón subir foto (solo visible si está logueado) -->
                         <div id="gallery-upload-container" class="flex justify-end mb-4 hidden">
-                            <label class="cursor-pointer bg-orange-500 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-orange-600 transition-colors flex items-center gap-2 shadow-md">
+                            <label class="cursor-pointer bg-cyan-500 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-cyan-600 transition-colors flex items-center gap-2 shadow-md">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -468,7 +468,7 @@
                                 <a href="https://drive.google.com/drive/folders/1fZ1cawEONEA90pW_1uil-70LzzcpdpBD?usp=sharing" 
                                    target="_blank" 
                                    rel="noopener noreferrer"
-                                   class="bg-orange-500 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-orange-600 transition-colors flex items-center gap-2 shadow-md w-full sm:w-auto justify-center">
+                                   class="bg-cyan-500 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-cyan-600 transition-colors flex items-center gap-2 shadow-md w-full sm:w-auto justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -653,7 +653,7 @@
                                 <button onclick="closeEditClassified()" class="flex-1 bg-slate-700 text-slate-300 py-2 rounded-lg font-bold hover:bg-gray-300 transition-colors">
                                     Cancelar
                                 </button>
-                                <button onclick="saveEditClassified()" class="flex-1 bg-orange-500 text-white py-2 rounded-lg font-bold hover:bg-orange-600 transition-colors">
+                                <button onclick="saveEditClassified()" class="flex-1 bg-cyan-500 text-white py-2 rounded-lg font-bold hover:bg-cyan-600 transition-colors">
                                     Guardar
                                 </button>
                             </div>
@@ -718,7 +718,7 @@
         </nav>
 
         <div id="new-message-toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 hidden cursor-pointer transition-all duration-300 w-max">
-            <div class="bg-orange-500 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 border border-blue-400 text-sm font-bold">
+            <div class="bg-cyan-500 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 border border-cyan-400 text-sm font-bold">
                 💬 Nuevo Mensaje
             </div>
         </div>
@@ -762,7 +762,7 @@
 
             <!-- Filtros de categoría -->
             <div class="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-hide px-0.5">
-                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-orange-500 text-white border border-orange-500 transition-all active:scale-95" data-category="all">Todo</button>
+                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-cyan-500 text-white border border-cyan-500 transition-all active:scale-95" data-category="all">Todo</button>
                 <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-500 transition-all active:scale-95" data-category="remeras">Remeras</button>
                 <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-500 transition-all active:scale-95" data-category="buzos">Buzos</button>
             </div>
