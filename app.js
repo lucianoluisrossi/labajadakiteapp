@@ -463,7 +463,7 @@ try {
                     if (now - imgTime < oneDay) {
                         hasImages = true;
                         const imgContainer = document.createElement('div');
-                        imgContainer.className = "relative aspect-square cursor-pointer overflow-hidden rounded-lg shadow-md bg-gray-100 hover:opacity-90 transition-opacity";
+                        imgContainer.className = "relative aspect-square cursor-pointer overflow-hidden rounded-lg shadow-md bg-slate-800 hover:opacity-90 transition-opacity";
                         imgContainer.innerHTML = `<img src="${data.url}" class="w-full h-full object-cover" loading="lazy" alt="Foto"><div class="absolute bottom-0 right-0 bg-black bg-opacity-50 text-white text-[10px] px-2 py-1 rounded-tl-lg">${timeAgo(imgDate)}</div>`;
                         imgContainer.addEventListener('click', () => {
                             modalImg.src = data.url;
@@ -473,7 +473,7 @@ try {
                     }
                 }
             });
-            if (!hasImages) galleryGrid.innerHTML = '<div class="col-span-full text-center text-gray-400 py-4 text-sm">Sin fotos hoy.</div>';
+            if (!hasImages) galleryGrid.innerHTML = '<div class="col-span-full text-center text-slate-500 py-4 text-sm">Sin fotos hoy.</div>';
             
             // Notificación de nueva foto
             if (hasImages && newestPhotoTime > lastPhotoReadTime && lastPhotoReadTime > 0) {
@@ -610,13 +610,13 @@ try {
                     if (now - msgTime < oneDay) {
                         hasMessages = true;
                         const div = document.createElement('div');
-                        div.className = "bg-gray-50 p-3 rounded border border-gray-100 text-sm mb-2";
-                        div.innerHTML = `<div class="flex justify-between items-baseline mb-1"><span class="font-bold text-blue-900">${data.author}</span><span class="text-xs text-gray-400">${timeAgo(msgDate)}</span></div><p class="text-gray-700 break-words">${data.text}</p>`;
+                        div.className = "bg-slate-900/60 p-3 rounded border border-gray-100 text-sm mb-2";
+                        div.innerHTML = `<div class="flex justify-between items-baseline mb-1"><span class="font-bold text-cyan-400">${data.author}</span><span class="text-xs text-slate-500">${timeAgo(msgDate)}</span></div><p class="text-slate-300 break-words">${data.text}</p>`;
                         messagesContainer.appendChild(div);
                     }
                 }
             });
-            if (!hasMessages) messagesContainer.innerHTML = '<p class="text-center text-gray-400 text-xs py-2">No hay mensajes recientes.</p>';
+            if (!hasMessages) messagesContainer.innerHTML = '<p class="text-center text-slate-500 text-xs py-2">No hay mensajes recientes.</p>';
             else {
                 if (newestMessageTime > lastReadTime && lastReadTime > 0) {
                     if (viewCommunity.classList.contains('hidden')) {
@@ -745,9 +745,9 @@ try {
     }
 
     function calculateGustFactor(speed, gust) {
-        if (speed === null || gust === null || speed <= 0) return { factor: null, text: 'N/A', color: ['bg-gray-100', 'border-gray-300'] };
+        if (speed === null || gust === null || speed <= 0) return { factor: null, text: 'N/A', color: ['bg-slate-800', 'border-slate-700'] };
         const MIN_KITE_WIND = 12; 
-        if (speed < MIN_KITE_WIND) return { factor: null, text: 'N/A', color: ['bg-gray-100', 'border-gray-300'] };
+        if (speed < MIN_KITE_WIND) return { factor: null, text: 'N/A', color: ['bg-slate-800', 'border-slate-700'] };
         if (gust <= speed) return { factor: 0, text: 'Ultra Estable', color: ['bg-green-400', 'border-green-600'] };
         const factor = (1 - (speed / gust)) * 100; 
         if (factor <= 15) return { factor, text: 'Estable', color: ['bg-green-300', 'border-green-500'] }; 
@@ -772,7 +772,7 @@ try {
 
         // Offshore siempre peligroso
         if (degrees !== null && (degrees > 292.5 || degrees <= 67.5)) return ["VIENTO OFFSHORE!", ['bg-red-400', 'border-red-600']];
-        if (speed === null) return ["Calculando...", ['bg-gray-100', 'border-gray-300']];
+        if (speed === null) return ["Calculando...", ['bg-slate-800', 'border-slate-700']];
         if (speed <= 14) return ["FLOJO...", ['bg-blue-200', 'border-blue-400']];
         else if (speed <= 16) return ["ACEPTABLE", ['bg-cyan-300', 'border-cyan-500']];
         else if (speed <= 19) return ["¡IDEAL!", ['bg-green-300', 'border-green-500']];
@@ -783,11 +783,16 @@ try {
     }
 
     const allColorClasses = [
-        'bg-gray-100', 'border-gray-300', 'bg-blue-200', 'border-blue-400', 'bg-green-300', 'border-green-500',
-        'bg-yellow-300', 'border-yellow-500', 'bg-orange-300', 'border-orange-500', 'bg-red-400', 'border-red-600','bg-cyan-300', 'border-cyan-500',
-        'bg-purple-400', 'border-purple-600', 'text-red-600', 'text-green-600', 'text-yellow-600', 'text-gray-900',
-        'bg-green-400', 'border-green-600', 'bg-gray-50', 'bg-white/30', 'bg-cyan-300', 'border-cyan-500',
-        'bg-gradient-to-r', 'from-yellow-400', 'to-amber-500', 'border-yellow-600', 'shadow-xl'
+        'bg-slate-800', 'border-slate-700', 'bg-blue-200', 'border-blue-400', 'bg-green-300', 'border-green-500',
+        'bg-yellow-300', 'border-yellow-500', 'bg-orange-300', 'border-orange-500', 'bg-red-400', 'border-red-600', 'bg-cyan-300', 'border-cyan-500',
+        'bg-purple-400', 'border-purple-600', 'text-red-600', 'text-green-600', 'text-yellow-600', 'text-slate-100',
+        'bg-green-400', 'border-green-600', 'bg-slate-900/60', 'bg-slate-700/20', 'bg-slate-700/30',
+        'bg-gradient-to-r', 'from-yellow-400', 'to-amber-500', 'border-yellow-600', 'shadow-xl',
+        'bg-orange-500', 'border-orange-500', 'bg-slate-700', 'border-slate-600', 'text-slate-300', 'text-slate-400', 'text-slate-500',
+        'bg-green-900/50', 'text-green-400', 'bg-yellow-900/50', 'text-yellow-400', 'bg-orange-900/50', 'text-orange-400',
+        'bg-red-950/30', 'border-red-700', 'bg-green-950/30', 'border-green-700', 'text-cyan-400',
+        'bg-amber-900/50', 'border-amber-600', 'text-amber-300', 'bg-slate-600', 'border-slate-500',
+        'from-red-950/80', 'to-red-900/50', 'border-red-800', 'border-red-900', 'text-slate-200'
     ];
 
     function updateCardColors(element, newClasses) {
@@ -817,7 +822,7 @@ try {
             else return ['bg-purple-400', 'border-purple-600'];                      // Demasiado Fuerte
         }
         
-        return ['bg-gray-100', 'border-gray-300']; 
+        return ['bg-slate-800', 'border-slate-700']; 
     }
         
 
@@ -831,7 +836,7 @@ try {
             else if (speedInKnots <= 33) return ['bg-red-400', 'border-red-600']; 
             else return ['bg-purple-400', 'border-purple-600']; 
         }
-        return ['bg-gray-100', 'border-gray-300']; 
+        return ['bg-slate-800', 'border-slate-700']; 
     }
     
     function getMockWeatherData() {
@@ -956,13 +961,13 @@ try {
                     const isCross = (windDirDegrees > 67.5 && windDirDegrees <= 112.5) || (windDirDegrees > 247.5 && windDirDegrees <= 292.5);
                     const isOnshore = !isOffshore && !isCross;
 
-                    windArrowEl.classList.remove('text-red-600', 'text-green-600', 'text-yellow-600', 'text-gray-900');
+                    windArrowEl.classList.remove('text-red-600', 'text-green-600', 'text-yellow-600', 'text-slate-100');
                     if (isOffshore) windArrowEl.classList.add('text-red-600');
                     else if (isCross) windArrowEl.classList.add('text-yellow-600');
                     else windArrowEl.classList.add('text-green-600');
                 }
 
-                updateCardColors(windHighlightCard, ['bg-gray-100', 'border-gray-300']); 
+                updateCardColors(windHighlightCard, ['bg-slate-800', 'border-slate-700']); 
                 updateCardColors(unifiedWindDataCardEl, getUnifiedWindColorClasses(windSpeedValue, windDirDegrees));
                 if (gustInfoContainer) updateCardColors(gustInfoContainer, getUnifiedWindColorClasses(windGustValue, windDirDegrees));
 
@@ -1030,8 +1035,8 @@ try {
             sponsorTrack.style.transform = `translateX(-${index * 100}%)`;
         }
         sponsorDots.forEach((dot, i) => {
-            dot.classList.toggle('bg-gray-400', i === index);
-            dot.classList.toggle('bg-gray-300', i !== index);
+            dot.classList.toggle('bg-orange-500', i === index);
+            dot.classList.toggle('bg-slate-600', i !== index);
         });
     }
 
@@ -1063,8 +1068,8 @@ try {
             escuelasTrack.style.transform = `translateX(-${index * 100}%)`;
         }
         escuelasDots.forEach((dot, i) => {
-            dot.classList.toggle('bg-gray-400', i === index);
-            dot.classList.toggle('bg-gray-300', i !== index);
+            dot.classList.toggle('bg-orange-500', i === index);
+            dot.classList.toggle('bg-slate-600', i !== index);
         });
     }
 
@@ -1276,9 +1281,9 @@ try {
             currentFilter = btn.dataset.filter;
             filterBtns.forEach(b => {
                 b.classList.remove('bg-orange-500', 'text-white');
-                b.classList.add('bg-gray-200', 'text-gray-700');
+                b.classList.add('bg-slate-700', 'text-slate-300');
             });
-            btn.classList.remove('bg-gray-200', 'text-gray-700');
+            btn.classList.remove('bg-slate-700', 'text-slate-300');
             btn.classList.add('bg-orange-500', 'text-white');
             renderClassifieds();
         });
@@ -1293,7 +1298,7 @@ try {
             : allClassifieds.filter(c => c.category === currentFilter);
 
         if (filtered.length === 0) {
-            classifiedsList.innerHTML = '<p class="text-center text-gray-400 text-sm py-4">No hay anuncios en esta categoria</p>';
+            classifiedsList.innerHTML = '<p class="text-center text-slate-500 text-sm py-4">No hay anuncios en esta categoria</p>';
             return;
         }
 
@@ -1308,9 +1313,9 @@ try {
             const isLostFound = isPerdido || isEncontrado;
             
             const statusColors = {
-                'disponible': 'bg-green-100 text-green-700',
-                'reservado': 'bg-yellow-100 text-yellow-700',
-                'vendido': 'bg-gray-300 text-gray-600'
+                'disponible': 'bg-green-900/50 text-green-400',
+                'reservado': 'bg-yellow-900/50 text-yellow-400',
+                'vendido': 'bg-slate-700 text-slate-400'
             };
             const statusLabels = {
                 'disponible': isLostFound ? 'Activo' : 'Disponible',
@@ -1319,13 +1324,13 @@ try {
             };
             
             const categoryColors = {
-                'perdido': 'bg-red-500 text-white',
+                'perdido': 'bg-red-600 text-white',
                 'encontrado': 'bg-green-600 text-white',
-                'kites': 'bg-orange-100 text-orange-700',
-                'tablas': 'bg-orange-100 text-orange-700',
-                'barras': 'bg-orange-100 text-orange-700',
-                'arneses': 'bg-orange-100 text-orange-700',
-                'otros': 'bg-orange-100 text-orange-700'
+                'kites': 'bg-orange-900/50 text-orange-400',
+                'tablas': 'bg-orange-900/50 text-orange-400',
+                'barras': 'bg-orange-900/50 text-orange-400',
+                'arneses': 'bg-orange-900/50 text-orange-400',
+                'otros': 'bg-orange-900/50 text-orange-400'
             };
             const categoryLabels = {
                 'perdido': 'PERDIDO',
@@ -1343,8 +1348,8 @@ try {
                 : encodeURIComponent('Hola! Vi tu anuncio de "' + c.title + '" en La Bajada App');
             
             return `
-            <div class="bg-gray-50 rounded-lg p-3 border ${isPerdido ? 'border-red-300 bg-red-50' : isEncontrado ? 'border-green-300 bg-green-50' : 'border-gray-200'} flex gap-3 ${isVendido ? 'opacity-60' : ''}" data-category="${c.category}" data-id="${c.id}">
-                ${c.photoURL ? `<img src="${c.photoURL}" alt="${c.title}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0 cursor-pointer ${isVendido ? 'grayscale' : ''}" onclick="document.getElementById('modal-img').src='${c.photoURL}';document.getElementById('image-modal').classList.remove('hidden');">` : '<div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center text-gray-300 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>'}
+            <div class="bg-slate-800 rounded-lg p-3 border ${isPerdido ? 'border-red-700 bg-red-950/30' : isEncontrado ? 'border-green-700 bg-green-950/30' : 'border-slate-700'} flex gap-3 ${isVendido ? 'opacity-60' : ''}" data-category="${c.category}" data-id="${c.id}">
+                ${c.photoURL ? `<img src="${c.photoURL}" alt="${c.title}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0 cursor-pointer ${isVendido ? 'grayscale' : ''}" onclick="document.getElementById('modal-img').src='${c.photoURL}';document.getElementById('image-modal').classList.remove('hidden');">` : '<div class="w-20 h-20 bg-slate-700 rounded-lg flex items-center justify-center text-slate-500 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>'}
                 <div class="flex-grow min-w-0">
                     <div class="flex items-start justify-between gap-2">
                         <h4 class="font-bold text-gray-800 text-sm ${isVendido ? 'line-through' : ''}">${c.title}</h4>
@@ -1355,10 +1360,10 @@ try {
                     </div>
                     ${isLostFound 
                         ? `<p class="text-gray-600 text-sm mt-1 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>${c.location || 'Sin ubicacion'}</p>`
-                        : `<p class="text-green-600 font-bold text-lg ${isVendido ? 'line-through text-gray-400' : ''}">${c.currency === 'USD' ? 'U$D' : '$'} ${c.price?.toLocaleString('es-AR') || '0'}</p>`
+                        : `<p class="text-green-600 font-bold text-lg ${isVendido ? 'line-through text-slate-500' : ''}">${c.currency === 'USD' ? 'U$D' : '$'} ${c.price?.toLocaleString('es-AR') || '0'}</p>`
                     }
                     ${c.description ? `<p class="text-gray-600 text-xs mt-1 line-clamp-2">${c.description}</p>` : ''}
-                    <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                    <div class="flex items-center gap-2 mt-1 text-xs text-slate-500">
                         <span>${c.userName || 'Usuario'}</span>
                         <span>-</span>
                         <span>${timeAgo(createdDate)}</span>
@@ -1367,7 +1372,7 @@ try {
                         ${!isVendido ? `<a href="https://wa.me/${c.whatsapp}?text=${whatsappMsg}" target="_blank" class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold hover:bg-green-600 transition-colors flex items-center gap-1">
                             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                             WhatsApp
-                        </a>` : '<span class="text-xs text-gray-400 italic">' + (isLostFound ? 'Objeto recuperado' : 'Anuncio finalizado') + '</span>'}
+                        </a>` : '<span class="text-xs text-slate-500 italic">' + (isLostFound ? 'Objeto recuperado' : 'Anuncio finalizado') + '</span>'}
                         ${isOwner ? `<div class="flex items-center gap-2">
                             <button onclick="openEditClassified('${c.id}')" class="text-blue-500 hover:text-blue-700 text-xs font-medium flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>

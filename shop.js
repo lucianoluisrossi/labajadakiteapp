@@ -94,22 +94,22 @@ function buildProductCard(product, index) {
         ? `<span class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[9px] font-black px-2 py-0.5 rounded-full tracking-wider">${product.badge}</span>`
         : '';
     const sizesHtml = product.sizes
-        .map(s => `<span class="text-[9px] font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">${s}</span>`)
+        .map(s => `<span class="text-[9px] font-bold bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded border border-slate-600">${s}</span>`)
         .join('');
 
     return `
-    <div class="shop-product-card bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100 flex flex-col">
+    <div class="shop-product-card bg-slate-800 rounded-2xl shadow-md overflow-hidden border border-slate-700 flex flex-col">
         <div class="relative h-32 flex items-center justify-center flex-shrink-0" style="background:${bg};">
             <span class="text-5xl">${icon}</span>
             ${badgeHtml}
         </div>
         <div class="p-3 flex flex-col flex-1">
-            <p class="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-0.5">${product.category}</p>
-            <h3 class="text-sm font-black text-gray-900 leading-tight mb-1">${product.name}</h3>
-            <p class="text-[11px] text-gray-500 leading-relaxed flex-1 mb-2">${product.description}</p>
+            <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-0.5">${product.category}</p>
+            <h3 class="text-sm font-black text-slate-100 leading-tight mb-1">${product.name}</h3>
+            <p class="text-[11px] text-slate-400 leading-relaxed flex-1 mb-2">${product.description}</p>
             <div class="flex flex-wrap gap-1 mb-3">${sizesHtml}</div>
-            <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
-                <span class="text-base font-black text-gray-900">${formatPrice(product.price, product.currency)}</span>
+            <div class="flex items-center justify-between mt-auto pt-2 border-t border-slate-700">
+                <span class="text-base font-black text-slate-100">${formatPrice(product.price, product.currency)}</span>
                 <a href="${waLink}" target="_blank" rel="noopener"
                    class="inline-flex items-center gap-1 bg-green-500 hover:bg-green-600 active:scale-95 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-sm">
                     <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@ function renderProducts(filter) {
     }
 
     if (list.length === 0) {
-        grid.innerHTML = `<p class="col-span-2 text-center text-gray-400 text-sm py-12">Sin productos en esta categoría</p>`;
+        grid.innerHTML = `<p class="col-span-2 text-center text-slate-500 text-sm py-12">Sin productos en esta categoría</p>`;
         return;
     }
 
@@ -153,11 +153,11 @@ function initShop() {
             currentFilter = btn.dataset.category;
 
             filterBtns.forEach(b => {
-                b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
-                b.classList.add('bg-white', 'text-gray-600', 'border-gray-200');
+                b.classList.remove('bg-orange-500', 'text-white', 'border-orange-500');
+                b.classList.add('bg-slate-700', 'text-slate-300', 'border-slate-600');
             });
-            btn.classList.remove('bg-white', 'text-gray-600', 'border-gray-200');
-            btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+            btn.classList.remove('bg-slate-700', 'text-slate-300', 'border-slate-600');
+            btn.classList.add('bg-orange-500', 'text-white', 'border-orange-500');
 
             renderProducts(currentFilter);
         });
