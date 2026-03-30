@@ -10,7 +10,7 @@
     <title>La Bajada</title>
     
     <!-- Configuración PWA y Manifiesto -->
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#1f2937">
     <link rel="manifest" href="manifest.json">
 
     <!-- Tailwind CSS -->
@@ -20,48 +20,18 @@
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+        
         /* Estilo para quitar el triángulo por defecto del details */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
-
-        /* Bottom Nav */
-        #bottom-nav { padding-bottom: env(safe-area-inset-bottom); }
-        .nav-btn { color: #475569; transition: color 0.15s; }
-        .nav-btn.nav-active { color: #06b6d4; }
-        .nav-btn.nav-active .nav-label { color: #06b6d4; }
-        .nav-btn svg { transition: transform 0.15s; }
-        .nav-btn.nav-active svg { transform: scale(1.1); }
-
-        /* Dark theme — form inputs */
-        input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),
-        select, textarea {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-        input::placeholder, textarea::placeholder { color: #64748b; }
-        select option { background-color: #1e293b; }
-
-        /* Shop */
-        .shop-product-card { transition: transform 0.15s, box-shadow 0.15s; }
-        .shop-product-card:active { transform: scale(0.97); }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-[#0f172a] text-slate-100 min-h-screen p-4 md:p-8 relative overflow-x-hidden">
+<body class="bg-white text-gray-900 min-h-screen p-4 md:p-8 relative overflow-x-hidden">
 
     <div class="max-w-6xl mx-auto">
         
-        <!-- ⚠️ TEST ENV BANNER — para quitar: borrar este bloque completo -->
-        <div class="flex items-center justify-center gap-2 bg-yellow-400 text-yellow-900 text-xs font-black px-4 py-1.5 rounded-full shadow mb-4 mx-auto w-fit tracking-wide uppercase">
-            <span>⚠️</span> Entorno de pruebas — no es la app real <span>⚠️</span>
-        </div>
-        <!-- FIN TEST ENV BANNER -->
-
-        <!-- ENCABEZADO PRINCIPAL — oculto (logo movido al bottom nav) -->
-        <div id="main-header" class="hidden">
+        <!-- ENCABEZADO PRINCIPAL -->
+        <div class="relative flex justify-center items-start mb-6 mt-4 md:mt-8">
 
             <!-- LOGOS CENTRALES -->
             <div class="flex flex-col items-center z-10">
@@ -69,17 +39,17 @@
                    target="blank" 
                    class="flex items-center justify-center gap-2 md:gap-4 transition-transform hover:scale-105">
                     
-                    <!-- Logo Palmera -->
-                    <img id="logo-palmera" src="logo_palmera.png" alt="Logo Palmera Kitesurf" class="h-32 md:h-40 w-auto transition-all duration-300" onerror="this.style.display='none'">
-
-                    <!-- Logo La Bajada -->
-                    <img id="logo-principal" src="logo2.png" alt="Logo La Bajada Principal" class="h-28 md:h-36 w-auto transition-all duration-300" onerror="this.style.display='none'">
+                    <!-- Logo Palmera (+30% más grande) -->
+                    <img src="logo_palmera.png" alt="Logo Palmera Kitesurf" class="h-32 md:h-40 w-auto" onerror="this.style.display='none'">
+                    
+                    <!-- Logo La Bajada (+30% más grande) -->
+                    <img src="logo2.png" alt="Logo La Bajada Principal" class="h-28 md:h-36 w-auto" onerror="this.style.display='none'">
                 </a>
             </div>
         </div>
 
         <!-- BANNER DE CONEXIÓN DESACTUALIZADA -->
-        <div id="connection-warning" class="hidden bg-amber-900/50 border border-amber-600 text-amber-300 px-4 py-3 rounded-lg mb-4 flex items-center gap-3 shadow-md animate-pulse">
+        <div id="connection-warning" class="hidden bg-amber-100 border border-amber-400 text-amber-800 px-4 py-3 rounded-lg mb-4 flex items-center gap-3 shadow-md animate-pulse">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
@@ -96,7 +66,7 @@
         <div id="view-dashboard" class="fade-in">
             
             <!-- CONTENEDOR PRINCIPAL DE VIENTO Y VIDEO (Unificado) -->
-            <div id="wind-highlight-card" class="mt-6 lg:mt-8 p-4 md:p-6 rounded-xl shadow-2xl transition-all duration-300 bg-slate-800 border border-slate-700 relative">
+            <div id="wind-highlight-card" class="mt-6 lg:mt-8 p-4 md:p-6 rounded-xl shadow-2xl transition-all duration-300 bg-gray-100 border border-gray-300 relative">
                 
                 <!-- Badge de Notificaciones (flotante) -->
                 <button id="notification-badge" 
@@ -114,70 +84,70 @@
                 </div>
 
                 <!-- 2. Veredicto -->
-                <div id="verdict-card" class="mb-3 py-2 px-3 rounded-lg border border-slate-700 transition-colors duration-300">
-                    <p class="text-gray-900 text-[10px] font-medium text-center uppercase">Status del Spot</p>
+                <div id="verdict-card" class="mb-3 py-2 px-3 rounded-lg border border-gray-300 transition-colors duration-300">
+                    <p class="text-gray-600 text-[10px] font-medium text-center uppercase">Status del Spot</p>
                     <div id="verdict-data-loader" class="skeleton-loader skeleton-text-xl mx-auto" style="width: 70%;"></div>
-                    <p id="verdict-data" class="data-content text-lg font-extrabold text-slate-100 text-center">Calculando...</p>
+                    <p id="verdict-data" class="data-content text-lg font-extrabold text-gray-900 text-center">Calculando...</p>
                 </div>
                 
                 <!-- 3. TARJETA DE VIENTO UNIFICADA (con Estabilidad) -->
-                <div id="unified-wind-data-card" class="p-4 rounded-lg border border-slate-700 transition-colors duration-300 bg-slate-900/60">
+                <div id="unified-wind-data-card" class="p-4 rounded-lg border border-gray-300 transition-colors duration-300 bg-gray-50">
                     <div class="flex flex-row items-center justify-between">
                         <!-- Columna Dirección (35%) -->
                         <div class="flex flex-col items-center justify-center w-[35%] border-r border-gray-400/30 pr-2">
-                            <p class="text-slate-400 text-[10px] uppercase font-bold mb-1">Dirección</p>
-                            <button id="wind-view-toggle" class="px-2 py-0.5 mb-1 text-[9px] font-bold uppercase tracking-wider rounded-full bg-slate-700 text-slate-400 hover:bg-gray-300 transition-all active:scale-95 select-none" title="Cambiar vista de la flecha">📷 Vista cámara</button>
+                            <p class="text-gray-600 text-[10px] uppercase font-bold mb-1">Dirección</p>
+                            <button id="wind-view-toggle" class="px-2 py-0.5 mb-1 text-[9px] font-bold uppercase tracking-wider rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition-all active:scale-95 select-none" title="Cambiar vista de la flecha">📷 Vista cámara</button>
                             <div class="flex flex-col items-center justify-center">
                                 <!-- FLECHA: Borde ajustado a 0.5px -->
-                                <svg id="wind-arrow" class="w-20 h-20 text-slate-100 transition-transform duration-500 drop-shadow-md" style="stroke: #06b6d4; stroke-width: 0.5px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L6 8h3v12h6V8h3l-6-6z"/></svg>
+                                <svg id="wind-arrow" class="w-20 h-20 text-gray-900 transition-transform duration-500 drop-shadow-md" style="stroke: black; stroke-width: 0.5px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L6 8h3v12h6V8h3l-6-6z"/></svg>
                                 
                                 <div id="highlight-wind-dir-data-loader" class="skeleton-loader skeleton-text-xl w-12 mt-1"></div>
-                                <p class="text-4xl font-black text-slate-100 data-content mt-1 text-shadow" id="highlight-wind-dir-data">N/A</p>
+                                <p class="text-4xl font-black text-gray-900 data-content mt-1 text-shadow" id="highlight-wind-dir-data">N/A</p>
                             </div>
                         </div>
                         
                         <!-- Columna Velocidad (65%) -->
                         <div class="flex flex-col items-center justify-center w-[65%] pl-2">
                             <div class="flex flex-col items-center w-full">
-                                <p class="text-slate-400 text-[10px] uppercase font-bold">Velocidad Prom.</p>
+                                <p class="text-gray-600 text-[10px] uppercase font-bold">Velocidad Prom.</p>
                                 <div id="highlight-wind-speed-data-loader" class="skeleton-loader skeleton-text-4xl w-24 mt-1"></div>
                                 <div class="flex items-center gap-2">
-                                    <p class="text-5xl font-black text-slate-100 data-content leading-none tracking-tight" id="highlight-wind-speed-data">N/A</p>
+                                    <p class="text-5xl font-black text-gray-900 data-content leading-none tracking-tight" id="highlight-wind-speed-data">N/A</p>
                                 </div>
                                 
                                 <!-- Barra de intensidad -->
                                 <div class="w-full max-w-[180px] mt-2 data-content" id="wind-intensity-container">
-                                    <div class="h-2 bg-slate-700 rounded-full overflow-hidden shadow-inner">
+                                    <div class="h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                                         <div id="wind-intensity-bar" 
                                              class="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all duration-500 rounded-full" 
                                              style="width: 0%">
                                         </div>
                                     </div>
-                                    <div class="flex justify-between text-[8px] text-slate-400 mt-1 px-1">
+                                    <div class="flex justify-between text-[8px] text-gray-500 mt-1 px-1">
                                         <span>0kts</span>
                                         <span id="wind-percentage" class="font-bold">--%</span>
                                         <span>30kts</span>
                                     </div>
                                 </div>
                             </div>
-                            <div id="gust-info-container" class="mt-3 flex items-center justify-center gap-2 opacity-90 bg-slate-700/30 px-3 py-1 rounded-full shadow-sm transition-colors duration-300 border border-slate-600/50">
-                                <span id="gust-label" class="text-xs text-slate-100 font-bold uppercase">Racha:</span>
+                            <div id="gust-info-container" class="mt-3 flex items-center justify-center gap-2 opacity-90 bg-white/30 px-3 py-1 rounded-full shadow-sm transition-colors duration-300 border border-gray-200/50">
+                                <span id="gust-label" class="text-xs text-gray-800 font-bold uppercase">Racha:</span>
                                 <div id="highlight-gust-data-loader" class="skeleton-loader skeleton-text-sm w-8 inline-block"></div>
-                                <span class="text-lg font-black text-slate-100 data-content" id="highlight-gust-data">N/A</span>
+                                <span class="text-lg font-black text-gray-900 data-content" id="highlight-gust-data">N/A</span>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Estabilidad (dentro de la tarjeta de viento) -->
-                    <div id="stability-card" class="mt-3 flex items-center justify-center gap-3 py-2 px-3 rounded-md border border-slate-700 transition-colors duration-300 bg-slate-700/20">
-                        <span class="text-slate-400 text-xs font-bold uppercase">Estabilidad:</span>
+                    <div id="stability-card" class="mt-3 flex items-center justify-center gap-3 py-2 px-3 rounded-md border border-gray-200 transition-colors duration-300 bg-white/50">
+                        <span class="text-gray-600 text-xs font-bold uppercase">Estabilidad:</span>
                         <div id="stability-data-loader" class="skeleton-loader skeleton-text-sm w-16 inline-block"></div>
-                        <span class="text-lg font-extrabold text-slate-100 data-content" id="stability-data">N/A</span>
+                        <span class="text-lg font-extrabold text-gray-900 data-content" id="stability-data">N/A</span>
                     </div>
                     
                     <!-- Timestamp última actualización -->
                     <div class="mt-2 text-center">
-                        <p class="text-[9px] text-slate-400 data-content">
+                        <p class="text-[9px] text-gray-500 data-content">
                             🕐 Actualizado hace <span id="time-since-update" class="font-semibold">--</span>
                         </p>
                     </div>
@@ -187,31 +157,31 @@
             </div>
 
             <!-- WINDGURU -->
-            <details class="group bg-slate-800 rounded-xl shadow-2xl border border-slate-700 overflow-hidden mt-6 lg:mt-8 transition-all duration-300">
-                <summary class="flex justify-between items-center p-6 cursor-pointer hover:bg-slate-700 transition-colors">
-                    <h3 class="text-xl font-extrabold text-slate-100 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <details class="group bg-gray-100 rounded-xl shadow-2xl border border-gray-300 overflow-hidden mt-6 lg:mt-8 transition-all duration-300">
+                <summary class="flex justify-between items-center p-6 cursor-pointer hover:bg-gray-200 transition-colors">
+                    <h3 class="text-xl font-extrabold text-gray-900 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                         </svg>
                         Pronóstico Windguru
                     </h3>
-                    <span class="transform group-open:rotate-180 transition-transform duration-300 text-slate-400">
+                    <span class="transform group-open:rotate-180 transition-transform duration-300 text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </span>
                 </summary>
-                <div class="p-4 bg-slate-900/60 overflow-x-auto border-t border-slate-700 animate-fadeIn">
-                    <p class="text-xs text-slate-400 mb-2 text-center">Desliza para ver más días -></p>
+                <div class="p-4 bg-gray-50 overflow-x-auto border-t border-gray-300 animate-fadeIn">
+                    <p class="text-xs text-gray-500 mb-2 text-center">Desliza para ver más días -></p>
                     <div id="windguru-container">
-                        <p class="text-center text-slate-500 py-4">Cargando pronóstico...</p>
+                        <p class="text-center text-gray-400 py-4">Cargando pronóstico...</p>
                     </div>
                 </div>
             </details>
 
             <!-- SPONSOR CAROUSEL -->
             <div class="text-center mt-6 lg:mt-8">
-                <p class="text-[11px] text-slate-400 uppercase tracking-wider mb-2">Sponsors oficiales del Spot</p>
+                <p class="text-[11px] text-gray-500 uppercase tracking-wider mb-2">Sponsors oficiales del Spot</p>
                 <div id="sponsor-carousel" class="relative overflow-hidden">
                     <div id="sponsor-track" class="flex transition-transform duration-500 ease-in-out">
                         <!-- Sponsor 1: Maccarone -->
@@ -242,20 +212,20 @@
             </div>
 
             <!-- DATOS EN VIVO (COLUMNA) -->
-            <div class="bg-slate-800 p-6 rounded-xl shadow-2xl flex flex-col mt-6 lg:mt-8 border border-slate-700">
+            <div class="bg-gray-100 p-6 rounded-xl shadow-2xl flex flex-col mt-6 lg:mt-8 border border-gray-300">
                 <ul class="space-y-4 text-lg">
-                    <li class="flex justify-between items-center"><span class="text-slate-400 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048l-1.096 1.096A11.25 11.25 0 0012 21a11.25 11.25 0 006.058-20.957l-1.096 1.096z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 3.75v12.75A3 3 0 0015 13.5a3 3 0 00-3-2.25z" /></svg>Temperatura (Ext.):</span><div id="temp-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-slate-100 data-content" id="temp-data">Cargando...</span></li>
-                    <li class="flex justify-between items-center"><span class="text-slate-400 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048l-1.096 1.096A11.25 11.25 0 0012 21a11.25 11.25 0 006.058-20.957l-1.096 1.096z" /></svg>Humedad:</span><div id="humidity-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-slate-100 data-content" id="humidity-data">Cargando...</span></li>
-                    <li class="flex justify-between items-center"><span class="text-slate-400 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" /></svg>Presión (Relativa):</span><div id="pressure-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-slate-100 data-content" id="pressure-data">Cargando...</span></li>
-                    <li class="flex justify-between items-center"><span class="text-slate-400 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m-3-3h6M15 12.75H9" /></svg>Lluvia (Diaria):</span><div id="rainfall-daily-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-slate-100 data-content" id="rainfall-daily-data">Cargando...</span></li>
-                    <li class="flex justify-between items-center"><span class="text-slate-400 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12H.75m.386-6.364l1.591 1.591M12 12a2.25 2.25 0 00-2.25 2.25c0 .543.19 1.04.5 1.414.31.374.724.665 1.184.876.46.211.956.314 1.466.314.51 0 1.006-.103 1.466-.314.46-.211.874-.502 1.184-.876.31-.374.5-1.04.5-1.414A2.25 2.25 0 0012 12z" /></svg>Índice UV:</span><div id="uvi-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-slate-100 data-content" id="uvi-data">Cargando...</span></li>
+                    <li class="flex justify-between items-center"><span class="text-gray-600 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048l-1.096 1.096A11.25 11.25 0 0012 21a11.25 11.25 0 006.058-20.957l-1.096 1.096z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 3.75v12.75A3 3 0 0015 13.5a3 3 0 00-3-2.25z" /></svg>Temperatura (Ext.):</span><div id="temp-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-gray-900 data-content" id="temp-data">Cargando...</span></li>
+                    <li class="flex justify-between items-center"><span class="text-gray-600 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048l-1.096 1.096A11.25 11.25 0 0012 21a11.25 11.25 0 006.058-20.957l-1.096 1.096z" /></svg>Humedad:</span><div id="humidity-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-gray-900 data-content" id="humidity-data">Cargando...</span></li>
+                    <li class="flex justify-between items-center"><span class="text-gray-600 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" /></svg>Presión (Relativa):</span><div id="pressure-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-gray-900 data-content" id="pressure-data">Cargando...</span></li>
+                    <li class="flex justify-between items-center"><span class="text-gray-600 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m-3-3h6M15 12.75H9" /></svg>Lluvia (Diaria):</span><div id="rainfall-daily-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-gray-900 data-content" id="rainfall-daily-data">Cargando...</span></li>
+                    <li class="flex justify-between items-center"><span class="text-gray-600 text-sm flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-6.364-.386l1.591-1.591M3 12H.75m.386-6.364l1.591 1.591M12 12a2.25 2.25 0 00-2.25 2.25c0 .543.19 1.04.5 1.414.31.374.724.665 1.184.876.46.211.956.314 1.466.314.51 0 1.006-.103 1.466-.314.46-.211.874-.502 1.184-.876.31-.374.5-1.04.5-1.414A2.25 2.25 0 0012 12z" /></svg>Índice UV:</span><div id="uvi-data-loader" class="skeleton-loader skeleton-text-xl"></div><span class="text-xl font-extrabold text-gray-900 data-content" id="uvi-data">Cargando...</span></li>
                 </ul>
-                <div class="mt-4 pt-4 border-t border-slate-700 text-right"><p id="last-updated" class="text-xs text-slate-400">Actualizando datos...</p></div>
+                <div class="mt-4 pt-4 border-t border-gray-300 text-right"><p id="last-updated" class="text-xs text-gray-500">Actualizando datos...</p></div>
             </div>
 
             <!-- ESCUELAS DE KITE - CARRUSEL -->
             <div class="text-center mt-6 lg:mt-8">
-                <p class="text-sm text-slate-400 uppercase tracking-wider mb-3 flex justify-center items-center gap-2 font-semibold">
+                <p class="text-sm text-gray-600 uppercase tracking-wider mb-3 flex justify-center items-center gap-2 font-semibold">
                     Escuelas de Kite
                     <img class="w-5 h-5" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/1200px-WhatsApp.svg.png" alt="WhatsApp">
                 </p>
@@ -284,7 +254,7 @@
             </div>
 
             <!-- TELÉFONOS DE EMERGENCIA -->
-            <details class="bg-gradient-to-r from-red-950/80 to-red-900/50 rounded-2xl shadow-lg overflow-hidden border-2 border-red-800 mt-6 group">
+            <details class="bg-gradient-to-r from-red-50 to-red-100 rounded-2xl shadow-lg overflow-hidden border-2 border-red-200 mt-6 group">
                 <summary class="cursor-pointer p-4 hover:bg-red-50 transition-colors select-none flex items-center justify-between">
                     <h3 class="text-lg font-bold text-red-700 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -298,7 +268,7 @@
                         </svg>
                     </span>
                 </summary>
-                <div class="p-4 bg-slate-800 border-t border-red-900 animate-fadeIn">
+                <div class="p-4 bg-white border-t border-red-200 animate-fadeIn">
                     <div class="space-y-3">
                         <a href="tel:2983463080" class="flex items-center justify-between p-3 bg-yellow-100 rounded-lg hover:bg-yellow-200 transition-colors">
                             <div class="flex items-center gap-3">
@@ -341,7 +311,7 @@
                             <span class="font-black text-blue-800 text-lg">101</span>
                         </a>
                     </div>
-                    <p class="text-xs text-slate-400 mt-4 text-center">Tocá un contacto para llamar directamente</p>
+                    <p class="text-xs text-gray-500 mt-4 text-center">Tocá un contacto para llamar directamente</p>
                 </div>
             </details>
         </div>
@@ -349,19 +319,19 @@
         <!-- VISTA COMUNIDAD -->
         <div id="view-community" class="hidden fade-in space-y-6 mt-6">
             <div class="flex items-center justify-between mb-2">
-                <h2 class="text-2xl font-black text-slate-100">Comunidad</h2>
-                <button id="back-to-home" class="text-sm text-cyan-400 font-bold hover:underline flex items-center gap-1">
+                <h2 class="text-2xl font-black text-gray-800">Comunidad</h2>
+                <button id="back-to-home" class="text-sm text-blue-600 font-bold hover:underline flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                     Volver al Clima
                 </button>
             </div>
 
             <!-- SECCIÓN DE LOGIN/USUARIO -->
-            <div id="auth-section" class="p-4 bg-slate-800 rounded-xl shadow-lg border border-slate-700">
+            <div id="auth-section" class="p-4 bg-white rounded-xl shadow-lg border border-gray-200">
                 <!-- Estado: No logueado -->
                 <div id="auth-login" class="text-center">
-                    <p class="text-sm text-slate-400 mb-3">Inicia sesion para participar en la comunidad</p>
-                    <button id="btn-google-login" class="bg-slate-700 border border-slate-600 text-slate-200 px-6 py-3 rounded-lg font-bold text-sm hover:bg-slate-900/60 transition-colors shadow-md flex items-center justify-center gap-3 mx-auto">
+                    <p class="text-sm text-gray-600 mb-3">Inicia sesion para participar en la comunidad</p>
+                    <button id="btn-google-login" class="bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors shadow-md flex items-center justify-center gap-3 mx-auto">
                         <svg class="w-5 h-5" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -375,10 +345,10 @@
                 <div id="auth-user" class="hidden">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <img id="user-photo" src="" alt="Foto" class="w-10 h-10 rounded-full border-2 border-cyan-500">
+                            <img id="user-photo" src="" alt="Foto" class="w-10 h-10 rounded-full border-2 border-blue-500">
                             <div>
-                                <p class="font-bold text-slate-100 text-sm" id="user-name">Usuario</p>
-                                <p class="text-xs text-slate-400">Conectado</p>
+                                <p class="font-bold text-gray-800 text-sm" id="user-name">Usuario</p>
+                                <p class="text-xs text-gray-500">Conectado</p>
                             </div>
                         </div>
                         <button id="btn-logout" class="text-red-500 hover:text-red-700 text-sm font-bold flex items-center gap-1">
@@ -392,15 +362,15 @@
             </div>
 
             <!-- 1. PIZARRA KITERA (ARRIBA) -->
-            <div id="pizarra-section" class="p-6 bg-slate-800 rounded-xl shadow-lg border border-slate-700">
+            <div id="pizarra-section" class="p-6 bg-white rounded-xl shadow-lg border border-gray-200">
                 <div class="flex items-center justify-center gap-2 mb-4">
-                    <h3 class="text-xl font-extrabold text-slate-100">Pizarra Kitera</h3>
+                    <h3 class="text-xl font-extrabold text-gray-800">Pizarra Kitera</h3>
                 </div>
                 <!-- Formulario (solo visible si está logueado) -->
-                <form id="kiter-board-form" class="mb-6 bg-slate-900/60 p-4 rounded-lg border border-slate-700 shadow-inner hidden">
+                <form id="kiter-board-form" class="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-inner hidden">
                     <div class="flex gap-2">
-                        <input type="text" id="message-text" placeholder="Escribe un mensaje..." maxlength="140" class="flex-grow p-2 rounded border border-slate-700 text-sm focus:outline-none focus:border-cyan-500 bg-slate-700 text-slate-100 placeholder-slate-500" required>
-                        <button type="submit" class="bg-cyan-500 text-white px-4 py-2 rounded font-bold text-sm hover:bg-cyan-600 transition-colors shadow-md">Enviar</button>
+                        <input type="text" id="message-text" placeholder="Escribe un mensaje..." maxlength="140" class="flex-grow p-2 rounded border border-gray-300 text-sm focus:outline-none focus:border-blue-500 bg-white" required>
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-blue-700 transition-colors shadow-md">Enviar</button>
                     </div>
                 </form>
                 <!-- Mensaje si no está logueado -->
@@ -411,23 +381,23 @@
             </div>
 
             <!-- 2. GALERÍA DEL DÍA (ABAJO Y DESPLEGABLE) -->
-            <details id="gallery-section" class="group bg-slate-800 rounded-xl shadow-lg border border-slate-700 overflow-hidden transition-all duration-300">
-                <summary class="flex justify-between items-center p-6 cursor-pointer hover:bg-slate-900/60 transition-colors">
-                    <h3 class="text-lg font-extrabold text-slate-100 flex items-center gap-2">Galería del Día 📸</h3>
-                    <span class="transform group-open:rotate-180 transition-transform duration-300 text-slate-400">
+            <details id="gallery-section" class="group bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300">
+                <summary class="flex justify-between items-center p-6 cursor-pointer hover:bg-gray-50 transition-colors">
+                    <h3 class="text-lg font-extrabold text-gray-800 flex items-center gap-2">Galería del Día 📸</h3>
+                    <span class="transform group-open:rotate-180 transition-transform duration-300 text-gray-500">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </span>
                 </summary>
                 <!-- Contenido desplegable -->
-                <div class="p-6 border-t border-slate-700">
+                <div class="p-6 border-t border-gray-200">
                     <!-- TABS: Fotos / Videos -->
-                    <div class="flex gap-2 mb-4 border-b border-slate-700">
-                        <button id="tab-fotos" class="px-4 py-2 font-bold text-sm transition-colors border-b-2 border-cyan-500 text-cyan-400">
+                    <div class="flex gap-2 mb-4 border-b border-gray-200">
+                        <button id="tab-fotos" class="px-4 py-2 font-bold text-sm transition-colors border-b-2 border-blue-600 text-blue-600">
                             📸 Fotos
                         </button>
-                        <button id="tab-videos" class="px-4 py-2 font-bold text-sm transition-colors border-b-2 border-transparent text-slate-400 hover:text-slate-300">
+                        <button id="tab-videos" class="px-4 py-2 font-bold text-sm transition-colors border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                             🎥 Videos
                         </button>
                     </div>
@@ -436,7 +406,7 @@
                     <div id="content-fotos" class="tab-content">
                         <!-- Botón subir foto (solo visible si está logueado) -->
                         <div id="gallery-upload-container" class="flex justify-end mb-4 hidden">
-                            <label class="cursor-pointer bg-cyan-500 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-cyan-600 transition-colors flex items-center gap-2 shadow-md">
+                            <label class="cursor-pointer bg-blue-600 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-md">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -451,7 +421,7 @@
                             Inicia sesion con Google para subir fotos
                         </div>
                         <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[500px] overflow-y-auto p-1">
-                            <p id="gallery-loading" class="col-span-full text-center text-slate-500 text-sm py-4">Cargando fotos...</p>
+                            <p id="gallery-loading" class="col-span-full text-center text-gray-400 text-sm py-4">Cargando fotos...</p>
                         </div>
                     </div>
 
@@ -459,8 +429,8 @@
                     <div id="content-videos" class="tab-content hidden">
                         <div class="text-center space-y-4 py-8">
                             <div class="text-6xl">🎥</div>
-                            <h3 class="text-xl font-bold text-slate-100">Videos de Sesiones</h3>
-                            <p class="text-slate-400 text-sm max-w-md mx-auto">
+                            <h3 class="text-xl font-bold text-gray-800">Videos de Sesiones</h3>
+                            <p class="text-gray-600 text-sm max-w-md mx-auto">
                                 Mirá y compartí videos de las mejores sesiones de kite en Claromecó
                             </p>
                             
@@ -468,7 +438,7 @@
                                 <a href="https://drive.google.com/drive/folders/1fZ1cawEONEA90pW_1uil-70LzzcpdpBD?usp=sharing" 
                                    target="_blank" 
                                    rel="noopener noreferrer"
-                                   class="bg-cyan-500 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-cyan-600 transition-colors flex items-center gap-2 shadow-md w-full sm:w-auto justify-center">
+                                   class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-md w-full sm:w-auto justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -487,9 +457,9 @@
                                 </a>
                             </div>
 
-                            <div class="mt-6 p-4 bg-slate-900/60 rounded-lg text-left max-w-md mx-auto">
-                                <p class="text-xs text-slate-400 font-semibold mb-2">📌 Instrucciones:</p>
-                                <ul class="text-xs text-slate-400 space-y-1">
+                            <div class="mt-6 p-4 bg-gray-50 rounded-lg text-left max-w-md mx-auto">
+                                <p class="text-xs text-gray-600 font-semibold mb-2">📌 Instrucciones:</p>
+                                <ul class="text-xs text-gray-600 space-y-1">
                                     <li>• Los videos se abren en Google Drive</li>
                                     <li>• Podés ver y descargar todos los videos</li>
                                     <li>• Para subir necesitás cuenta de Google</li>
@@ -506,27 +476,27 @@
         <!-- VISTA CLASIFICADOS (SEPARADA) -->
         <div id="view-classifieds" class="hidden fade-in space-y-6 mt-6">
             <div class="flex items-center justify-between mb-2">
-                <h2 class="text-2xl font-black text-slate-100 flex items-center gap-2">
+                <h2 class="text-2xl font-black text-gray-800 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                     Clasificados Kiteros
                 </h2>
-                <button id="back-to-home-classifieds" class="text-sm text-cyan-400 font-bold hover:underline flex items-center gap-1">
+                <button id="back-to-home-classifieds" class="text-sm text-blue-600 font-bold hover:underline flex items-center gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                     Volver
                 </button>
             </div>
 
-            <div class="bg-slate-800 rounded-xl shadow-lg border border-slate-700 overflow-hidden p-6">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden p-6">
                 <!-- Filtros de categoría -->
                 <div class="flex flex-wrap gap-2 mb-4">
                     <button data-filter="todos" class="filter-btn active px-3 py-1 text-xs font-bold rounded-full bg-orange-500 text-white transition-colors">Todos</button>
-                    <button data-filter="kites" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-slate-700 text-slate-300 hover:bg-gray-300 transition-colors">Kites</button>
-                    <button data-filter="tablas" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-slate-700 text-slate-300 hover:bg-gray-300 transition-colors">Tablas</button>
-                    <button data-filter="barras" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-slate-700 text-slate-300 hover:bg-gray-300 transition-colors">Barras</button>
-                    <button data-filter="arneses" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-slate-700 text-slate-300 hover:bg-gray-300 transition-colors">Arneses</button>
-                    <button data-filter="otros" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-slate-700 text-slate-300 hover:bg-gray-300 transition-colors">Otros</button>
+                    <button data-filter="kites" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">Kites</button>
+                    <button data-filter="tablas" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">Tablas</button>
+                    <button data-filter="barras" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">Barras</button>
+                    <button data-filter="arneses" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">Arneses</button>
+                    <button data-filter="otros" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors">Otros</button>
                     <button data-filter="perdido" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors border border-red-300">Perdido</button>
                     <button data-filter="encontrado" class="filter-btn px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors border border-green-300">Encontrado</button>
                 </div>
@@ -542,9 +512,9 @@
                 </div>
 
                 <!-- Mensaje si no está logueado con botón de Google -->
-                <div id="login-prompt-classifieds" class="mb-4 p-4 bg-slate-700/40 border border-slate-600 rounded-lg text-center">
-                    <p class="text-sm text-slate-300 mb-3 font-medium">Inicia sesión para publicar anuncios</p>
-                    <button id="btn-google-login-classifieds" class="bg-white hover:bg-slate-900/60 text-slate-100 font-bold py-2 px-4 rounded-lg shadow-md border border-slate-700 transition-all duration-200 flex items-center justify-center gap-3 mx-auto">
+                <div id="login-prompt-classifieds" class="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg text-center">
+                    <p class="text-sm text-gray-700 mb-3 font-medium">Inicia sesión para publicar anuncios</p>
+                    <button id="btn-google-login-classifieds" class="bg-white hover:bg-gray-50 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-md border border-gray-300 transition-all duration-200 flex items-center justify-center gap-3 mx-auto">
                         <svg class="w-5 h-5" viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -557,19 +527,19 @@
 
                 <!-- Modal formulario de publicación -->
                 <div id="classified-form-modal" class="hidden fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4">
-                    <div class="bg-slate-800 rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div class="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl">
                         <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-lg font-bold text-slate-100">Nuevo Anuncio</h4>
-                            <button id="btn-close-classified-form" class="text-slate-400 hover:text-slate-300 text-2xl">&times;</button>
+                            <h4 class="text-lg font-bold text-gray-800">Nuevo Anuncio</h4>
+                            <button id="btn-close-classified-form" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
                         </div>
                         <form id="classified-form" class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Titulo</label>
-                                <input type="text" id="classified-title" maxlength="60" required class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500" placeholder="Ej: Kite Core XR7 12m">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Titulo</label>
+                                <input type="text" id="classified-title" maxlength="60" required class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="Ej: Kite Core XR7 12m">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Categoria</label>
-                                <select id="classified-category" required class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                                <select id="classified-category" required class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
                                     <option value="">Seleccionar...</option>
                                     <optgroup label="Venta">
                                         <option value="kites">Kites</option>
@@ -586,32 +556,32 @@
                             </div>
                             <div id="price-container" class="flex gap-2">
                                 <div class="flex-1">
-                                    <label class="block text-sm font-medium text-slate-300 mb-1">Precio</label>
-                                    <input type="number" id="classified-price" required min="0" class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500" placeholder="Ej: 350000">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+                                    <input type="number" id="classified-price" required min="0" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="Ej: 350000">
                                 </div>
                                 <div class="w-24">
-                                    <label class="block text-sm font-medium text-slate-300 mb-1">Moneda</label>
-                                    <select id="classified-currency" class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
+                                    <select id="classified-currency" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
                                         <option value="ARS">ARS</option>
                                         <option value="USD">USD</option>
                                     </select>
                                 </div>
                             </div>
                             <div id="location-container" class="hidden">
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Ubicacion aproximada</label>
-                                <input type="text" id="classified-location" class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500" placeholder="Ej: Playa La Bajada, cerca del parador">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Ubicacion aproximada</label>
+                                <input type="text" id="classified-location" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="Ej: Playa La Bajada, cerca del parador">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Descripcion</label>
-                                <textarea id="classified-description" maxlength="200" rows="3" class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500 resize-none" placeholder="Estado, detalles, etc."></textarea>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Descripcion</label>
+                                <textarea id="classified-description" maxlength="200" rows="3" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 resize-none" placeholder="Estado, detalles, etc."></textarea>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-1">WhatsApp (con codigo pais)</label>
-                                <input type="tel" id="classified-whatsapp" required class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500" placeholder="Ej: 5492983500324">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">WhatsApp (con codigo pais)</label>
+                                <input type="tel" id="classified-whatsapp" required class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500" placeholder="Ej: 5492983500324">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Foto del producto</label>
-                                <input type="file" id="classified-photo" accept="image/*" class="w-full p-2 border border-slate-700 rounded-lg text-sm">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Foto del producto</label>
+                                <input type="file" id="classified-photo" accept="image/*" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
                             </div>
                             <button type="submit" id="btn-submit-classified" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors">
                                 Publicar Anuncio
@@ -622,38 +592,38 @@
 
                 <!-- Modal editar clasificado -->
                 <div id="edit-classified-modal" class="hidden fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4">
-                    <div class="bg-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl">
+                    <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
                         <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-lg font-bold text-slate-100">Editar Anuncio</h4>
-                            <button onclick="closeEditClassified()" class="text-slate-400 hover:text-slate-300 text-2xl">&times;</button>
+                            <h4 class="text-lg font-bold text-gray-800">Editar Anuncio</h4>
+                            <button onclick="closeEditClassified()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
                         </div>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Titulo</label>
-                                <input type="text" id="edit-classified-title" maxlength="60" class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Titulo</label>
+                                <input type="text" id="edit-classified-title" maxlength="60" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
                             </div>
                             <div class="flex gap-2">
                                 <div class="flex-1">
-                                    <label class="block text-sm font-medium text-slate-300 mb-1">Precio</label>
-                                    <input type="number" id="edit-classified-price" min="0" class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Precio</label>
+                                    <input type="number" id="edit-classified-price" min="0" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
                                 </div>
                                 <div class="w-24">
-                                    <label class="block text-sm font-medium text-slate-300 mb-1">Moneda</label>
-                                    <select id="edit-classified-currency" class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
+                                    <select id="edit-classified-currency" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
                                         <option value="ARS">ARS</option>
                                         <option value="USD">USD</option>
                                     </select>
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-slate-300 mb-1">Descripcion</label>
-                                <textarea id="edit-classified-description" maxlength="200" rows="3" class="w-full p-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-cyan-500 resize-none"></textarea>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Descripcion</label>
+                                <textarea id="edit-classified-description" maxlength="200" rows="3" class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 resize-none"></textarea>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="closeEditClassified()" class="flex-1 bg-slate-700 text-slate-300 py-2 rounded-lg font-bold hover:bg-gray-300 transition-colors">
+                                <button onclick="closeEditClassified()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-300 transition-colors">
                                     Cancelar
                                 </button>
-                                <button onclick="saveEditClassified()" class="flex-1 bg-cyan-500 text-white py-2 rounded-lg font-bold hover:bg-cyan-600 transition-colors">
+                                <button onclick="saveEditClassified()" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors">
                                     Guardar
                                 </button>
                             </div>
@@ -663,62 +633,30 @@
 
                 <!-- Lista de clasificados -->
                 <div id="classifieds-list" class="space-y-3 max-h-[70vh] overflow-y-auto">
-                    <p id="classifieds-loading" class="text-center text-slate-500 text-sm py-4">Cargando clasificados...</p>
+                    <p id="classifieds-loading" class="text-center text-gray-400 text-sm py-4">Cargando clasificados...</p>
                 </div>
             </div>
         </div>
 
-        <!-- BOTTOM NAVIGATION BAR -->
-        <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900 border-t border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+        <!-- FLOATERS - Centrados abajo, uno al lado del otro -->
+        <div id="fab-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-40 flex gap-3">
+            <button id="fab-community" class="bg-blue-600 text-white p-3.5 rounded-full shadow-2xl hover:bg-blue-700 transition-transform hover:scale-110 active:scale-95 border-2 border-white relative">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                <span id="notification-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full hidden border border-white animate-bounce">!</span>
+            </button>
+            <button id="fab-clasificados" class="bg-orange-500 text-white p-3.5 rounded-full shadow-2xl hover:bg-orange-600 transition-transform hover:scale-110 active:scale-95 border-2 border-white relative">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                <span id="clasificados-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full hidden border border-white animate-bounce">!</span>
+            </button>
+        </div>
 
-            <!-- Logo watermark — firma de marca discreta -->
-            <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-slate-900 rounded-full px-2.5 py-0.5 border border-slate-700 shadow-sm pointer-events-none select-none">
-                <img src="logo_palmera.png" alt="" class="h-5 w-auto opacity-50" onerror="this.style.display='none'">
-                <img src="logo2.png" alt="" class="h-4 w-auto opacity-50" onerror="this.style.display='none'">
-            </div>
-
-            <div class="flex items-stretch h-16 max-w-lg mx-auto">
-
-                <!-- Spot -->
-                <button id="nav-spot" class="nav-btn nav-active flex-1 flex flex-col items-center justify-center gap-0.5 px-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"/>
-                    </svg>
-                    <span class="nav-label text-[10px] font-bold">Spot</span>
-                </button>
-
-                <!-- Comunidad -->
-                <button id="nav-community" class="nav-btn flex-1 flex flex-col items-center justify-center gap-0.5 px-1 relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-                    </svg>
-                    <span class="nav-label text-[10px] font-bold">Comunidad</span>
-                    <span id="nav-community-badge" class="absolute top-2 right-3 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full hidden border border-white">!</span>
-                </button>
-
-                <!-- Shop KiteLook -->
-                <button id="nav-shop" class="nav-btn flex-1 flex flex-col items-center justify-center gap-0.5 px-1 relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                    </svg>
-                    <span class="nav-label text-[10px] font-bold">Shop</span>
-                    <span class="absolute top-1.5 right-3.5 w-1.5 h-1.5 bg-yellow-400 rounded-full"></span>
-                </button>
-
-                <!-- Clasificados -->
-                <button id="nav-clasificados" class="nav-btn flex-1 flex flex-col items-center justify-center gap-0.5 px-1 relative">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    <span class="nav-label text-[10px] font-bold">Clasificados</span>
-                    <span id="clasificados-badge" class="absolute top-2 right-3 bg-red-500 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full hidden border border-white">!</span>
-                </button>
-
-            </div>
-        </nav>
+        <!-- FAB Volver al Clima - Solo visible en Comunidad/Clasificados -->
+        <button id="fab-back-weather" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-40 bg-green-600 text-white p-3.5 rounded-full shadow-2xl hover:bg-green-700 transition-transform hover:scale-110 active:scale-95 border-2 border-white hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>
+        </button>
 
         <div id="new-message-toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 hidden cursor-pointer transition-all duration-300 w-max">
-            <div class="bg-cyan-500 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 border border-cyan-400 text-sm font-bold">
+            <div class="bg-blue-600 text-white px-4 py-2 rounded-full shadow-xl flex items-center gap-2 border border-blue-400 text-sm font-bold">
                 💬 Nuevo Mensaje
             </div>
         </div>
@@ -740,58 +678,10 @@
             <button class="absolute top-4 right-4 text-white text-4xl font-bold focus:outline-none">&times;</button>
         </div>
 
-        <!-- VISTA SHOP - KITELOOK -->
-        <div id="view-shop" class="hidden fade-in mt-6 pb-4">
-
-            <!-- Hero KiteLook -->
-            <div class="relative rounded-2xl overflow-hidden mb-5 shadow-2xl" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0c4a6e 100%);">
-                <!-- Patrón decorativo -->
-                <div class="absolute inset-0 opacity-10" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(255,255,255,0.05) 20px, rgba(255,255,255,0.05) 40px);"></div>
-                <div class="relative px-6 py-8 text-center">
-                    <div class="flex items-center justify-center gap-3 mb-2">
-                        <span class="text-4xl">🪁</span>
-                        <h1 class="text-4xl font-black text-white tracking-tight">KiteLook</h1>
-                    </div>
-                    <p class="text-blue-200 text-sm font-medium tracking-widest uppercase">Ropa con identidad kitera</p>
-                    <div class="flex justify-center gap-4 mt-4">
-                        <span class="text-xs text-blue-300 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-700">Envíos a todo el país</span>
-                        <span class="text-xs text-blue-300 bg-blue-900/50 px-3 py-1 rounded-full border border-blue-700">Stock limitado</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filtros de categoría -->
-            <div class="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-hide px-0.5">
-                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-cyan-500 text-white border border-cyan-500 transition-all active:scale-95" data-category="all">Todo</button>
-                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-500 transition-all active:scale-95" data-category="remeras">Remeras</button>
-                <button class="shop-filter-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-700 text-slate-300 border border-slate-600 hover:border-slate-500 transition-all active:scale-95" data-category="buzos">Buzos</button>
-            </div>
-
-            <!-- Contador de resultados -->
-            <p id="shop-results-count" class="text-xs text-slate-500 mb-3 font-medium">8 productos</p>
-
-            <!-- Grid de productos -->
-            <div id="shop-products-grid" class="grid grid-cols-2 gap-3">
-                <!-- Renderizado por shop.js -->
-            </div>
-
-            <!-- Contacto mayorista -->
-            <div class="mt-6 p-5 bg-slate-800 rounded-2xl border border-slate-600 text-center">
-                <p class="text-sm font-bold text-slate-100 mb-1">¿Revendedor o pedido especial?</p>
-                <p class="text-xs text-slate-400 mb-3">Personalizaciones, talles especiales y precios mayoristas</p>
-                <a href="https://wa.me/5492983595133?text=Hola!%20Me%20interesa%20info%20de%20KiteLook%20mayorista." target="_blank" rel="noopener"
-                   class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-md active:scale-95">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.096.543 4.07 1.497 5.786L0 24l6.387-1.47A11.934 11.934 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg>
-                    Contactar por WhatsApp
-                </a>
-            </div>
-
-        </div>
-
         <!-- FOOTER -->
-        <footer class="mt-8 pt-4 pb-24 border-t border-slate-700">
-            <div class="text-center text-xs text-slate-400">
-                <p>¿Sugerencias? <a href="https://wa.me/5492983500324" target="_blank" class="underline hover:text-slate-500 font-medium">Contactar desarrollador</a></p>
+        <footer class="mt-8 pt-4 pb-24 border-t border-gray-300">
+            <div class="text-center text-xs text-gray-500">
+                <p>¿Sugerencias? <a href="https://wa.me/5492983500324" target="_blank" class="underline hover:text-gray-400 font-medium">Contactar desarrollador</a></p>
             </div>
         </footer>
 
@@ -806,5 +696,4 @@
     
     <script src="/_vercel/insights/script.js"></script>
     <script type="module" src="/app.js?v=3"></script>
-    <script type="module" src="/shop.js"></script>
 </body>

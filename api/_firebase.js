@@ -113,4 +113,54 @@ export async function updateSubscriberActivity(chatId) {
     }
 }
 
+// ─── WhatsApp subscribers ────────────────────────────────────────────────────
+const WA_SUBSCRIBERS_COLLECTION = 'whatsapp_subscribers';
+
+export async function addWhatsAppSubscriber(phone) {
+    const firestore = initFirebase();
+    if (!firestore) return false;
+    try {
+        await firestore.collection(WA_SUBSCRIBERS_COLLECTION).doc(phone).set({
+            phone,
+            active: true,
+            subscribedAt: admin.firestore.FieldValue.serverTimestamp(),
+            lastActivity: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        return true;
+    } catch (error) {
+        console.error('Error agregando suscriptor WhatsApp:', error);
+        return false;
+    }
+}
+
+export async function removeWhatsAppSubscriber(phone) {
+    const firestore = initFirebase();
+    if (!firestore) return false;
+    try {
+        await firestore.collection(WA_SUBSCRIBERS_COLLECTION).doc(phone).set({
+            phone,
+            active: false,
+            unsubscribedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        return true;
+    } catch (error) {
+        console.error('Error removiendo suscriptor WhatsApp:', error);
+        return false;
+    }
+}
+
+export async function getWhatsAppSubscribers() {
+    const firestore = initFirebase();
+    if (!firestore) return [];
+    try {
+        const snapshot = await firestore.collection(WA_SUBSCRIBERS_COLLECTION)
+            .where('active', '==', true)
+            .get();
+        return snapshot.docs.map(doc => ({ phone: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error('Error obteniendo suscriptores WhatsApp:', error);
+        return [];
+    }
+}
+
 export { initFirebase };

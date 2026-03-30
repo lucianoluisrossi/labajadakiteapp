@@ -18,6 +18,10 @@
     {
       "path": "/api/push-alert",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/whatsapp-alert",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
