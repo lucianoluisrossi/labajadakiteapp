@@ -113,52 +113,53 @@ export async function updateSubscriberActivity(chatId) {
     }
 }
 
-// ─── WhatsApp subscribers ────────────────────────────────────────────────────
-const WA_SUBSCRIBERS_COLLECTION = 'whatsapp_subscribers';
+// ─── SMS subscribers ─────────────────────────────────────────────────────────
+const SMS_SUBSCRIBERS_COLLECTION = 'sms_subscribers';
 
-export async function addWhatsAppSubscriber(phone) {
+export async function addSmsSubscriber(phone, config = {}) {
     const firestore = initFirebase();
     if (!firestore) return false;
     try {
-        await firestore.collection(WA_SUBSCRIBERS_COLLECTION).doc(phone).set({
+        await firestore.collection(SMS_SUBSCRIBERS_COLLECTION).doc(phone).set({
             phone,
             active: true,
+            config: { minNavigableWind: config.minWind || 15 },
             subscribedAt: admin.firestore.FieldValue.serverTimestamp(),
             lastActivity: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         return true;
     } catch (error) {
-        console.error('Error agregando suscriptor WhatsApp:', error);
+        console.error('Error agregando suscriptor SMS:', error);
         return false;
     }
 }
 
-export async function removeWhatsAppSubscriber(phone) {
+export async function removeSmsSubscriber(phone) {
     const firestore = initFirebase();
     if (!firestore) return false;
     try {
-        await firestore.collection(WA_SUBSCRIBERS_COLLECTION).doc(phone).set({
+        await firestore.collection(SMS_SUBSCRIBERS_COLLECTION).doc(phone).set({
             phone,
             active: false,
             unsubscribedAt: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         return true;
     } catch (error) {
-        console.error('Error removiendo suscriptor WhatsApp:', error);
+        console.error('Error removiendo suscriptor SMS:', error);
         return false;
     }
 }
 
-export async function getWhatsAppSubscribers() {
+export async function getSmsSubscribers() {
     const firestore = initFirebase();
     if (!firestore) return [];
     try {
-        const snapshot = await firestore.collection(WA_SUBSCRIBERS_COLLECTION)
+        const snapshot = await firestore.collection(SMS_SUBSCRIBERS_COLLECTION)
             .where('active', '==', true)
             .get();
         return snapshot.docs.map(doc => ({ phone: doc.id, ...doc.data() }));
     } catch (error) {
-        console.error('Error obteniendo suscriptores WhatsApp:', error);
+        console.error('Error obteniendo suscriptores SMS:', error);
         return [];
     }
 }

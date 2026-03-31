@@ -314,6 +314,59 @@
                     <p class="text-xs text-gray-500 mt-4 text-center">Tocá un contacto para llamar directamente</p>
                 </div>
             </details>
+
+            <!-- ALERTAS SMS -->
+            <div id="sms-alert-card" class="bg-white rounded-2xl shadow-lg border border-gray-200 mt-6 overflow-hidden">
+                <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-3 flex items-center gap-2">
+                    <span class="text-2xl">📱</span>
+                    <div>
+                        <h3 class="text-white font-black text-sm">Alertas de viento por SMS</h3>
+                        <p class="text-green-100 text-xs">Recibí un mensaje cuando haya buenas condiciones</p>
+                    </div>
+                </div>
+                <div class="p-4 space-y-3">
+                    <!-- Formulario de suscripción -->
+                    <div id="sms-form">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Número de teléfono</label>
+                                <input id="sms-phone" type="tel" placeholder="Ej: 2983 595133"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500">
+                                <p class="text-xs text-gray-400 mt-1">Ingresá tu celular argentino sin el 0 ni el 15</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Viento mínimo para recibir alerta</label>
+                                <select id="sms-wind" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 bg-white">
+                                    <option value="12">12 kts — Kite grande (18-21m)</option>
+                                    <option value="14">14 kts — Kite grande (16-18m)</option>
+                                    <option value="15" selected>15 kts — Kite estándar (12-15m)</option>
+                                    <option value="17">17 kts — Ideal</option>
+                                    <option value="20">20 kts — Solo viento fuerte</option>
+                                </select>
+                            </div>
+                            <button id="sms-subscribe-btn"
+                                class="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-black py-2.5 rounded-lg text-sm transition-colors">
+                                Suscribirme a las alertas
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Estado del resultado -->
+                    <div id="sms-status" class="hidden text-center py-2"></div>
+                    <!-- Estado: ya suscripto -->
+                    <div id="sms-subscribed-state" class="hidden">
+                        <div class="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                            <span class="text-green-500 text-lg">✅</span>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-green-800">¡Estás suscripto!</p>
+                                <p id="sms-subscribed-detail" class="text-xs text-green-600"></p>
+                            </div>
+                            <button id="sms-unsubscribe-btn" class="text-xs text-gray-400 hover:text-red-500 underline">Dar de baja</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- FIN ALERTAS SMS -->
+
         </div>
 
         <!-- VISTA COMUNIDAD -->
@@ -696,4 +749,92 @@
     
     <script src="/_vercel/insights/script.js"></script>
     <script type="module" src="/app.js?v=3"></script>
+
+    <!-- LÓGICA ALERTAS SMS -->
+    <script>
+    (function() {
+        const STORAGE_KEY = 'sms_subscription';
+
+        function getSubscription() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+        }
+        function saveSubscription(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        function clearSubscription() {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+
+        function showSubscribed(sub) {
+            document.getElementById('sms-form').classList.add('hidden');
+            document.getElementById('sms-subscribed-state').classList.remove('hidden');
+            document.getElementById('sms-subscribed-detail').textContent =
+                `Alerta cuando el viento supere ${sub.minWind} kts`;
+        }
+
+        function showForm() {
+            document.getElementById('sms-form').classList.remove('hidden');
+            document.getElementById('sms-subscribed-state').classList.add('hidden');
+            document.getElementById('sms-status').classList.add('hidden');
+        }
+
+        function showStatus(msg, isError) {
+            const el = document.getElementById('sms-status');
+            el.textContent = msg;
+            el.className = `text-center py-2 text-sm font-medium ${isError ? 'text-red-600' : 'text-green-600'}`;
+            el.classList.remove('hidden');
+        }
+
+        // Inicializar estado
+        document.addEventListener('DOMContentLoaded', function() {
+            const sub = getSubscription();
+            if (sub) showSubscribed(sub);
+
+            // Botón suscribirse
+            document.getElementById('sms-subscribe-btn').addEventListener('click', async function() {
+                const phone   = document.getElementById('sms-phone').value.trim();
+                const minWind = document.getElementById('sms-wind').value;
+                const btn     = this;
+
+                if (!phone) {
+                    showStatus('Ingresá tu número de teléfono', true);
+                    return;
+                }
+
+                btn.disabled   = true;
+                btn.textContent = 'Enviando...';
+
+                try {
+                    const res  = await fetch('/api/sms-subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone, minWind: parseInt(minWind) })
+                    });
+                    const data = await res.json();
+
+                    if (data.ok) {
+                        const sub = { phone: data.phone, minWind: data.minWind };
+                        saveSubscription(sub);
+                        showSubscribed(sub);
+                    } else {
+                        showStatus(data.error || 'Error al suscribirte. Revisá el número.', true);
+                        btn.disabled   = false;
+                        btn.textContent = 'Suscribirme a las alertas';
+                    }
+                } catch (e) {
+                    showStatus('Error de conexión. Intentá de nuevo.', true);
+                    btn.disabled   = false;
+                    btn.textContent = 'Suscribirme a las alertas';
+                }
+            });
+
+            // Botón dar de baja
+            document.getElementById('sms-unsubscribe-btn').addEventListener('click', function() {
+                clearSubscription();
+                showForm();
+            });
+        });
+    })();
+    </script>
+    <!-- FIN LÓGICA ALERTAS SMS -->
 </body>
