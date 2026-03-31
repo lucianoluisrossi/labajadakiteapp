@@ -75,7 +75,12 @@
                     <span class="absolute -top-1 -right-1 bg-white text-red-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">!</span>
                 </button>
 
-                <!-- 1. STATUS DEL SPOT -->
+                <!-- 1. CÁMARA EN VIVO -->
+                <div class="bg-black rounded-xl overflow-hidden shadow-lg mb-3 border border-gray-400/50">
+                    <iframe id="live-camera" class="w-full aspect-video" src="https://www.youtube.com/embed/SzveEm5Y4oc?autoplay=1&mute=1&controls=0" title="YouTube Live Camera" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+
+                <!-- 2. STATUS DEL SPOT -->
                 <div id="verdict-card" class="mb-3 py-2 px-4 rounded-xl border border-gray-200 transition-colors duration-300 text-center">
                     <p class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-0.5">Estado del Spot</p>
                     <div id="verdict-data-loader" class="skeleton-loader skeleton-text-xl mx-auto" style="width: 60%;"></div>
@@ -138,21 +143,6 @@
                     </p>
                 </div>
 
-                <!-- 3. CÁMARA EN VIVO (colapsable) -->
-                <details class="group mt-3" open>
-                    <summary class="flex items-center gap-2 cursor-pointer select-none py-1.5 px-1">
-                        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.869v6.262a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Cámara en vivo</span>
-                        <svg class="w-3.5 h-3.5 text-gray-400 ml-auto transform group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </summary>
-                    <div class="bg-black rounded-xl overflow-hidden shadow-lg mt-1.5 border border-gray-400/50">
-                        <iframe id="live-camera" class="w-full aspect-video" src="https://www.youtube.com/embed/SzveEm5Y4oc?autoplay=1&mute=1&controls=0" title="YouTube Live Camera" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    </div>
-                </details>
 
                 <div id="error-message" class="hidden mt-4 p-4 bg-red-600 text-white rounded-xl text-center">Error al cargar los datos del clima.</div>
             </div>
