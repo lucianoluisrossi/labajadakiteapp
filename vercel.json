@@ -18,10 +18,6 @@
     {
       "path": "/api/push-alert",
       "schedule": "*/15 * * * *"
-    },
-    {
-      "path": "/api/sms-alert",
-      "schedule": "*/15 * * * *"
     }
   ]
 }
