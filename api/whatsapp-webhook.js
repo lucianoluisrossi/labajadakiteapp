@@ -1,122 +1,110 @@
 // api/whatsapp-webhook.js
-// Webhook de WhatsApp Cloud API (Meta) — La Bajada Kitesurf
+// Webhook de Twilio WhatsApp — La Bajada Kitesurf
 //
-// GET  /api/whatsapp-webhook  — verificación del webhook por Meta
-// POST /api/whatsapp-webhook  — mensajes entrantes
+// POST /api/whatsapp-webhook — mensajes entrantes de Twilio (form-encoded)
 //
 // Flujo: cualquier mensaje suscribe al usuario.
 //        "STOP" / "stop" / "salir" / "cancelar" da de baja.
+//
+// Responde con TwiML <Message> para reply inmediato (sin llamada extra a la API).
+// Twilio env vars: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM
 
+import crypto from 'crypto';
 import { addWhatsAppSubscriber, removeWhatsAppSubscriber } from './_firebase.js';
 
-const WA_API_BASE = 'https://graph.facebook.com/v19.0';
+// ── Validación de firma Twilio (HMAC-SHA1) ───────────────────────────────────
+function validateTwilioSignature(req) {
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    if (!authToken) return true; // Sin token configurado: saltar validación
 
-async function sendWhatsAppMessage(to, text) {
-    const token   = process.env.WHATSAPP_TOKEN;
-    const phoneId = process.env.WHATSAPP_PHONE_ID;
+    const signature = req.headers['x-twilio-signature'];
+    if (!signature) return false;
 
-    if (!token || !phoneId) {
-        console.error('WHATSAPP_TOKEN o WHATSAPP_PHONE_ID no configurados');
-        return false;
-    }
+    // URL completa tal como Twilio la conoce
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const host  = req.headers['x-forwarded-host'] || req.headers.host;
+    const url   = `${proto}://${host}${req.url}`;
 
-    try {
-        const response = await fetch(`${WA_API_BASE}/${phoneId}/messages`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                messaging_product: 'whatsapp',
-                to,
-                type: 'text',
-                text: { body: text }
-            })
-        });
+    // Parámetros POST ordenados alfabéticamente concatenados a la URL
+    const params     = req.body || {};
+    const sortedKeys = Object.keys(params).sort();
+    const str        = url + sortedKeys.map(k => k + params[k]).join('');
 
-        if (!response.ok) {
-            const err = await response.text();
-            console.error('Error WhatsApp API:', err);
-        }
-        return response.ok;
-    } catch (error) {
-        console.error('Error enviando mensaje WhatsApp:', error);
-        return false;
-    }
+    const expected = crypto.createHmac('sha1', authToken).update(str).digest('base64');
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
 }
 
+// ── Respuesta TwiML ──────────────────────────────────────────────────────────
+function twimlMessage(text) {
+    // Escapar caracteres XML especiales
+    const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${safe}</Message></Response>`;
+}
+
+function twimlEmpty() {
+    return '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
+}
+
+// ── Handler ──────────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
-
-    // ── GET: verificación del webhook ────────────────────────────────────────
-    if (req.method === 'GET') {
-        const mode      = req.query['hub.mode'];
-        const token     = req.query['hub.verify_token'];
-        const challenge = req.query['hub.challenge'];
-
-        if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
-            console.log('Webhook de WhatsApp verificado correctamente');
-            return res.status(200).send(challenge);
-        }
-        return res.status(403).json({ error: 'Verificación fallida' });
-    }
-
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Método no permitido' });
     }
 
-    // ── POST: mensaje entrante ───────────────────────────────────────────────
+    // Twilio espera Content-Type: text/xml en la respuesta
+    res.setHeader('Content-Type', 'text/xml');
+
     try {
-        const body = req.body;
+        // Validar firma
+        if (!validateTwilioSignature(req)) {
+            console.warn('Firma Twilio inválida');
+            return res.status(403).send(twimlEmpty());
+        }
 
-        // Meta requiere 200 rápido; lo respondemos antes de procesar
-        res.status(200).json({ ok: true });
+        // Twilio envía form-encoded: From=whatsapp:+549... Body=Hola
+        const from = req.body?.From || '';   // "whatsapp:+5492983595133"
+        const body = (req.body?.Body || '').trim().toLowerCase();
 
-        // Validar que sea evento de WhatsApp Business
-        if (body.object !== 'whatsapp_business_account') return;
+        // Extraer número limpio (sin "whatsapp:+")
+        const phone = from.replace(/^whatsapp:\+?/, '');
 
-        const messages = body.entry?.[0]?.changes?.[0]?.value?.messages;
-        if (!messages?.length) return; // puede ser status update, ignorar
+        if (!phone) {
+            return res.status(400).send(twimlEmpty());
+        }
 
-        const message = messages[0];
-        if (message.type !== 'text') return; // ignorar imagen, audio, etc.
-
-        const phone = message.from; // número en formato E.164 sin + (ej: 5492983595133)
-        const text  = message.text.body.trim().toLowerCase();
-
-        const STOP_WORDS = ['stop', 'salir', 'baja', 'darme de baja', 'cancelar', 'no quiero'];
-        const wantsToStop = STOP_WORDS.some(w => text === w);
+        const STOP_WORDS = ['stop', 'salir', 'baja', 'darme de baja', 'cancelar'];
+        const wantsToStop = STOP_WORDS.some(w => body === w);
 
         if (wantsToStop) {
             await removeWhatsAppSubscriber(phone);
-            await sendWhatsAppMessage(phone,
+            return res.status(200).send(twimlMessage(
 `👋 Te diste de baja de las alertas de viento de La Bajada.
 
 Para volver a suscribirte mandá cualquier mensaje.
 
 🔗 labajada.vercel.app`
-            );
-        } else {
-            const saved = await addWhatsAppSubscriber(phone);
-            await sendWhatsAppMessage(phone,
-`🪁 *¡Bienvenido a La Bajada — Claromecó!*
+            ));
+        }
+
+        const saved = await addWhatsAppSubscriber(phone);
+        return res.status(200).send(twimlMessage(
+`🪁 ¡Bienvenido a La Bajada — Claromecó!
 
 ${saved ? '✅ Quedás suscripto a las alertas de viento.' : 'Ya estabas suscripto. ✅'}
 
-*Te avisamos cuando haya:*
+Te avisamos cuando haya:
 • Viento favorable sostenido (5+ min)
 • Condiciones épicas E/ESE/SE 17-25 kts
 • Viento peligroso (>30 kts)
 • Offshore activo
 
-Para darte de baja mandá: *STOP*
+Para darte de baja mandá: STOP
 
 🔗 labajada.vercel.app`
-            );
-        }
+        ));
 
     } catch (error) {
         console.error('Error en webhook WhatsApp:', error);
-        // No relanzar: ya respondimos 200 a Meta
+        return res.status(500).send(twimlEmpty());
     }
 }

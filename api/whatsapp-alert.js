@@ -16,7 +16,6 @@
 import { initFirebase, getWhatsAppSubscribers } from './_firebase.js';
 import admin from 'firebase-admin';
 
-const WA_API_BASE         = 'https://graph.facebook.com/v19.0';
 const TRACKER_COLLECTION  = 'condition_tracker';
 const LOG_COLLECTION      = 'whatsapp_alert_log';
 
@@ -103,25 +102,32 @@ async function updateTracker(db, docId, conditionMet, requiredMinutes) {
     }
 }
 
-// ── Enviar mensaje WhatsApp ───────────────────────────────────────────────────
+// ── Enviar mensaje WhatsApp via Twilio ───────────────────────────────────────
 async function sendWhatsAppMessage(to, text) {
-    const token   = process.env.WHATSAPP_TOKEN;
-    const phoneId = process.env.WHATSAPP_PHONE_ID;
-    if (!token || !phoneId) return false;
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken  = process.env.TWILIO_AUTH_TOKEN;
+    const from       = process.env.TWILIO_WHATSAPP_FROM; // ej: whatsapp:+14155238886
+
+    if (!accountSid || !authToken || !from) {
+        console.error('Variables Twilio no configuradas');
+        return false;
+    }
+
+    const auth = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+    const url  = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
 
     try {
-        const response = await fetch(`${WA_API_BASE}/${phoneId}/messages`, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': `Basic ${auth}`
             },
-            body: JSON.stringify({
-                messaging_product: 'whatsapp',
-                to,
-                type: 'text',
-                text: { body: text }
-            })
+            body: new URLSearchParams({
+                From: from,
+                To:   `whatsapp:+${to}`,
+                Body: text
+            }).toString()
         });
         return response.ok;
     } catch (error) {
