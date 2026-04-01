@@ -20,11 +20,65 @@
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
+
         /* Estilo para quitar el triángulo por defecto del details */
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
+
+        /* ================================================
+           TEMAS DE VISUALIZACIÓN
+           ================================================ */
+
+        /* --- OSCURO --- */
+        html.dark body { background-color: #0f172a; color: #e2e8f0; }
+        html.dark .bg-white { background-color: #1e293b !important; }
+        html.dark .bg-gray-50 { background-color: #1e293b !important; }
+        html.dark .bg-gray-100 { background-color: #1e293b !important; }
+        html.dark .bg-gradient-to-r.from-red-50 { background: #2d1b1b !important; }
+        html.dark .border-gray-200 { border-color: #334155 !important; }
+        html.dark .border-gray-300 { border-color: #334155 !important; }
+        html.dark .border-t { border-color: #334155 !important; }
+        html.dark .text-gray-900 { color: #e2e8f0 !important; }
+        html.dark .text-gray-800 { color: #cbd5e1 !important; }
+        html.dark .text-gray-700 { color: #94a3b8 !important; }
+        html.dark .text-gray-600 { color: #94a3b8 !important; }
+        html.dark .text-gray-500 { color: #64748b !important; }
+        html.dark .text-gray-400 { color: #475569 !important; }
+        html.dark details { background-color: #1e293b !important; border-color: #334155 !important; }
+        html.dark details .bg-gray-50 { background-color: #1e293b !important; }
+        html.dark summary:hover { background-color: #263248 !important; }
+        html.dark #wind-arrow { stroke: currentColor !important; }
+        html.dark #theme-toggle:hover { background-color: #1e293b !important; }
+
+        /* --- LECTURA (sepia cálido) --- */
+        html.lectura body { background-color: #fdf8f0; color: #3d2e1e; }
+        html.lectura .bg-white { background-color: #f5efe0 !important; }
+        html.lectura .bg-gray-50 { background-color: #f5efe0 !important; }
+        html.lectura .bg-gray-100 { background-color: #ede8d8 !important; }
+        html.lectura .bg-gradient-to-r.from-red-50 { background: #f5e8d8 !important; }
+        html.lectura .border-gray-200 { border-color: #d4b896 !important; }
+        html.lectura .border-gray-300 { border-color: #c4a880 !important; }
+        html.lectura .border-t { border-color: #d4b896 !important; }
+        html.lectura .text-gray-900 { color: #3d2e1e !important; }
+        html.lectura .text-gray-800 { color: #4a3728 !important; }
+        html.lectura .text-gray-700 { color: #5a3e28 !important; }
+        html.lectura .text-gray-600 { color: #7a5c3e !important; }
+        html.lectura .text-gray-500 { color: #9a7c5e !important; }
+        html.lectura .text-gray-400 { color: #b89c7e !important; }
+        html.lectura details { background-color: #ede8d8 !important; border-color: #d4b896 !important; }
+        html.lectura details .bg-gray-50 { background-color: #ede8d8 !important; }
+        html.lectura summary:hover { background-color: #e4dcc8 !important; }
+        html.lectura #theme-toggle:hover { background-color: #ede8d8 !important; }
     </style>
+
+    <!-- Aplicar tema antes del primer render para evitar flash -->
+    <script>
+        (function() {
+            var t = localStorage.getItem('theme');
+            if (t === 'oscuro') document.documentElement.classList.add('dark');
+            else if (t === 'lectura') document.documentElement.classList.add('lectura');
+        })();
+    </script>
 </head>
 <body class="bg-white text-gray-900 min-h-screen p-4 md:p-8 relative overflow-x-hidden">
 
@@ -39,9 +93,16 @@
                     <p class="text-[10px] text-gray-500 leading-tight">Claromecó · Kitesurf</p>
                 </div>
             </a>
-            <div class="ml-auto flex items-center gap-1.5">
-                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                <span class="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">En vivo</span>
+            <div class="ml-auto flex items-center gap-2">
+                <!-- Selector de tema -->
+                <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Cambiar tema de visualización">
+                    <span id="theme-icon" class="text-base leading-none">☀️</span>
+                </button>
+                <!-- En vivo -->
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">En vivo</span>
+                </div>
             </div>
         </div>
 
@@ -95,7 +156,7 @@
                         <div class="flex flex-col items-center justify-center w-[35%] border-r border-gray-300/50 pr-3">
                             <p class="text-gray-500 text-[9px] uppercase font-bold mb-1 tracking-wider">Dirección</p>
                             <button id="wind-view-toggle" class="px-2 py-0.5 mb-1 text-[9px] font-bold uppercase tracking-wider rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition-all active:scale-95 select-none" title="Cambiar vista de la flecha">📷 Vista cámara</button>
-                            <svg id="wind-arrow" class="w-20 h-20 text-gray-900 transition-transform duration-500 drop-shadow-md" style="stroke: black; stroke-width: 0.5px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L6 8h3v12h6V8h3l-6-6z"/></svg>
+                            <svg id="wind-arrow" class="w-20 h-20 text-gray-900 transition-transform duration-500 drop-shadow-md" style="stroke: currentColor; stroke-width: 0.5px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L6 8h3v12h6V8h3l-6-6z"/></svg>
                             <div id="highlight-wind-dir-data-loader" class="skeleton-loader skeleton-text-xl w-12 mt-1"></div>
                             <p class="text-4xl font-black text-gray-900 data-content mt-1" id="highlight-wind-dir-data">N/A</p>
                         </div>
@@ -675,5 +736,38 @@
     
     <script src="/_vercel/insights/script.js"></script>
     <script type="module" src="/app.js?v=3"></script>
+
+    <!-- === TEMA SWITCHER === -->
+    <script>
+        (function() {
+            var themes = ['claro', 'oscuro', 'lectura'];
+            var icons = { claro: '☀️', oscuro: '🌙', lectura: '📖' };
+
+            function applyTheme(theme) {
+                var html = document.documentElement;
+                html.classList.remove('dark', 'lectura');
+                if (theme === 'oscuro') html.classList.add('dark');
+                else if (theme === 'lectura') html.classList.add('lectura');
+                var icon = document.getElementById('theme-icon');
+                if (icon) icon.textContent = icons[theme] || '☀️';
+                localStorage.setItem('theme', theme);
+            }
+
+            // Inicializar ícono según tema guardado
+            var saved = localStorage.getItem('theme') || 'claro';
+            applyTheme(saved);
+
+            // Botón de toggle: cicla Claro → Oscuro → Lectura → Claro
+            var btn = document.getElementById('theme-toggle');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    var current = localStorage.getItem('theme') || 'claro';
+                    var idx = themes.indexOf(current);
+                    var next = themes[(idx + 1) % themes.length];
+                    applyTheme(next);
+                });
+            }
+        })();
+    </script>
 
 </body>
