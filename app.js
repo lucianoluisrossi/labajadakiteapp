@@ -288,25 +288,11 @@ try {
     let supportBannerInitialized = false;
     function initSupportBanner(isVip) {
         if (!supportBanner || isVip || supportBannerInitialized) return;
-        supportBannerInitialized = true; // Ejecutar solo una vez por carga
-
-        // Contar visitas (solo una vez por carga)
-        const visits = parseInt(localStorage.getItem('appVisits') || '0') + 1;
-        localStorage.setItem('appVisits', visits);
-
-        // Mostrar solo desde la 2da visita
-        if (visits < 2) return;
-
-        // Mostrar solo una vez por día
-        const lastShown = parseInt(localStorage.getItem('supportBannerLastShown') || '0');
-        const oneDayMs = 24 * 60 * 60 * 1000;
-        if (Date.now() - lastShown < oneDayMs) return;
-
-        // Mostrar con pequeño delay
+        supportBannerInitialized = true;
+        // TEST: mostrar siempre
         setTimeout(() => {
             supportBanner.classList.remove('hidden');
-            localStorage.setItem('supportBannerLastShown', Date.now());
-        }, 3000);
+        }, 2000);
     }
 
     if (supportBannerClose) supportBannerClose.addEventListener('click', () => {
