@@ -52,6 +52,8 @@
         /* Logos de escuelas: siempre fondo blanco en cualquier tema */
         html.dark .logo-circle,
         html.lectura .logo-circle { background-color: white !important; }
+        /* Logo top bar: fondo blanco siempre para que el PNG transparente se vea bien */
+        .logo-topbar { background-color: white; border-radius: 6px; padding: 2px; }
         /* Cards dinámicas con fondo claro (verde, azul, naranja...) → texto oscuro */
         html.dark #verdict-card .text-gray-900,
         html.dark #unified-wind-data-card .text-gray-900,
@@ -104,7 +106,7 @@
         <!-- TOP BAR MINIMALISTA -->
         <div class="flex items-center gap-3 py-2.5 mb-2 border-b border-gray-200">
             <a href="https://labajada.com.ar/" target="_blank" rel="noopener" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <img src="logo_palmera.png" alt="La Bajada" class="h-8 w-auto" onerror="this.style.display='none'">
+                <img src="logo_palmera.png" alt="La Bajada" class="logo-topbar h-8 w-auto" onerror="this.style.display='none'">
                 <div>
                     <p class="text-sm font-black text-gray-900 leading-tight">La Bajada</p>
                     <p class="text-[10px] text-gray-500 leading-tight">Claromecó · Kitesurf</p>
