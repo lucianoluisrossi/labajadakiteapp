@@ -256,13 +256,8 @@ try {
     const vipModalClose = document.getElementById('vip-modal-close');
 
     async function updateVipUI(user) {
-        if (!vipBadge || !btnSubscribe) return;
         if (!user) {
-            // Sin login: mostrar "Apoyar", sin badge
-            vipBadge.classList.add('hidden');
-            vipBadge.classList.remove('flex');
-            btnSubscribe.classList.remove('hidden');
-            btnSubscribe.classList.add('flex');
+            if (vipBadge) { vipBadge.classList.add('hidden'); vipBadge.classList.remove('flex'); }
             initSupportBanner(false);
             return;
         }
@@ -270,16 +265,10 @@ try {
             const res = await fetch(`/api/vip-status?email=${encodeURIComponent(user.email)}`);
             const data = await res.json();
             if (data.active) {
-                vipBadge.classList.remove('hidden');
-                vipBadge.classList.add('flex');
-                btnSubscribe.classList.add('hidden');
-                btnSubscribe.classList.remove('flex');
+                if (vipBadge) { vipBadge.classList.remove('hidden'); vipBadge.classList.add('flex'); }
                 initSupportBanner(true);
             } else {
-                vipBadge.classList.add('hidden');
-                vipBadge.classList.remove('flex');
-                btnSubscribe.classList.remove('hidden');
-                btnSubscribe.classList.add('flex');
+                if (vipBadge) { vipBadge.classList.add('hidden'); vipBadge.classList.remove('flex'); }
                 initSupportBanner(false);
             }
         } catch(e) {
@@ -287,16 +276,6 @@ try {
             initSupportBanner(false);
         }
     }
-
-    // Mostrar "Apoyar" por defecto hasta saber el estado del usuario
-    if (btnSubscribe) {
-        btnSubscribe.classList.remove('hidden');
-        btnSubscribe.classList.add('flex');
-    }
-
-    if (btnSubscribe) btnSubscribe.addEventListener('click', () => {
-        if (vipModal) vipModal.classList.remove('hidden');
-    });
 
     // --- BANNER DE SOPORTE (1 vez por día, solo si no es VIP, después de 3 visitas) ---
     const supportBanner = document.getElementById('support-banner');
