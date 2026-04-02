@@ -691,6 +691,11 @@ try {
                     } else { markMessagesAsRead(); }
                 } else if (lastReadTime === 0 && newestMessageTime > 0) {
                     localStorage.setItem('lastReadTime', now);
+                } else {
+                    // Mensajes leídos — ocultar badge por si quedó visible
+                    const badge = document.getElementById('notification-badge');
+                    if (badge) badge.classList.add('hidden');
+                    if (newMessageToast) newMessageToast.classList.add('hidden');
                 }
             }
         });
