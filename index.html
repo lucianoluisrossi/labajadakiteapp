@@ -49,8 +49,9 @@
         html.dark summary:hover { background-color: #263248 !important; }
         html.dark #wind-arrow { stroke: currentColor !important; }
         html.dark #theme-toggle:hover { background-color: #1e293b !important; }
-        /* Logos de escuelas: siempre fondo blanco */
-        .logo-circle { background-color: white !important; }
+        /* Logos de escuelas: siempre fondo blanco en cualquier tema */
+        html.dark .logo-circle,
+        html.lectura .logo-circle { background-color: white !important; }
         /* Cards dinámicas con fondo claro (verde, azul, naranja...) → texto oscuro */
         html.dark #verdict-card .text-gray-900,
         html.dark #unified-wind-data-card .text-gray-900,
