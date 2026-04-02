@@ -811,6 +811,8 @@
         <footer class="mt-8 pt-4 pb-24 border-t border-gray-300">
             <div class="text-center text-xs text-gray-500">
                 <p>¿Sugerencias? <a href="https://wa.me/5492983500324" target="_blank" class="underline hover:text-gray-400 font-medium">Contactar desarrollador</a></p>
+                <!-- Botón oculto de modo test (5 toques) -->
+                <span id="dev-test-trigger" class="inline-block mt-3 text-gray-200 select-none cursor-default text-[10px]">v1</span>
             </div>
         </footer>
 
@@ -899,6 +901,32 @@
                     applyTheme(next);
                 });
             }
+        })();
+    </script>
+
+    <!-- === MODO TEST (5 toques en "v1" del footer) === -->
+    <script>
+        (function() {
+            var el = document.getElementById('dev-test-trigger');
+            if (!el) return;
+            var taps = 0, timer;
+            el.addEventListener('click', function() {
+                taps++;
+                clearTimeout(timer);
+                if (taps >= 5) {
+                    taps = 0;
+                    localStorage.removeItem('supportBannerLastShown');
+                    localStorage.removeItem('appVisits');
+                    localStorage.removeItem('splashSeen');
+                    alert('✅ Test reset: contadores borrados. Recargá la app.');
+                } else {
+                    el.textContent = 'v1 (' + taps + '/5)';
+                    timer = setTimeout(function() {
+                        taps = 0;
+                        el.textContent = 'v1';
+                    }, 2000);
+                }
+            });
         })();
     </script>
 
