@@ -963,6 +963,9 @@ try {
                 const stability = calculateGustFactor(windSpeedValue, windGustValue);
                 if (stabilityCardEl) updateCardColors(stabilityCardEl, stability.color);
                 if (stabilityDataEl) stabilityDataEl.textContent = stability.text;
+
+                // Historial de viento
+                if (windSpeedValue !== null) updateWindHistory(windSpeedValue);
                 
                 // ⭐ MEJORAS UX: Actualizar barra, tendencia, timestamp
                 if (window.updateUXImprovements) {
@@ -996,6 +999,97 @@ try {
         }
     }
     
+    // --- HISTORIAL DE VIENTO ---
+    const HISTORY_MAX = 120; // 1 hora a 30s por lectura
+    const HISTORY_KEY = 'windHistory';
+
+    function loadHistory() {
+        try {
+            const raw = localStorage.getItem(HISTORY_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            // Descartar lecturas de más de 1 hora
+            const cutoff = Date.now() - 3600000;
+            return parsed.filter(p => p.t > cutoff);
+        } catch(e) { return []; }
+    }
+
+    function updateWindHistory(speed) {
+        const history = loadHistory();
+        history.push({ t: Date.now(), v: speed });
+        if (history.length > HISTORY_MAX) history.splice(0, history.length - HISTORY_MAX);
+        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch(e) {}
+        renderWindChart(history);
+    }
+
+    function windColor(spd) {
+        if (spd <= 14) return '#93c5fd'; // azul flojo
+        if (spd <= 16) return '#67e8f9'; // cyan aceptable
+        if (spd <= 19) return '#86efac'; // verde ideal
+        if (spd <= 22) return '#fde047'; // amarillo muy bueno
+        if (spd <= 27) return '#fb923c'; // naranja fuerte
+        return '#f87171';                // rojo muy fuerte
+    }
+
+    function renderWindChart(history) {
+        const container = document.getElementById('wind-history-chart');
+        const minEl = document.getElementById('history-min');
+        const maxEl = document.getElementById('history-max');
+        const trendEl = document.getElementById('history-trend');
+        if (!container || history.length < 2) return;
+
+        const W = container.clientWidth || 300;
+        const H = 64;
+        const pad = 4;
+        const values = history.map(p => p.v);
+        const minV = Math.max(0, Math.min(...values) - 2);
+        const maxV = Math.max(...values) + 2;
+        const range = maxV - minV || 1;
+
+        if (minEl) minEl.textContent = Math.min(...values).toFixed(1);
+        if (maxEl) maxEl.textContent = Math.max(...values).toFixed(1);
+
+        // Tendencia: comparar últimas 5 lecturas vs las 5 anteriores
+        if (trendEl && values.length >= 6) {
+            const recent = values.slice(-5).reduce((a,b) => a+b,0) / 5;
+            const before = values.slice(-10,-5).reduce((a,b) => a+b,0) / 5;
+            const diff = recent - before;
+            if (diff > 0.5)       { trendEl.textContent = '↑ Subiendo'; trendEl.className = 'text-[10px] font-black text-orange-500'; }
+            else if (diff < -0.5) { trendEl.textContent = '↓ Bajando'; trendEl.className = 'text-[10px] font-black text-blue-400'; }
+            else                  { trendEl.textContent = '→ Estable'; trendEl.className = 'text-[10px] font-black text-green-500'; }
+        }
+
+        const toX = (i) => pad + (i / (history.length - 1)) * (W - pad * 2);
+        const toY = (v) => H - pad - ((v - minV) / range) * (H - pad * 2);
+
+        // Línea principal
+        const points = history.map((p, i) => `${toX(i)},${toY(p.v)}`).join(' ');
+
+        // Área de relleno (mismo path + cierre abajo)
+        const areaPoints = history.map((p, i) => `${toX(i)},${toY(p.v)}`).join(' ');
+        const areaPath = `M${toX(0)},${H} L${areaPoints.split(' ').map((pt,i) => i===0 ? `${pt}` : `L${pt}`).join(' ')} L${toX(history.length-1)},${H} Z`;
+
+        // Color basado en el último valor
+        const lastColor = windColor(values[values.length - 1]);
+
+        container.innerHTML = `
+            <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="wh-grad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="${lastColor}" stop-opacity="0.35"/>
+                        <stop offset="100%" stop-color="${lastColor}" stop-opacity="0.03"/>
+                    </linearGradient>
+                </defs>
+                <path d="${areaPath}" fill="url(#wh-grad)"/>
+                <polyline points="${points}" fill="none" stroke="${lastColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                <circle cx="${toX(history.length-1)}" cy="${toY(values[values.length-1])}" r="3" fill="${lastColor}" stroke="white" stroke-width="1.5"/>
+            </svg>`;
+    }
+
+    // Cargar historial al iniciar
+    const savedHistory = loadHistory();
+    if (savedHistory.length >= 2) renderWindChart(savedHistory);
+
     fetchWeatherData();
     setInterval(fetchWeatherData, 30000);
     setInterval(updateTimeAgo, 5000);

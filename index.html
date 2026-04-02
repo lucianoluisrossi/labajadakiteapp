@@ -254,6 +254,25 @@
                 <div id="error-message" class="hidden mt-4 p-4 bg-red-600 text-white rounded-xl text-center">Error al cargar los datos del clima.</div>
             </div>
 
+            <!-- HISTORIAL DE VIENTO -->
+            <div class="mt-4 bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-[10px] text-gray-500 uppercase font-extrabold tracking-widest">📈 Última hora</p>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] text-gray-400">Mín <span id="history-min" class="font-black text-gray-600">--</span> kts</span>
+                        <span class="text-[10px] text-gray-400">Máx <span id="history-max" class="font-black text-gray-600">--</span> kts</span>
+                        <span id="history-trend" class="text-[10px] font-black"></span>
+                    </div>
+                </div>
+                <div id="wind-history-chart" class="w-full h-16">
+                    <p class="text-[10px] text-gray-300 text-center pt-4">Acumulando datos...</p>
+                </div>
+                <div class="flex justify-between text-[8px] text-gray-300 mt-1 px-0.5">
+                    <span id="history-label-old">60 min</span>
+                    <span>ahora</span>
+                </div>
+            </div>
+
             <!-- WINDGURU -->
             <details class="group bg-gray-100 rounded-xl shadow-2xl border border-gray-300 overflow-hidden mt-6 lg:mt-8 transition-all duration-300">
                 <summary class="flex justify-between items-center p-6 cursor-pointer hover:bg-gray-200 transition-colors">
