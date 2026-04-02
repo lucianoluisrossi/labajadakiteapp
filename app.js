@@ -289,7 +289,6 @@ try {
     function initSupportBanner(isVip) {
         if (!supportBanner || isVip || supportBannerInitialized) return;
         supportBannerInitialized = true;
-        // TEST: mostrar siempre
         setTimeout(() => {
             supportBanner.classList.remove('hidden');
         }, 2000);
