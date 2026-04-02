@@ -139,6 +139,16 @@
                 <button id="vip-badge" class="hidden items-center gap-1 bg-amber-400 text-amber-900 text-[10px] font-black px-2 py-1 rounded-full shadow-sm" title="Kiter VIP activo">
                     🪁 VIP
                 </button>
+                <!-- Botón login (sin sesión) -->
+                <button id="topbar-login-btn" class="hidden items-center gap-1 text-[10px] font-bold text-gray-600 border border-gray-300 px-2 py-1 rounded-full hover:bg-gray-50 transition-colors">
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                    Ingresar
+                </button>
+                <!-- Avatar usuario logueado -->
+                <button id="topbar-user-btn" class="hidden items-center gap-1.5" title="Mi cuenta">
+                    <img id="topbar-user-photo" src="" alt="" class="w-6 h-6 rounded-full border border-gray-300 object-cover">
+                    <span id="topbar-user-name" class="text-[10px] font-bold text-gray-700 max-w-[60px] truncate"></span>
+                </button>
                 <!-- Botón suscribirse (no VIP) -->
                 <button id="btn-subscribe" class="hidden items-center gap-1 text-[10px] font-bold text-sky-600 border border-sky-300 px-2 py-1 rounded-full hover:bg-sky-50 transition-colors" title="Suscribirse">
                     ⭐ Apoyar

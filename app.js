@@ -186,12 +186,28 @@ try {
         const notifLoginRequired = document.getElementById('notif-login-required');
         const notifSettingsLogged = document.getElementById('notif-settings-logged');
 
+        const topbarLoginBtn = document.getElementById('topbar-login-btn');
+        const topbarUserBtn = document.getElementById('topbar-user-btn');
+        const topbarUserPhoto = document.getElementById('topbar-user-photo');
+        const topbarUserName = document.getElementById('topbar-user-name');
+
+        if (topbarLoginBtn) {
+            topbarLoginBtn.onclick = () => window.loginWithGoogle && window.loginWithGoogle();
+        }
+        if (topbarUserBtn) {
+            topbarUserBtn.onclick = () => switchView('community');
+        }
+
         if (user) {
             // Usuario logueado
             if (authLogin) authLogin.classList.add('hidden');
             if (authUser) authUser.classList.remove('hidden');
             if (userPhoto) userPhoto.src = user.photoURL || 'https://via.placeholder.com/40';
             if (userName) userName.textContent = user.displayName || 'Kiter';
+            if (topbarLoginBtn) { topbarLoginBtn.classList.add('hidden'); topbarLoginBtn.classList.remove('flex'); }
+            if (topbarUserBtn) { topbarUserBtn.classList.remove('hidden'); topbarUserBtn.classList.add('flex'); }
+            if (topbarUserPhoto) topbarUserPhoto.src = user.photoURL || '';
+            if (topbarUserName) topbarUserName.textContent = (user.displayName || 'Kiter').split(' ')[0];
             if (messageForm) messageForm.classList.remove('hidden');
             if (loginPromptMessages) loginPromptMessages.classList.add('hidden');
             if (galleryUploadContainer) galleryUploadContainer.classList.remove('hidden');
@@ -219,6 +235,8 @@ try {
             if (notifLoginRequired) notifLoginRequired.classList.remove('hidden');
             if (notifSettingsLogged) notifSettingsLogged.classList.add('hidden');
             
+            if (topbarLoginBtn) { topbarLoginBtn.classList.remove('hidden'); topbarLoginBtn.classList.add('flex'); }
+            if (topbarUserBtn) { topbarUserBtn.classList.add('hidden'); topbarUserBtn.classList.remove('flex'); }
             console.log("ℹ️ Usuario no logueado");
         }
     }
