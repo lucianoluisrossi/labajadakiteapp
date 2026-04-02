@@ -292,8 +292,8 @@ try {
         const visits = parseInt(localStorage.getItem('appVisits') || '0') + 1;
         localStorage.setItem('appVisits', visits);
 
-        // Mostrar solo desde la 3ra visita
-        if (visits < 3) return;
+        // Mostrar solo desde la 2da visita
+        if (visits < 2) return;
 
         // Mostrar solo una vez por día
         const lastShown = parseInt(localStorage.getItem('supportBannerLastShown') || '0');
