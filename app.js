@@ -285,10 +285,12 @@ try {
     const supportBannerBtn = document.getElementById('support-banner-btn');
     const supportBannerClose = document.getElementById('support-banner-close');
 
+    let supportBannerInitialized = false;
     function initSupportBanner(isVip) {
-        if (!supportBanner || isVip) return;
+        if (!supportBanner || isVip || supportBannerInitialized) return;
+        supportBannerInitialized = true; // Ejecutar solo una vez por carga
 
-        // Contar visitas
+        // Contar visitas (solo una vez por carga)
         const visits = parseInt(localStorage.getItem('appVisits') || '0') + 1;
         localStorage.setItem('appVisits', visits);
 
@@ -300,11 +302,11 @@ try {
         const oneDayMs = 24 * 60 * 60 * 1000;
         if (Date.now() - lastShown < oneDayMs) return;
 
-        // Mostrar con pequeño delay para no interrumpir la carga
+        // Mostrar con pequeño delay
         setTimeout(() => {
             supportBanner.classList.remove('hidden');
             localStorage.setItem('supportBannerLastShown', Date.now());
-        }, 4000);
+        }, 3000);
     }
 
     if (supportBannerClose) supportBannerClose.addEventListener('click', () => {
