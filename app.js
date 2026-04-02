@@ -1142,6 +1142,13 @@ try {
     setInterval(fetchWeatherData, 30000);
     setInterval(updateTimeAgo, 5000);
 
+    // Refrescar datos al volver al foco (unlock, cambio de app, etc.)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            fetchWeatherData();
+        }
+    });
+
     // --- SPONSOR CAROUSEL ---
     const sponsorTrack = document.getElementById('sponsor-track');
     const sponsorDots = document.querySelectorAll('.sponsor-dot');
