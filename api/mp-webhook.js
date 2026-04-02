@@ -33,11 +33,20 @@ export default async function handler(req, res) {
         const subscription = await getSubscriptionStatus(data.id);
         if (!subscription) return res.status(200).json({ ok: true, ignored: 'no subscription data' });
 
-        const { status, payer_email, id, next_payment_date } = subscription;
+        console.log('Subscription data:', JSON.stringify(subscription));
+
+        const { status, payer_email, payer_id, id, next_payment_date } = subscription;
         const isActive = status === 'authorized' || status === 'active';
 
-        // Guardamos por email como ID del documento
-        const docId = payer_email.replace(/[.#$[\]]/g, '_');
+        // Usar email si existe, sino usar payer_id como fallback
+        const emailKey = payer_email || null;
+        if (!emailKey && !payer_id) {
+            console.error('No payer_email ni payer_id en la suscripción:', subscription);
+            return res.status(200).json({ ok: true, ignored: 'no payer identifier' });
+        }
+        const docId = emailKey
+            ? emailKey.replace(/[.#$[\]@]/g, '_')
+            : `payer_${payer_id}`;
         await db.collection(VIP_COLLECTION).doc(docId).set({
             email: payer_email,
             preapproval_id: id,
