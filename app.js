@@ -1,7 +1,7 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, deleteDoc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, deleteDoc, updateDoc, getDoc, setDoc, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ⭐ MEJORAS UX/UI
 import './ux-improvements.js';
@@ -999,49 +999,30 @@ try {
         }
     }
     
-    // --- HISTORIAL DE VIENTO ---
-    const HISTORY_MAX = 120; // 1 hora a 30s por lectura
-    const HISTORY_KEY = 'windHistory';
-
-    function loadHistory() {
-        try {
-            const raw = localStorage.getItem(HISTORY_KEY);
-            if (!raw) return [];
-            const parsed = JSON.parse(raw);
-            // Descartar lecturas de más de 1 hora
-            const cutoff = Date.now() - 3600000;
-            return parsed.filter(p => p.t > cutoff);
-        } catch(e) { return []; }
-    }
-
-    function updateWindHistory(speed) {
-        const history = loadHistory();
-        history.push({ t: Date.now(), v: speed });
-        if (history.length > HISTORY_MAX) history.splice(0, history.length - HISTORY_MAX);
-        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch(e) {}
-        renderWindChart(history);
-    }
+    // --- HISTORIAL DE VIENTO (Firebase) ---
+    const windHistoryCollection = db ? collection(db, 'wind_history') : null;
+    let lastHistoryWrite = 0;
 
     function windColor(spd) {
-        if (spd <= 14) return '#93c5fd'; // azul flojo
-        if (spd <= 16) return '#67e8f9'; // cyan aceptable
-        if (spd <= 19) return '#86efac'; // verde ideal
-        if (spd <= 22) return '#fde047'; // amarillo muy bueno
-        if (spd <= 27) return '#fb923c'; // naranja fuerte
-        return '#f87171';                // rojo muy fuerte
+        if (spd <= 14) return '#93c5fd';
+        if (spd <= 16) return '#67e8f9';
+        if (spd <= 19) return '#86efac';
+        if (spd <= 22) return '#fde047';
+        if (spd <= 27) return '#fb923c';
+        return '#f87171';
     }
 
-    function renderWindChart(history) {
+    function renderWindChart(docs) {
         const container = document.getElementById('wind-history-chart');
         const minEl = document.getElementById('history-min');
         const maxEl = document.getElementById('history-max');
         const trendEl = document.getElementById('history-trend');
-        if (!container || history.length < 2) return;
+        if (!container || docs.length < 2) return;
 
         const W = container.clientWidth || 300;
         const H = 64;
         const pad = 4;
-        const values = history.map(p => p.v);
+        const values = docs.map(d => d.v);
         const minV = Math.max(0, Math.min(...values) - 2);
         const maxV = Math.max(...values) + 2;
         const range = maxV - minV || 1;
@@ -1049,8 +1030,7 @@ try {
         if (minEl) minEl.textContent = Math.min(...values).toFixed(1);
         if (maxEl) maxEl.textContent = Math.max(...values).toFixed(1);
 
-        // Tendencia: comparar últimas 5 lecturas vs las 5 anteriores
-        if (trendEl && values.length >= 6) {
+        if (trendEl && values.length >= 10) {
             const recent = values.slice(-5).reduce((a,b) => a+b,0) / 5;
             const before = values.slice(-10,-5).reduce((a,b) => a+b,0) / 5;
             const diff = recent - before;
@@ -1059,18 +1039,17 @@ try {
             else                  { trendEl.textContent = '→ Estable'; trendEl.className = 'text-[10px] font-black text-green-500'; }
         }
 
-        const toX = (i) => pad + (i / (history.length - 1)) * (W - pad * 2);
+        const toX = (i) => pad + (i / (docs.length - 1)) * (W - pad * 2);
         const toY = (v) => H - pad - ((v - minV) / range) * (H - pad * 2);
-
-        // Línea principal
-        const points = history.map((p, i) => `${toX(i)},${toY(p.v)}`).join(' ');
-
-        // Área de relleno (mismo path + cierre abajo)
-        const areaPoints = history.map((p, i) => `${toX(i)},${toY(p.v)}`).join(' ');
-        const areaPath = `M${toX(0)},${H} L${areaPoints.split(' ').map((pt,i) => i===0 ? `${pt}` : `L${pt}`).join(' ')} L${toX(history.length-1)},${H} Z`;
-
-        // Color basado en el último valor
+        const points = docs.map((d, i) => `${toX(i)},${toY(d.v)}`).join(' ');
+        const areaPath = `M${toX(0)},${H} ` + docs.map((d,i) => `L${toX(i)},${toY(d.v)}`).join(' ') + ` L${toX(docs.length-1)},${H} Z`;
         const lastColor = windColor(values[values.length - 1]);
+
+        // Calcular label de tiempo más antiguo
+        const oldestDoc = docs[0];
+        const ageMin = oldestDoc.t ? Math.round((Date.now() - oldestDoc.t.toMillis()) / 60000) : '?';
+        const oldLabel = document.getElementById('history-label-old');
+        if (oldLabel) oldLabel.textContent = ageMin >= 60 ? '6 hs' : `${ageMin} min`;
 
         container.innerHTML = `
             <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
@@ -1082,13 +1061,35 @@ try {
                 </defs>
                 <path d="${areaPath}" fill="url(#wh-grad)"/>
                 <polyline points="${points}" fill="none" stroke="${lastColor}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-                <circle cx="${toX(history.length-1)}" cy="${toY(values[values.length-1])}" r="3" fill="${lastColor}" stroke="white" stroke-width="1.5"/>
+                <circle cx="${toX(docs.length-1)}" cy="${toY(values[values.length-1])}" r="3" fill="${lastColor}" stroke="white" stroke-width="1.5"/>
             </svg>`;
     }
 
-    // Cargar historial al iniciar
-    const savedHistory = loadHistory();
-    if (savedHistory.length >= 2) renderWindChart(savedHistory);
+    async function updateWindHistory(speed) {
+        if (!windHistoryCollection) return;
+        const now = Date.now();
+        // Escribir máximo una vez cada 25 segundos
+        if (now - lastHistoryWrite < 25000) return;
+        lastHistoryWrite = now;
+        try {
+            await addDoc(windHistoryCollection, { v: speed, t: serverTimestamp() });
+        } catch(e) { console.warn('wind_history write error', e); }
+    }
+
+    // Suscripción en tiempo real a las últimas 6 horas
+    if (windHistoryCollection) {
+        const sixHoursAgo = Timestamp.fromMillis(Date.now() - 6 * 3600000);
+        const historyQuery = query(
+            windHistoryCollection,
+            where('t', '>', sixHoursAgo),
+            orderBy('t', 'asc'),
+            limit(720)
+        );
+        onSnapshot(historyQuery, (snapshot) => {
+            const docs = snapshot.docs.map(d => ({ ...d.data() }));
+            if (docs.length >= 2) renderWindChart(docs);
+        });
+    }
 
     fetchWeatherData();
     setInterval(fetchWeatherData, 30000);
