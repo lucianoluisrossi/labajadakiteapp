@@ -240,10 +240,11 @@ try {
     async function updateVipUI(user) {
         if (!vipBadge || !btnSubscribe) return;
         if (!user) {
+            // Sin login: mostrar "Apoyar", sin badge
             vipBadge.classList.add('hidden');
             vipBadge.classList.remove('flex');
-            btnSubscribe.classList.add('hidden');
-            btnSubscribe.classList.remove('flex');
+            btnSubscribe.classList.remove('hidden');
+            btnSubscribe.classList.add('flex');
             return;
         }
         try {
@@ -263,6 +264,12 @@ try {
         } catch(e) {
             console.warn('VIP check error', e);
         }
+    }
+
+    // Mostrar "Apoyar" por defecto hasta saber el estado del usuario
+    if (btnSubscribe) {
+        btnSubscribe.classList.remove('hidden');
+        btnSubscribe.classList.add('flex');
     }
 
     if (btnSubscribe) btnSubscribe.addEventListener('click', () => {
