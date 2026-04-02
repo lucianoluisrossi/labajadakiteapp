@@ -49,7 +49,7 @@
         html.dark summary:hover { background-color: #263248 !important; }
         html.dark #wind-arrow { stroke: currentColor !important; }
         html.dark #theme-toggle:hover { background-color: #1e293b !important; }
-        /* Cards dinámicas: fondos claros (verde, azul, naranja...) → mantener texto oscuro */
+        /* Cards dinámicas con fondo claro (verde, azul, naranja...) → texto oscuro */
         html.dark #verdict-card .text-gray-900,
         html.dark #unified-wind-data-card .text-gray-900,
         html.dark #stability-card .text-gray-900,
@@ -60,6 +60,9 @@
         html.dark #unified-wind-data-card .text-gray-700,
         html.dark #gust-info-container .text-gray-700 { color: #1f2937 !important; }
         html.dark #unified-wind-data-card .text-gray-400 { color: #4b5563 !important; }
+        /* Stability card en N/A (bg-gray-100 → fondo oscuro en dark mode) → texto claro */
+        html.dark #stability-card.bg-gray-100 .text-gray-900 { color: #e2e8f0 !important; }
+        html.dark #stability-card.bg-gray-100 .text-gray-500 { color: #94a3b8 !important; }
 
         /* --- LECTURA (sepia cálido) --- */
         html.lectura body { background-color: #fdf8f0; color: #3d2e1e; }
