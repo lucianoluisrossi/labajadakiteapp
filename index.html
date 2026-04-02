@@ -15,11 +15,32 @@
 
     <!-- Tailwind CSS -->
     <link rel="stylesheet" href="style.css">
+    <!-- Fuente deportiva para velocidad de viento -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
 
     <style>
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Fuente deportiva para el número de viento */
+        #highlight-wind-speed-data {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 900;
+        }
+
+        /* Textura líneas de viento en el hero card */
+        .wind-lines-bg {
+            background-image: repeating-linear-gradient(
+                -60deg,
+                transparent,
+                transparent 22px,
+                rgba(255,255,255,0.055) 22px,
+                rgba(255,255,255,0.055) 23px
+            );
+            pointer-events: none;
+        }
 
         /* Estilo para quitar el triángulo por defecto del details */
         details > summary { list-style: none; }
@@ -98,12 +119,12 @@
         })();
     </script>
 </head>
-<body class="bg-white text-gray-900 min-h-screen p-4 md:p-8 relative overflow-x-hidden">
+<body class="bg-sky-50 text-gray-900 min-h-screen p-4 md:p-8 relative overflow-x-hidden">
 
     <div class="max-w-6xl mx-auto">
         
         <!-- TOP BAR MINIMALISTA -->
-        <div class="flex items-center gap-3 py-2.5 mb-2 border-b border-gray-200">
+        <div class="flex items-center gap-3 py-2.5">
             <a href="https://labajada.com.ar/" target="_blank" rel="noopener" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <img src="logo_palmera.png" alt="La Bajada" class="h-12 w-auto" onerror="this.style.display='none'">
                 <div>
@@ -118,11 +139,14 @@
                 </button>
                 <!-- En vivo -->
                 <div class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">En vivo</span>
+                    <span class="w-2 h-2 bg-sky-400 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] text-sky-500 font-semibold uppercase tracking-wide">En vivo</span>
                 </div>
             </div>
         </div>
+
+        <!-- Separador gradiente oceánico -->
+        <div class="h-0.5 bg-gradient-to-r from-sky-400 via-cyan-400 to-blue-400 rounded-full mb-3"></div>
 
         <!-- BANNER DE CONEXIÓN DESACTUALIZADA -->
         <div id="connection-warning" class="hidden bg-amber-100 border border-amber-400 text-amber-800 px-4 py-3 rounded-lg mb-4 flex items-center gap-3 shadow-md animate-pulse">
@@ -144,6 +168,9 @@
             <!-- CONTENEDOR PRINCIPAL — WIND COCKPIT -->
             <div id="wind-highlight-card" class="mt-3 p-4 md:p-5 rounded-2xl shadow-xl transition-all duration-300 bg-gray-100 border border-gray-300 relative">
 
+                <!-- Textura viento (decorativa) -->
+                <div class="wind-lines-bg absolute inset-0 rounded-2xl z-0"></div>
+
                 <!-- Badge de Notificaciones (flotante) -->
                 <button id="notification-badge"
                         class="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg z-20 hidden transition-all duration-300 hover:scale-110"
@@ -161,7 +188,7 @@
 
                 <!-- 2. STATUS DEL SPOT -->
                 <div id="verdict-card" class="mb-3 py-2 px-4 rounded-xl border border-gray-200 transition-colors duration-300 text-center">
-                    <p class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-0.5">Estado del Spot</p>
+                    <p class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-0.5">🪁 Estado del Spot</p>
                     <div id="verdict-data-loader" class="skeleton-loader skeleton-text-xl mx-auto" style="width: 60%;"></div>
                     <p id="verdict-data" class="data-content text-xl font-black text-gray-900">Calculando...</p>
                 </div>
@@ -181,7 +208,7 @@
 
                         <!-- Columna Velocidad (65%) -->
                         <div class="flex flex-col items-center justify-center w-[65%] pl-3">
-                            <p class="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">Velocidad</p>
+                            <p class="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">💨 Viento</p>
                             <div id="highlight-wind-speed-data-loader" class="skeleton-loader w-28 h-16 mt-1 rounded-lg"></div>
                             <div class="flex items-end gap-1.5 leading-none">
                                 <p class="text-7xl font-black text-gray-900 data-content leading-none tracking-tighter" id="highlight-wind-speed-data">--</p>
@@ -252,38 +279,45 @@
 
             <!-- DATOS EN VIVO — CHIPS COMPACTOS -->
             <div class="mt-4 grid grid-cols-3 gap-2">
-                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center shadow-sm">
+                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 border-l-2 border-l-sky-300 text-center shadow-sm">
                     <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wide mb-1">🌡️ Temp.</p>
                     <div id="temp-data-loader" class="skeleton-loader skeleton-text-xl mx-auto w-12"></div>
                     <p class="text-sm font-black text-gray-900 data-content" id="temp-data">--</p>
                 </div>
-                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center shadow-sm">
+                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 border-l-2 border-l-sky-300 text-center shadow-sm">
                     <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wide mb-1">💧 Humedad</p>
                     <div id="humidity-data-loader" class="skeleton-loader skeleton-text-xl mx-auto w-12"></div>
                     <p class="text-sm font-black text-gray-900 data-content" id="humidity-data">--</p>
                 </div>
-                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center shadow-sm">
+                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 border-l-2 border-l-sky-300 text-center shadow-sm">
                     <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wide mb-1">🔽 Presión</p>
                     <div id="pressure-data-loader" class="skeleton-loader skeleton-text-xl mx-auto w-12"></div>
                     <p class="text-sm font-black text-gray-900 data-content" id="pressure-data">--</p>
                 </div>
-                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center shadow-sm">
+                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 border-l-2 border-l-sky-300 text-center shadow-sm">
                     <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wide mb-1">🌧️ Lluvia</p>
                     <div id="rainfall-daily-data-loader" class="skeleton-loader skeleton-text-xl mx-auto w-12"></div>
                     <p class="text-sm font-black text-gray-900 data-content" id="rainfall-daily-data">--</p>
                 </div>
-                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center shadow-sm">
+                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 border-l-2 border-l-sky-300 text-center shadow-sm">
                     <p class="text-[9px] text-gray-400 uppercase font-bold tracking-wide mb-1">☀️ UV</p>
                     <div id="uvi-data-loader" class="skeleton-loader skeleton-text-xl mx-auto w-12"></div>
                     <p class="text-sm font-black text-gray-900 data-content" id="uvi-data">--</p>
                 </div>
-                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center shadow-sm flex flex-col items-center justify-center">
+                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 border-l-2 border-l-sky-300 text-center shadow-sm flex flex-col items-center justify-center">
                     <p id="last-updated" class="text-[9px] text-gray-400 leading-tight text-center">Actualizando...</p>
                 </div>
             </div>
 
+            <!-- Wave divider -->
+            <div class="mt-6 mb-1 text-sky-200">
+                <svg viewBox="0 0 400 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full">
+                    <path d="M0 10 C50 0,100 20,150 10 C200 0,250 20,300 10 C350 0,380 16,400 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+
             <!-- ESCUELAS DE KITE -->
-            <div class="mt-5">
+            <div class="mt-2">
                 <p class="text-xs text-gray-600 uppercase font-extrabold tracking-widest text-center mb-4">🏄 Escuelas de Kite · Claromecó</p>
                 <div class="flex justify-center items-end gap-3">
                     <!-- Escuela 1: Claromecó Kiteboarding -->
@@ -752,6 +786,18 @@
 
     </div>
     
+    <!-- SPLASH ONBOARDING (primera visita) -->
+    <div id="splash-overlay" class="fixed inset-0 z-[200] flex flex-col items-center justify-center text-white text-center p-8" style="background: linear-gradient(135deg, #0369a1 0%, #0891b2 50%, #0e7490 100%);">
+        <div class="text-7xl mb-5 animate-bounce">🪁</div>
+        <h1 class="text-4xl font-black mb-2 tracking-tight">La Bajada</h1>
+        <p class="text-lg font-bold mb-1 text-sky-200">Claromecó · Kitesurf Spot</p>
+        <p class="text-sm text-sky-300 mb-10 max-w-xs">Viento en tiempo real · Cámara live · Comunidad kitera</p>
+        <div class="flex items-center gap-2 text-sky-300">
+            <span class="w-2 h-2 bg-sky-300 rounded-full animate-pulse"></span>
+            <span class="text-xs font-semibold uppercase tracking-widest">Cargando datos del spot...</span>
+        </div>
+    </div>
+
     <script src="/_vercel/insights/script.js"></script>
     <script type="module" src="/app.js?v=3"></script>
 
@@ -785,6 +831,24 @@
                     applyTheme(next);
                 });
             }
+        })();
+    </script>
+
+    <!-- === SPLASH ONBOARDING === -->
+    <script>
+        (function() {
+            var splash = document.getElementById('splash-overlay');
+            if (!splash) return;
+            if (localStorage.getItem('splashSeen')) {
+                splash.style.display = 'none';
+                return;
+            }
+            localStorage.setItem('splashSeen', '1');
+            setTimeout(function() {
+                splash.style.transition = 'opacity 0.8s ease';
+                splash.style.opacity = '0';
+                setTimeout(function() { splash.style.display = 'none'; }, 800);
+            }, 2800);
         })();
     </script>
 
