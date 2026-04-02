@@ -173,14 +173,14 @@
                 <!-- Textura viento (decorativa) -->
                 <div class="wind-lines-bg absolute inset-0 rounded-2xl z-0"></div>
 
-                <!-- Badge de Notificaciones (flotante) -->
+                <!-- Badge mensajes nuevos (flotante) -->
                 <button id="notification-badge"
-                        class="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg z-20 hidden transition-all duration-300 hover:scale-110"
-                        title="Activar notificaciones">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                        class="absolute top-3 right-3 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full shadow-lg z-20 hidden transition-all duration-300 hover:scale-110"
+                        title="Ver mensajes nuevos">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-1M15 3H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l4-4h4a2 2 0 002-2V5a2 2 0 00-2-2z"/>
                     </svg>
-                    <span class="absolute -top-1 -right-1 bg-white text-red-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">!</span>
+                    <span class="absolute -top-1 -right-1 bg-white text-blue-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">!</span>
                 </button>
 
                 <!-- 1. CÁMARA EN VIVO -->
@@ -258,7 +258,7 @@
             <!-- HISTORIAL DE VIENTO -->
             <div class="mt-4 bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
                 <div class="flex items-center justify-between mb-3">
-                    <p class="text-[10px] text-gray-500 uppercase font-extrabold tracking-widest">📈 Última hora</p>
+                    <p class="text-[10px] text-gray-500 uppercase font-extrabold tracking-widest">📈 Tendencia del viento</p>
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-gray-400">Mín <span id="history-min" class="font-black text-gray-600">--</span> kts</span>
                         <span class="text-[10px] text-gray-400">Máx <span id="history-max" class="font-black text-gray-600">--</span> kts</span>

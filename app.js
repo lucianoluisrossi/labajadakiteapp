@@ -318,6 +318,8 @@ try {
     if (backToHomeBtn) backToHomeBtn.addEventListener('click', () => switchView('dashboard'));
     if (backToHomeClassifieds) backToHomeClassifieds.addEventListener('click', () => switchView('dashboard'));
     if (fabCommunity) fabCommunity.addEventListener('click', () => switchView('community'));
+    const notifBadge = document.getElementById('notification-badge');
+    if (notifBadge) notifBadge.addEventListener('click', () => switchView('community'));
     if (fabClasificados) fabClasificados.addEventListener('click', () => switchView('classifieds'));
     if (fabBackWeather) fabBackWeather.addEventListener('click', () => switchView('dashboard'));
     if (newMessageToast) newMessageToast.addEventListener('click', () => switchView('community'));
