@@ -245,6 +245,7 @@ try {
             vipBadge.classList.remove('flex');
             btnSubscribe.classList.remove('hidden');
             btnSubscribe.classList.add('flex');
+            initSupportBanner(false);
             return;
         }
         try {
@@ -255,14 +256,17 @@ try {
                 vipBadge.classList.add('flex');
                 btnSubscribe.classList.add('hidden');
                 btnSubscribe.classList.remove('flex');
+                initSupportBanner(true);
             } else {
                 vipBadge.classList.add('hidden');
                 vipBadge.classList.remove('flex');
                 btnSubscribe.classList.remove('hidden');
                 btnSubscribe.classList.add('flex');
+                initSupportBanner(false);
             }
         } catch(e) {
             console.warn('VIP check error', e);
+            initSupportBanner(false);
         }
     }
 
@@ -273,6 +277,42 @@ try {
     }
 
     if (btnSubscribe) btnSubscribe.addEventListener('click', () => {
+        if (vipModal) vipModal.classList.remove('hidden');
+    });
+
+    // --- BANNER DE SOPORTE (1 vez por día, solo si no es VIP, después de 3 visitas) ---
+    const supportBanner = document.getElementById('support-banner');
+    const supportBannerBtn = document.getElementById('support-banner-btn');
+    const supportBannerClose = document.getElementById('support-banner-close');
+
+    function initSupportBanner(isVip) {
+        if (!supportBanner || isVip) return;
+
+        // Contar visitas
+        const visits = parseInt(localStorage.getItem('appVisits') || '0') + 1;
+        localStorage.setItem('appVisits', visits);
+
+        // Mostrar solo desde la 3ra visita
+        if (visits < 3) return;
+
+        // Mostrar solo una vez por día
+        const lastShown = parseInt(localStorage.getItem('supportBannerLastShown') || '0');
+        const oneDayMs = 24 * 60 * 60 * 1000;
+        if (Date.now() - lastShown < oneDayMs) return;
+
+        // Mostrar con pequeño delay para no interrumpir la carga
+        setTimeout(() => {
+            supportBanner.classList.remove('hidden');
+            localStorage.setItem('supportBannerLastShown', Date.now());
+        }, 4000);
+    }
+
+    if (supportBannerClose) supportBannerClose.addEventListener('click', () => {
+        supportBanner.classList.add('hidden');
+    });
+
+    if (supportBannerBtn) supportBannerBtn.addEventListener('click', () => {
+        supportBanner.classList.add('hidden');
         if (vipModal) vipModal.classList.remove('hidden');
     });
     if (vipModalClose) vipModalClose.addEventListener('click', () => {
