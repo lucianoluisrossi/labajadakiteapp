@@ -228,6 +228,51 @@ try {
         currentUser = user;
 		updateDeviceAnalytics(user);
         updateAuthUI(user);
+        updateVipUI(user);
+    });
+
+    // --- VIP SUBSCRIPTION ---
+    const vipBadge = document.getElementById('vip-badge');
+    const btnSubscribe = document.getElementById('btn-subscribe');
+    const vipModal = document.getElementById('vip-modal');
+    const vipModalClose = document.getElementById('vip-modal-close');
+
+    async function updateVipUI(user) {
+        if (!vipBadge || !btnSubscribe) return;
+        if (!user) {
+            vipBadge.classList.add('hidden');
+            vipBadge.classList.remove('flex');
+            btnSubscribe.classList.add('hidden');
+            btnSubscribe.classList.remove('flex');
+            return;
+        }
+        try {
+            const res = await fetch(`/api/vip-status?email=${encodeURIComponent(user.email)}`);
+            const data = await res.json();
+            if (data.active) {
+                vipBadge.classList.remove('hidden');
+                vipBadge.classList.add('flex');
+                btnSubscribe.classList.add('hidden');
+                btnSubscribe.classList.remove('flex');
+            } else {
+                vipBadge.classList.add('hidden');
+                vipBadge.classList.remove('flex');
+                btnSubscribe.classList.remove('hidden');
+                btnSubscribe.classList.add('flex');
+            }
+        } catch(e) {
+            console.warn('VIP check error', e);
+        }
+    }
+
+    if (btnSubscribe) btnSubscribe.addEventListener('click', () => {
+        if (vipModal) vipModal.classList.remove('hidden');
+    });
+    if (vipModalClose) vipModalClose.addEventListener('click', () => {
+        if (vipModal) vipModal.classList.add('hidden');
+    });
+    if (vipModal) vipModal.addEventListener('click', (e) => {
+        if (e.target === vipModal) vipModal.classList.add('hidden');
     });
     console.log("🚀 App iniciada.");
 

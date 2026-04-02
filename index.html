@@ -135,6 +135,14 @@
                 </div>
             </a>
             <div class="ml-auto flex items-center gap-2">
+                <!-- Badge Kiter VIP -->
+                <button id="vip-badge" class="hidden items-center gap-1 bg-amber-400 text-amber-900 text-[10px] font-black px-2 py-1 rounded-full shadow-sm" title="Kiter VIP activo">
+                    🪁 VIP
+                </button>
+                <!-- Botón suscribirse (no VIP) -->
+                <button id="btn-subscribe" class="hidden items-center gap-1 text-[10px] font-bold text-sky-600 border border-sky-300 px-2 py-1 rounded-full hover:bg-sky-50 transition-colors" title="Suscribirse">
+                    ⭐ Apoyar
+                </button>
                 <!-- Selector de tema -->
                 <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Cambiar tema de visualización">
                     <span id="theme-icon" class="text-base leading-none">☀️</span>
@@ -807,6 +815,37 @@
 
     </div>
     
+    <!-- MODAL SUSCRIPCIÓN VIP -->
+    <div id="vip-modal" class="hidden fixed inset-0 z-[150] bg-black/60 flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <!-- Header degradado -->
+            <div class="bg-gradient-to-r from-sky-500 to-cyan-400 p-6 text-white text-center">
+                <div class="text-5xl mb-2">🪁</div>
+                <h2 class="text-xl font-black">Kiter VIP</h2>
+                <p class="text-sky-100 text-sm mt-1">Apoyá La Bajada</p>
+            </div>
+            <!-- Contenido -->
+            <div class="p-6">
+                <ul class="space-y-2 mb-5">
+                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Mantenimiento de la estación meteorológica</li>
+                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Servidores Vercel y Firebase siempre activos</li>
+                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Fondo para sensores de backup</li>
+                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Badge <span class="bg-amber-400 text-amber-900 text-[10px] font-black px-1.5 py-0.5 rounded-full">🪁 VIP</span> en tu perfil</li>
+                </ul>
+                <div class="text-center mb-4">
+                    <span class="text-3xl font-black text-gray-900">$4.000</span>
+                    <span class="text-gray-400 text-sm">/mes</span>
+                </div>
+                <a id="btn-go-mp" href="https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=3abba398a4e44c45ad14a53532407155" target="_blank" rel="noopener"
+                   class="block w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3 rounded-xl text-center transition-colors shadow-md text-sm">
+                    Suscribirme con MercadoPago
+                </a>
+                <p class="text-[10px] text-gray-400 text-center mt-2">Podés cancelar cuando quieras desde MercadoPago</p>
+            </div>
+            <button id="vip-modal-close" class="absolute top-4 right-4 text-white text-2xl font-bold leading-none">&times;</button>
+        </div>
+    </div>
+
     <!-- SPLASH ONBOARDING (primera visita) -->
     <div id="splash-overlay" class="fixed inset-0 z-[200] flex flex-col items-center justify-center text-white text-center p-8" style="background: linear-gradient(135deg, #0369a1 0%, #0891b2 50%, #0e7490 100%);">
         <div class="text-7xl mb-5 animate-bounce">🪁</div>
