@@ -102,56 +102,6 @@ function updateGustAlert(speed, gust) {
     }
 }
 
-// ====================================
-// 4. BADGE DE NOTIFICACIONES
-// ====================================
-
-function updateNotificationBadge() {
-    const badge = document.getElementById('notification-badge');
-    if (!badge) return;
-    
-    // Verificar si las notificaciones están activadas
-    if ('Notification' in window) {
-        if (Notification.permission === 'granted') {
-            // Notificaciones activas - ocultar badge
-            badge.classList.add('hidden');
-        } else {
-            // Notificaciones no activas - mostrar badge
-            badge.classList.remove('hidden');
-        }
-    }
-}
-
-// Click en badge: scroll al panel de notificaciones
-document.addEventListener('DOMContentLoaded', () => {
-    const badge = document.getElementById('notification-badge');
-    if (badge) {
-        badge.addEventListener('click', () => {
-            const notificationsCard = document.getElementById('notifications-card');
-            if (notificationsCard) {
-                notificationsCard.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-                
-                // Highlight del panel
-                notificationsCard.classList.add('ring-4', 'ring-blue-400', 'ring-opacity-50');
-                setTimeout(() => {
-                    notificationsCard.classList.remove('ring-4', 'ring-blue-400', 'ring-opacity-50');
-                }, 2000);
-            }
-        });
-    }
-    
-    // Verificar badge al cargar
-    updateNotificationBadge();
-    
-    // Actualizar badge si cambian los permisos
-    if ('Notification' in window) {
-        // Revisar cada 5 segundos
-        setInterval(updateNotificationBadge, 5000);
-    }
-});
 
 // ====================================
 // 5. TIMESTAMP ÚLTIMA ACTUALIZACIÓN

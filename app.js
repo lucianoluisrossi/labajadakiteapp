@@ -659,7 +659,6 @@ try {
             let hasMessages = false;
             const lastReadTime = parseInt(localStorage.getItem('lastReadTime') || '0');
             let newestMessageTime = 0;
-            console.log('📬 kiter_board snapshot — docs:', snapshot.size, '| lastReadTime:', lastReadTime);
 
             snapshot.forEach((doc) => {
                 const data = doc.data();
@@ -680,7 +679,6 @@ try {
             if (!hasMessages) {
                 messagesContainer.innerHTML = '<p class="text-center text-gray-400 text-xs py-2">No hay mensajes recientes.</p>';
                 const badge = document.getElementById('notification-badge');
-                console.log('🔴 !hasMessages — badge element:', badge, '| hidden?', badge?.classList.contains('hidden'));
                 if (badge) badge.classList.add('hidden');
                 if (newMessageToast) newMessageToast.classList.add('hidden');
             }
@@ -689,8 +687,6 @@ try {
                     if (viewCommunity.classList.contains('hidden')) {
                         if(newMessageToast) newMessageToast.classList.remove('hidden');
                         const badge = document.getElementById('notification-badge');
-                        console.log('🟢 MOSTRANDO badge — newestMsgTime:', newestMessageTime, '| lastReadTime:', lastReadTime);
-                        console.trace();
                         if(badge) badge.classList.remove('hidden');
                     } else { markMessagesAsRead(); }
                 } else if (lastReadTime === 0 && newestMessageTime > 0) {
