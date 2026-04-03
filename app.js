@@ -689,6 +689,8 @@ try {
                     if (viewCommunity.classList.contains('hidden')) {
                         if(newMessageToast) newMessageToast.classList.remove('hidden');
                         const badge = document.getElementById('notification-badge');
+                        console.log('🟢 MOSTRANDO badge — newestMsgTime:', newestMessageTime, '| lastReadTime:', lastReadTime);
+                        console.trace();
                         if(badge) badge.classList.remove('hidden');
                     } else { markMessagesAsRead(); }
                 } else if (lastReadTime === 0 && newestMessageTime > 0) {
