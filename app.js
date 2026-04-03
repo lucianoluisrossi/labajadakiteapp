@@ -653,12 +653,13 @@ try {
     if (messagesContainer && db) {
         const q = query(messagesCollection, orderBy("timestamp", "desc"), limit(50));
         onSnapshot(q, (snapshot) => {
-            messagesContainer.innerHTML = ''; 
+            messagesContainer.innerHTML = '';
             const now = Date.now();
             const oneDay = 24 * 60 * 60 * 1000;
             let hasMessages = false;
             const lastReadTime = parseInt(localStorage.getItem('lastReadTime') || '0');
             let newestMessageTime = 0;
+            console.log('📬 kiter_board snapshot — docs:', snapshot.size, '| lastReadTime:', lastReadTime);
 
             snapshot.forEach((doc) => {
                 const data = doc.data();
