@@ -680,6 +680,7 @@ try {
             if (!hasMessages) {
                 messagesContainer.innerHTML = '<p class="text-center text-gray-400 text-xs py-2">No hay mensajes recientes.</p>';
                 const badge = document.getElementById('notification-badge');
+                console.log('🔴 !hasMessages — badge element:', badge, '| hidden?', badge?.classList.contains('hidden'));
                 if (badge) badge.classList.add('hidden');
                 if (newMessageToast) newMessageToast.classList.add('hidden');
             }
