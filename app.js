@@ -192,7 +192,10 @@ try {
         const topbarUserName = document.getElementById('topbar-user-name');
 
         if (topbarLoginBtn) {
-            topbarLoginBtn.onclick = () => window.loginWithGoogle && window.loginWithGoogle();
+            topbarLoginBtn.onclick = () => {
+                window._openVipAfterLogin = true;
+                window.loginWithGoogle && window.loginWithGoogle();
+            };
         }
         if (topbarUserBtn) {
             topbarUserBtn.onclick = () => switchView('community');
@@ -270,6 +273,10 @@ try {
             } else {
                 if (vipBadge) { vipBadge.classList.add('hidden'); vipBadge.classList.remove('flex'); }
                 initSupportBanner(false);
+                if (window._openVipAfterLogin) {
+                    window._openVipAfterLogin = false;
+                    setTimeout(() => { if (vipModal) vipModal.classList.remove('hidden'); }, 400);
+                }
             }
         } catch(e) {
             console.warn('VIP check error', e);
