@@ -41,6 +41,25 @@ async function sendToChannel(text) {
     return true;
 }
 
+async function sendToGroup(text) {
+    const instanceId = process.env.GREENAPI_INSTANCE_ID;
+    const token      = process.env.GREENAPI_TOKEN;
+    const chatId     = process.env.GREENAPI_GROUP_ID;
+    if (!instanceId || !token || !chatId) { console.warn('Faltan vars Green API'); return false; }
+    try {
+        const res = await fetch(`https://api.green-api.com/waInstance${instanceId}/sendMessage/${token}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId, message: text })
+        });
+        if (!res.ok) { const j = await res.json(); console.error('Green API error:', j); }
+        return res.ok;
+    } catch (e) {
+        console.error('Error enviando al grupo WhatsApp:', e);
+        return false;
+    }
+}
+
 async function sendWhatsApp(to, text) {
     const sid   = process.env.TWILIO_ACCOUNT_SID;
     const token = process.env.TWILIO_AUTH_TOKEN;
@@ -185,16 +204,22 @@ ${isEpic ? '🚀 ¡ESTO ES LO QUE ESPERABAS!' : '🔥 ¡Momento de salir!'}
 
     // WhatsApp — texto plano (sin HTML)
     const waMsg = msg.replace(/<b>/g,'*').replace(/<\/b>/g,'*').replace(/<[^>]+>/g,'');
+
+    // WhatsApp suscriptores individuales (Twilio)
     const waSubscribers = await getWhatsAppSubscribers();
     const waResults = await Promise.allSettled(
         waSubscribers.map(s => sendWhatsApp(s.phone, waMsg))
     );
     const waSent = waResults.filter(r => r.status === 'fulfilled' && r.value).length;
 
+    // WhatsApp grupo Kite Claromecó (Green API)
+    const groupSent = await sendToGroup(waMsg);
+
     await saveLastAlertTime(db);
     return res.status(200).json({ ok: true, sent: true,
         wind: { speed: wind.speed.toFixed(1), cardinal, avg: consistency.avg, readings: consistency.count },
         telegram: true,
-        whatsapp: { sent: waSent, total: waSubscribers.length }
+        whatsapp: { sent: waSent, total: waSubscribers.length },
+        whatsappGroup: groupSent
     });
 }
