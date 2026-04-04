@@ -13,8 +13,8 @@ const GOOD_DIRECTIONS   = ['ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OS
 const CONSISTENCY_MS    = 30 * 60 * 1000;            // ventana consistencia: 30 min
 const MIN_READINGS      = 3;                         // mínimo de lecturas en esa ventana
 const ALERT_INTERVAL_MS = 3 * 60 * 60 * 1000;       // anti-spam: 1 alerta cada 3hs
-const HOUR_START        = 7;                         // horario alerta inicio (hora Argentina)
-const HOUR_END          = 21;                        // horario alerta fin
+const HOUR_START        = 9;                         // horario alerta inicio (hora Argentina)
+const HOUR_END          = 19;                        // horario alerta fin
 
 // --- Helpers ---
 function degreesToCardinal(deg) {
@@ -140,15 +140,16 @@ export default async function handler(req, res) {
     }
 
     // ✅ Todo OK — enviar alerta al canal
+    const isEpic = ['E', 'ESE'].includes(cardinal);
     const msg =
-`🪁 <b>¡Buenas condiciones en La Bajada!</b>
+`${isEpic ? '🔥🪁 <b>¡EPICOOO EN LA BAJADA!</b> 🪁🔥' : '🪁 <b>¡Buenas condiciones en La Bajada!</b>'}
 
 💨 Viento: <b>${wind.speed.toFixed(1)} kts</b>
 📊 Promedio 30 min: <b>${consistency.avg} kts</b> (${consistency.count} lecturas)
-🧭 Dirección: <b>${cardinal}</b> — on shore ✅
+🧭 Dirección: <b>${cardinal}</b>${isEpic ? ' 🔥 ÉPICO' : ' — on shore ✅'}
 💥 Ráfagas: <b>${wind.gust.toFixed(1)} kts</b>
 
-🔥 ¡Momento de salir!
+${isEpic ? '🚀 ¡ESTO ES LO QUE ESPERABAS!' : '🔥 ¡Momento de salir!'}
 🔗 <a href="https://test02-labajadakite.vercel.app">Ver cámara en vivo →</a>`;
 
     try { await sendToChannel(msg); } catch(e) {
