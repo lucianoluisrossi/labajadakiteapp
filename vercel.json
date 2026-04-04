@@ -14,9 +14,6 @@
       ]
     }
   ],
-  "rewrites": [
-    { "source": "/api/whatsapp-webhook", "destination": "/api/whatsapp-webhook" }
-  ],
   "crons": [
     {
       "path": "/api/push-alert",
