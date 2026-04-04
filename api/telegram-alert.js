@@ -98,14 +98,12 @@ async function checkConsistency(db) {
     }
 
     const readings = snap.docs.map(d => d.data().v || 0);
-    const allOk    = readings.every(v => v >= WIND_THRESHOLD);
-    const avg      = (readings.reduce((a, b) => a + b, 0) / readings.length).toFixed(1);
+    const avg      = readings.reduce((a, b) => a + b, 0) / readings.length;
 
-    if (!allOk) {
-        const min = Math.min(...readings).toFixed(1);
-        return { ok: false, reason: `Viento cayó a ${min} kts dentro de los 30 min` };
+    if (avg < WIND_THRESHOLD) {
+        return { ok: false, reason: `Promedio 30 min: ${avg.toFixed(1)} kts (mín ${WIND_THRESHOLD})` };
     }
-    return { ok: true, avg, count: readings.length };
+    return { ok: true, avg: avg.toFixed(1), count: readings.length };
 }
 
 async function getLastAlertTime(db) {
