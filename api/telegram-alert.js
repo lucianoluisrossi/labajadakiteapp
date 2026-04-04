@@ -9,7 +9,7 @@ const TELEGRAM_API = 'https://api.telegram.org/bot';
 
 // --- Configuración del spot ---
 const WIND_THRESHOLD    = 8;                         // kts mínimos (TEST - cambiar a 14)
-const GOOD_DIRECTIONS   = ['N', 'NE', 'NO', 'NNE', 'NNO']; // on-shore La Bajada
+const GOOD_DIRECTIONS   = ['N', 'NE', 'NO', 'NNE', 'NNO', 'OSO', 'O', 'ONO', 'SO', 'SSO']; // on-shore La Bajada
 const CONSISTENCY_MS    = 30 * 60 * 1000;            // ventana consistencia: 30 min
 const MIN_READINGS      = 3;                         // mínimo de lecturas en esa ventana
 const ALERT_INTERVAL_MS = 3 * 60 * 60 * 1000;       // anti-spam: 1 alerta cada 3hs
@@ -132,10 +132,9 @@ export default async function handler(req, res) {
     if (!wind) return res.status(500).json({ error: 'No se pudo obtener viento actual' });
 
     const cardinal = degreesToCardinal(wind.direction);
-    // TEST: dirección desactivada temporalmente
-    // if (!GOOD_DIRECTIONS.includes(cardinal)) {
-    //     return res.status(200).json({ ok: true, skipped: `Dirección no favorable: ${cardinal}` });
-    // }
+    if (!GOOD_DIRECTIONS.includes(cardinal)) {
+        return res.status(200).json({ ok: true, skipped: `Dirección no favorable: ${cardinal}` });
+    }
 
     // 4. Consistencia 30 min en Firestore
     const consistency = await checkConsistency(db);
