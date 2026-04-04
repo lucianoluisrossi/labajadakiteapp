@@ -130,20 +130,24 @@ export default async function handler(req, res) {
         if (apiKey !== expectedKey) return res.status(401).json({ error: 'No autorizado' });
     }
 
-    // 1. Horario (7-21hs Argentina)
-    if (!isWithinAlertHours()) {
-        return res.status(200).json({ ok: true, skipped: 'Fuera de horario (7-21hs AR)' });
+    const isTest = req.query.test === 'true';
+
+    // 1. Horario (9-19hs Argentina)
+    if (!isTest && !isWithinAlertHours()) {
+        return res.status(200).json({ ok: true, skipped: 'Fuera de horario (9-19hs AR)' });
     }
 
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase no disponible' });
 
     // 2. Anti-spam: máximo 1 alerta cada 3hs
-    const lastAlert = await getLastAlertTime(db);
-    const sinceLastMs = Date.now() - lastAlert;
-    if (sinceLastMs < ALERT_INTERVAL_MS) {
-        const nextInMin = Math.round((ALERT_INTERVAL_MS - sinceLastMs) / 60000);
-        return res.status(200).json({ ok: true, skipped: `Anti-spam: próxima alerta en ${nextInMin} min` });
+    if (!isTest) {
+        const lastAlert = await getLastAlertTime(db);
+        const sinceLastMs = Date.now() - lastAlert;
+        if (sinceLastMs < ALERT_INTERVAL_MS) {
+            const nextInMin = Math.round((ALERT_INTERVAL_MS - sinceLastMs) / 60000);
+            return res.status(200).json({ ok: true, skipped: `Anti-spam: próxima alerta en ${nextInMin} min` });
+        }
     }
 
     // 3. Dirección actual on-shore
@@ -151,12 +155,14 @@ export default async function handler(req, res) {
     if (!wind) return res.status(500).json({ error: 'No se pudo obtener viento actual' });
 
     const cardinal = degreesToCardinal(wind.direction);
-    if (!GOOD_DIRECTIONS.includes(cardinal)) {
+    if (!isTest && !GOOD_DIRECTIONS.includes(cardinal)) {
         return res.status(200).json({ ok: true, skipped: `Dirección no favorable: ${cardinal}` });
     }
 
     // 4. Consistencia 30 min en Firestore
-    const consistency = await checkConsistency(db);
+    const consistency = isTest
+        ? { ok: true, avg: wind.speed.toFixed(1), count: 3 }
+        : await checkConsistency(db);
     if (!consistency.ok) {
         return res.status(200).json({ ok: true, skipped: consistency.reason });
     }
