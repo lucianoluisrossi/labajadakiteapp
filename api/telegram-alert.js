@@ -59,18 +59,25 @@ async function sendViaGreenAPI(chatId, text) {
     }
 }
 
-async function sendToGreenAPITargets(text) {
+async function sendToGreenAPITargets(db, text) {
     const results = [];
 
     // Grupo(s): GREENAPI_GROUP_ID separados por coma
     const groups = (process.env.GREENAPI_GROUP_ID || '').split(',').map(s => s.trim()).filter(Boolean);
     for (const g of groups) results.push(await sendViaGreenAPI(g, text));
 
-    // Contactos individuales: GREENAPI_CONTACTS separados por coma
+    // Contactos fijos: GREENAPI_CONTACTS separados por coma
     const contacts = (process.env.GREENAPI_CONTACTS || '').split(',').map(s => s.trim()).filter(Boolean);
     for (const c of contacts) results.push(await sendViaGreenAPI(c, text));
 
-    return results.filter(Boolean).length; // cantidad enviados OK
+    // Suscriptores a demanda (desde Firestore)
+    try {
+        const snap = await db.collection('greenapi_subscribers').where('active', '==', true).get();
+        const subs = snap.docs.map(d => d.data().chatId).filter(Boolean);
+        for (const chatId of subs) results.push(await sendViaGreenAPI(chatId, text));
+    } catch (e) { console.warn('Error cargando suscriptores Green API:', e); }
+
+    return results.filter(Boolean).length;
 }
 
 async function sendWhatsApp(to, text) {
@@ -225,8 +232,8 @@ ${isEpic ? '🚀 ¡ESTO ES LO QUE ESPERABAS!' : '🔥 ¡Momento de salir!'}
     );
     const waSent = waResults.filter(r => r.status === 'fulfilled' && r.value).length;
 
-    // WhatsApp grupos y contactos (Green API)
-    const groupSent = await sendToGreenAPITargets(waMsg);
+    // WhatsApp grupos, contactos y suscriptores (Green API)
+    const groupSent = await sendToGreenAPITargets(db, waMsg);
 
     await saveLastAlertTime(db);
     return res.status(200).json({ ok: true, sent: true,
