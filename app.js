@@ -1140,20 +1140,19 @@ try {
         const areaPath = `M${toX(0)},${H} ` + docs.map((d,i) => `L${toX(i)},${toY(d.v)}`).join(' ') + ` L${toX(docs.length-1)},${H} Z`;
         const lastColor = windColor(values[values.length - 1]);
 
-        // Etiquetas de hora reales en el eje X
+        // Etiquetas de hora reales en el eje X — siempre 6 horas atrás
         const labelsEl = document.getElementById('history-time-labels');
-        if (labelsEl && docs[0].t) {
+        if (labelsEl) {
             const fmt = (ms) => {
                 const d = new Date(ms);
                 return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
             };
-            const t0 = docs[0].t.toMillis();
-            const t1 = Date.now();
-            const step = (t1 - t0) / 3;
+            const now = Date.now();
+            const sixH = 6 * 60 * 60 * 1000;
             labelsEl.innerHTML =
-                `<span>${fmt(t0)}</span>` +
-                `<span>${fmt(t0 + step)}</span>` +
-                `<span>${fmt(t0 + step * 2)}</span>` +
+                `<span>${fmt(now - sixH)}</span>` +
+                `<span>${fmt(now - sixH * 2/3)}</span>` +
+                `<span>${fmt(now - sixH * 1/3)}</span>` +
                 `<span>ahora</span>`;
         }
 
