@@ -306,12 +306,34 @@ try {
         supportBanner.classList.add('hidden');
         if (vipModal) vipModal.classList.remove('hidden');
     });
-    if (vipModalClose) vipModalClose.addEventListener('click', () => {
+    function closeVipModalAndOpenLink() {
         if (vipModal) vipModal.classList.add('hidden');
-    });
+        if (window._pendingAlertLink) {
+            window.open(window._pendingAlertLink, '_blank', 'noopener');
+            window._pendingAlertLink = null;
+        }
+    }
+    if (vipModalClose) vipModalClose.addEventListener('click', closeVipModalAndOpenLink);
     if (vipModal) vipModal.addEventListener('click', (e) => {
-        if (e.target === vipModal) vipModal.classList.add('hidden');
+        if (e.target === vipModal) closeVipModalAndOpenLink();
     });
+
+    // --- BOTONES DE ALERTA (WhatsApp / Telegram) — requieren login + modal apoyo ---
+    function handleAlertBtnClick(e, url) {
+        e.preventDefault();
+        window._pendingAlertLink = url;
+        if (!currentUser) {
+            window._openVipAfterLogin = true;
+            window.loginWithGoogle && window.loginWithGoogle();
+        } else {
+            if (vipModal) vipModal.classList.remove('hidden');
+        }
+    }
+    const alertTelegramBtn = document.getElementById('alert-telegram-btn');
+    const alertWhatsappBtn = document.getElementById('alert-whatsapp-btn');
+    if (alertTelegramBtn) alertTelegramBtn.addEventListener('click', (e) => handleAlertBtnClick(e, alertTelegramBtn.href));
+    if (alertWhatsappBtn) alertWhatsappBtn.addEventListener('click', (e) => handleAlertBtnClick(e, alertWhatsappBtn.href));
+
     console.log("🚀 App iniciada.");
 
     // --- ELEMENTOS DE NAVEGACIÓN ---
