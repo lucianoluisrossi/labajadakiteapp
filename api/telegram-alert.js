@@ -8,7 +8,7 @@ import admin from 'firebase-admin';
 const TELEGRAM_API = 'https://api.telegram.org/bot';
 
 // --- Configuración del spot ---
-const WIND_THRESHOLD    = 8;                         // kts mínimos (TEST - cambiar a 14)
+const WIND_THRESHOLD    = 14;                        // kts mínimos
 const GOOD_DIRECTIONS   = ['ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO']; // favorables La Bajada (excluye N, NE, NO, NNE, NNO)
 const CONSISTENCY_MS    = 30 * 60 * 1000;            // ventana consistencia: 30 min
 const MIN_READINGS      = 3;                         // mínimo de lecturas en esa ventana
@@ -151,18 +151,12 @@ export default async function handler(req, res) {
 🔥 ¡Momento de salir!
 🔗 <a href="https://test02-labajadakite.vercel.app">Ver cámara en vivo →</a>`;
 
-    let sent = false;
-    let telegramError = null;
-    try { sent = await sendToChannel(msg); } catch(e) { telegramError = e.message; }
-    if (!sent) return res.status(500).json({
-        error: 'Error enviando mensaje a Telegram',
-        telegramError,
-        debug: { chatId: process.env.TELEGRAM_CHAT_ID, tokenSet: !!process.env.TELEGRAM_BOT_TOKEN }
-    });
+    try { await sendToChannel(msg); } catch(e) {
+        return res.status(500).json({ error: 'Error enviando mensaje a Telegram', detail: e.message });
+    }
 
     await saveLastAlertTime(db);
-    return res.status(200).json({
-        ok: true, sent: true,
+    return res.status(200).json({ ok: true, sent: true,
         wind: { speed: wind.speed.toFixed(1), cardinal, avg: consistency.avg, readings: consistency.count }
     });
 }
