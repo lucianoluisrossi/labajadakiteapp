@@ -132,9 +132,10 @@ export default async function handler(req, res) {
     if (!wind) return res.status(500).json({ error: 'No se pudo obtener viento actual' });
 
     const cardinal = degreesToCardinal(wind.direction);
-    if (!GOOD_DIRECTIONS.includes(cardinal)) {
-        return res.status(200).json({ ok: true, skipped: `Dirección no favorable: ${cardinal}` });
-    }
+    // TEST: dirección desactivada temporalmente
+    // if (!GOOD_DIRECTIONS.includes(cardinal)) {
+    //     return res.status(200).json({ ok: true, skipped: `Dirección no favorable: ${cardinal}` });
+    // }
 
     // 4. Consistencia 30 min en Firestore
     const consistency = await checkConsistency(db);
