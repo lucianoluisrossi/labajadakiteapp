@@ -2,7 +2,7 @@
 // Alerta de viento para canal de Telegram
 // Condiciones: ≥14 kts constante 30 min + dirección on-shore + anti-spam 3hs
 
-import { initFirebase } from './_firebase.js';
+import { initFirebase, getWhatsAppSubscribers } from './_firebase.js';
 import admin from 'firebase-admin';
 
 const TELEGRAM_API = 'https://api.telegram.org/bot';
@@ -39,6 +39,28 @@ async function sendToChannel(text) {
     const json = await res.json();
     if (!res.ok) throw new Error(json.description || `HTTP ${res.status}`);
     return true;
+}
+
+async function sendWhatsApp(to, text) {
+    const sid   = process.env.TWILIO_ACCOUNT_SID;
+    const token = process.env.TWILIO_AUTH_TOKEN;
+    const from  = process.env.TWILIO_WHATSAPP_FROM;
+    if (!sid || !token || !from) { console.warn('Faltan vars Twilio'); return false; }
+    try {
+        const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({ From: from, To: to, Body: text }).toString()
+        });
+        if (!res.ok) { const j = await res.json(); console.error('Twilio error:', j.message); }
+        return res.ok;
+    } catch (e) {
+        console.error('Error enviando WhatsApp:', e);
+        return false;
+    }
 }
 
 async function getCurrentWind() {
@@ -152,12 +174,23 @@ export default async function handler(req, res) {
 ${isEpic ? '🚀 ¡ESTO ES LO QUE ESPERABAS!' : '🔥 ¡Momento de salir!'}
 🔗 <a href="https://test02-labajadakite.vercel.app">Ver cámara en vivo →</a>`;
 
+    // Telegram
     try { await sendToChannel(msg); } catch(e) {
         return res.status(500).json({ error: 'Error enviando mensaje a Telegram', detail: e.message });
     }
 
+    // WhatsApp — texto plano (sin HTML)
+    const waMsg = msg.replace(/<b>/g,'*').replace(/<\/b>/g,'*').replace(/<[^>]+>/g,'');
+    const waSubscribers = await getWhatsAppSubscribers();
+    const waResults = await Promise.allSettled(
+        waSubscribers.map(s => sendWhatsApp(s.phone, waMsg))
+    );
+    const waSent = waResults.filter(r => r.status === 'fulfilled' && r.value).length;
+
     await saveLastAlertTime(db);
     return res.status(200).json({ ok: true, sent: true,
-        wind: { speed: wind.speed.toFixed(1), cardinal, avg: consistency.avg, readings: consistency.count }
+        wind: { speed: wind.speed.toFixed(1), cardinal, avg: consistency.avg, readings: consistency.count },
+        telegram: true,
+        whatsapp: { sent: waSent, total: waSubscribers.length }
     });
 }

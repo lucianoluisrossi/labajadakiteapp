@@ -114,4 +114,47 @@ export async function updateSubscriberActivity(chatId) {
 }
 
 
+// --- WhatsApp subscribers ---
+const WA_SUBSCRIBERS_COLLECTION = 'whatsapp_subscribers';
+
+export async function getWhatsAppSubscribers() {
+    const firestore = initFirebase();
+    if (!firestore) return [];
+    try {
+        const snap = await firestore.collection(WA_SUBSCRIBERS_COLLECTION)
+            .where('active', '==', true).get();
+        return snap.docs.map(d => ({ phone: d.id, ...d.data() }));
+    } catch (e) {
+        console.error('Error obteniendo suscriptores WA:', e);
+        return [];
+    }
+}
+
+export async function addWhatsAppSubscriber(phone, name) {
+    const firestore = initFirebase();
+    if (!firestore) return false;
+    try {
+        await firestore.collection(WA_SUBSCRIBERS_COLLECTION).doc(phone).set({
+            phone, name: name || 'Kitero', active: true,
+            subscribedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        return true;
+    } catch (e) {
+        console.error('Error agregando suscriptor WA:', e);
+        return false;
+    }
+}
+
+export async function removeWhatsAppSubscriber(phone) {
+    const firestore = initFirebase();
+    if (!firestore) return false;
+    try {
+        await firestore.collection(WA_SUBSCRIBERS_COLLECTION).doc(phone).set({
+            active: false,
+            unsubscribedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        return true;
+    } catch (e) { return false; }
+}
+
 export { initFirebase };
