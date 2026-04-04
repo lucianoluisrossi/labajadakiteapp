@@ -37,6 +37,8 @@ async function sendToChannel(text) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true })
         });
+        const json = await res.json();
+        if (!res.ok) console.error('Telegram API error:', JSON.stringify(json));
         return res.ok;
     } catch (e) {
         console.error('Error enviando Telegram:', e);
@@ -155,7 +157,10 @@ export default async function handler(req, res) {
 🔗 <a href="https://test02-labajadakite.vercel.app">Ver cámara en vivo →</a>`;
 
     const sent = await sendToChannel(msg);
-    if (!sent) return res.status(500).json({ error: 'Error enviando mensaje a Telegram' });
+    if (!sent) return res.status(500).json({
+        error: 'Error enviando mensaje a Telegram',
+        debug: { chatId: process.env.TELEGRAM_CHAT_ID, tokenSet: !!process.env.TELEGRAM_BOT_TOKEN }
+    });
 
     await saveLastAlertTime(db);
     return res.status(200).json({
