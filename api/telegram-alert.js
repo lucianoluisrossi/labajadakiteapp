@@ -8,7 +8,7 @@ import admin from 'firebase-admin';
 const TELEGRAM_API = 'https://api.telegram.org/bot';
 
 // --- Configuración del spot ---
-const WIND_THRESHOLD    = 14;                        // kts mínimos
+const WIND_THRESHOLD    = 8;                         // kts mínimos (TEST - cambiar a 14)
 const GOOD_DIRECTIONS   = ['N', 'NE', 'NO', 'NNE', 'NNO']; // on-shore La Bajada
 const CONSISTENCY_MS    = 30 * 60 * 1000;            // ventana consistencia: 30 min
 const MIN_READINGS      = 3;                         // mínimo de lecturas en esa ventana
