@@ -1140,11 +1140,22 @@ try {
         const areaPath = `M${toX(0)},${H} ` + docs.map((d,i) => `L${toX(i)},${toY(d.v)}`).join(' ') + ` L${toX(docs.length-1)},${H} Z`;
         const lastColor = windColor(values[values.length - 1]);
 
-        // Calcular label de tiempo más antiguo
-        const oldestDoc = docs[0];
-        const ageMin = oldestDoc.t ? Math.round((Date.now() - oldestDoc.t.toMillis()) / 60000) : '?';
-        const oldLabel = document.getElementById('history-label-old');
-        if (oldLabel) oldLabel.textContent = ageMin >= 60 ? '6 hs' : `${ageMin} min`;
+        // Etiquetas de hora reales en el eje X
+        const labelsEl = document.getElementById('history-time-labels');
+        if (labelsEl && docs[0].t) {
+            const fmt = (ms) => {
+                const d = new Date(ms);
+                return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+            };
+            const t0 = docs[0].t.toMillis();
+            const t1 = Date.now();
+            const step = (t1 - t0) / 3;
+            labelsEl.innerHTML =
+                `<span>${fmt(t0)}</span>` +
+                `<span>${fmt(t0 + step)}</span>` +
+                `<span>${fmt(t0 + step * 2)}</span>` +
+                `<span>ahora</span>`;
+        }
 
         container.innerHTML = `
             <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
