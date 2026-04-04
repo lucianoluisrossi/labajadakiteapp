@@ -41,11 +41,10 @@ async function sendToChannel(text) {
     return true;
 }
 
-async function sendToGroup(text) {
+async function sendViaGreenAPI(chatId, text) {
     const instanceId = process.env.GREENAPI_INSTANCE_ID;
     const token      = process.env.GREENAPI_TOKEN;
-    const chatId     = process.env.GREENAPI_GROUP_ID;
-    if (!instanceId || !token || !chatId) { console.warn('Faltan vars Green API'); return false; }
+    if (!instanceId || !token) return false;
     try {
         const res = await fetch(`https://api.green-api.com/waInstance${instanceId}/sendMessage/${token}`, {
             method: 'POST',
@@ -55,9 +54,23 @@ async function sendToGroup(text) {
         if (!res.ok) { const j = await res.json(); console.error('Green API error:', j); }
         return res.ok;
     } catch (e) {
-        console.error('Error enviando al grupo WhatsApp:', e);
+        console.error('Error Green API:', e);
         return false;
     }
+}
+
+async function sendToGreenAPITargets(text) {
+    const results = [];
+
+    // Grupo(s): GREENAPI_GROUP_ID separados por coma
+    const groups = (process.env.GREENAPI_GROUP_ID || '').split(',').map(s => s.trim()).filter(Boolean);
+    for (const g of groups) results.push(await sendViaGreenAPI(g, text));
+
+    // Contactos individuales: GREENAPI_CONTACTS separados por coma
+    const contacts = (process.env.GREENAPI_CONTACTS || '').split(',').map(s => s.trim()).filter(Boolean);
+    for (const c of contacts) results.push(await sendViaGreenAPI(c, text));
+
+    return results.filter(Boolean).length; // cantidad enviados OK
 }
 
 async function sendWhatsApp(to, text) {
@@ -212,14 +225,14 @@ ${isEpic ? '🚀 ¡ESTO ES LO QUE ESPERABAS!' : '🔥 ¡Momento de salir!'}
     );
     const waSent = waResults.filter(r => r.status === 'fulfilled' && r.value).length;
 
-    // WhatsApp grupo Kite Claromecó (Green API)
-    const groupSent = await sendToGroup(waMsg);
+    // WhatsApp grupos y contactos (Green API)
+    const groupSent = await sendToGreenAPITargets(waMsg);
 
     await saveLastAlertTime(db);
     return res.status(200).json({ ok: true, sent: true,
         wind: { speed: wind.speed.toFixed(1), cardinal, avg: consistency.avg, readings: consistency.count },
         telegram: true,
         whatsapp: { sent: waSent, total: waSubscribers.length },
-        whatsappGroup: groupSent
+        whatsappGroup: { sent: groupSent }
     });
 }
