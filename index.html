@@ -925,39 +925,93 @@
     <script>
         // Variables globales para PWA install
         window.deferredPrompt = null;
-        let installPromptShown = false;
 
         // Capturar el evento beforeinstallprompt
         window.addEventListener('beforeinstallprompt', (e) => {
             console.log('✅ beforeinstallprompt capturado - PWA es instalable');
             e.preventDefault();
             window.deferredPrompt = e;
-            showInstallPrompt();
+
+            // Mostrar botón de instalación después de 3 segundos
+            setTimeout(() => {
+                showInstallButton();
+            }, 3000);
         });
 
-        // Función para mostrar el prompt de instalación
-        function showInstallPrompt() {
-            if (window.deferredPrompt && !installPromptShown) {
-                installPromptShown = true;
-                console.log('📲 Mostrando prompt de instalación');
+        // Función para mostrar el botón de instalación
+        function showInstallButton() {
+            if (window.deferredPrompt) {
+                // Crear botón flotante
+                const installBtn = document.createElement('button');
+                installBtn.id = 'pwa-install-btn';
+                installBtn.innerHTML = '⬇️ Instalar App';
+                installBtn.style.cssText = `
+                    position: fixed;
+                    bottom: 80px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 35;
+                    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 50px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+                    transition: all 0.3s ease;
+                `;
 
-                window.deferredPrompt.prompt();
-                window.deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('✅ Usuario aceptó instalar la PWA');
-                    } else {
-                        console.log('❌ Usuario rechazó instalar la PWA');
-                    }
-                    window.deferredPrompt = null;
-                    installPromptShown = false;
-                });
+                installBtn.onmouseover = () => {
+                    installBtn.style.transform = 'translateX(-50%) scale(1.05)';
+                    installBtn.style.boxShadow = '0 6px 16px rgba(37, 99, 235, 0.6)';
+                };
+
+                installBtn.onmouseout = () => {
+                    installBtn.style.transform = 'translateX(-50%) scale(1)';
+                    installBtn.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.4)';
+                };
+
+                installBtn.onclick = promptUserToInstall;
+
+                document.body.appendChild(installBtn);
+                console.log('📲 Botón de instalación mostrado');
             }
+        }
+
+        // Función para solicitar instalación al usuario
+        function promptUserToInstall() {
+            if (!window.deferredPrompt) {
+                console.log('⚠️ Prompt no disponible');
+                return;
+            }
+
+            console.log('🎯 Usuario presionó botón de instalar');
+            window.deferredPrompt.prompt();
+
+            window.deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('✅ Usuario aceptó instalar la PWA');
+                } else {
+                    console.log('❌ Usuario rechazó instalar la PWA');
+                }
+
+                // Limpiar
+                window.deferredPrompt = null;
+                const btn = document.getElementById('pwa-install-btn');
+                if (btn) btn.remove();
+            }).catch((error) => {
+                console.error('❌ Error en el prompt:', error);
+            });
         }
 
         // Escuchar cuando se instale la app
         window.addEventListener('appinstalled', () => {
             console.log('🎉 PWA instalada correctamente');
             window.deferredPrompt = null;
+            const btn = document.getElementById('pwa-install-btn');
+            if (btn) btn.remove();
         });
 
         // Registrar Service Worker
