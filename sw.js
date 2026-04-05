@@ -1,82 +1,126 @@
 // Service Worker - La Bajada Kite App
-const CACHE_NAME = 'labajada-v1';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'labajada-cache-v1';
+const RUNTIME_CACHE = 'labajada-runtime-v1';
+
+// Archivos críticos que deben estar cacheados
+const CRITICAL_ASSETS = [
   '/',
   '/index.html',
   '/app.js',
   '/style.css',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/manifest.json'
 ];
 
-// Install: Cachear archivos estáticos
+// ==========================================
+// INSTALL EVENT
+// ==========================================
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker instalando...');
-  self.skipWaiting();
+  console.log('[SW] 🔧 Service Worker instalando...');
+  self.skipWaiting(); // Activar inmediatamente
 
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('📦 Cacheando archivos estáticos...');
-        return cache.addAll(ASSETS_TO_CACHE).catch(() => {
-          console.log('⚠️ Algunos archivos no pudieron cachearse (normal en dev)');
-        });
+        console.log('[SW] 📦 Cacheando archivos críticos...');
+        return cache.addAll(CRITICAL_ASSETS)
+          .catch((error) => {
+            console.warn('[SW] ⚠️ No se pudieron cachear todos los assets (puede ser normal):', error.message);
+          });
       })
   );
 });
 
-// Activate: Limpiar caches viejos
+// ==========================================
+// ACTIVATE EVENT
+// ==========================================
 self.addEventListener('activate', (event) => {
-  console.log('⚡ Service Worker activado');
+  console.log('[SW] ⚡ Service Worker activando...');
+  self.clients.claim(); // Controlar inmediatamente
+
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => {
-            console.log('🗑️ Eliminando cache viejo:', cacheName);
-            return caches.delete(cacheName);
+          .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
+          .map((name) => {
+            console.log('[SW] 🗑️ Eliminando cache viejo:', name);
+            return caches.delete(name);
           })
       );
     })
   );
 });
 
-// Fetch: Network-first, fallback a cache
+// ==========================================
+// FETCH EVENT - Network First Strategy
+// ==========================================
 self.addEventListener('fetch', (event) => {
-  // Solo cachear GET requests
-  if (event.request.method !== 'GET') {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Ignorar requests que no sean GET
+  if (request.method !== 'GET') {
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // No cachear si no es una respuesta válida
-        if (!response || response.status !== 200 || response.type === 'error') {
-          return response;
-        }
+  // Ignorar extensiones de chrome
+  if (url.protocol === 'chrome-extension:') {
+    return;
+  }
 
-        // Clonar y guardar en cache
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
-        return response;
-      })
-      .catch(() => {
-        // Si offline, intentar obtener del cache
-        return caches.match(event.request)
-          .then((cachedResponse) => {
-            return cachedResponse || new Response('Offline - recurso no disponible', {
-              status: 503,
-              statusText: 'Service Unavailable'
-            });
-          });
-      })
-  );
+  // Network first para contenido dinámico, cache first para statics
+  if (url.pathname.includes('/api/') || url.pathname.includes('.json')) {
+    // APIs: Network first
+    event.respondWith(networkFirstStrategy(request));
+  } else {
+    // Assets: Cache first, fallback network
+    event.respondWith(cacheFirstStrategy(request));
+  }
 });
 
-console.log('✅ Service Worker cargado correctamente');
+// ==========================================
+// ESTRATEGIAS DE CACHE
+// ==========================================
+
+async function networkFirstStrategy(request) {
+  try {
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+      const cache = await caches.open(RUNTIME_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.log('[SW] ⚠️ Network failed, trying cache:', request.url);
+    const cached = await caches.match(request);
+    return cached || new Response('Offline', { status: 503 });
+  }
+}
+
+async function cacheFirstStrategy(request) {
+  const cached = await caches.match(request);
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.log('[SW] ⚠️ Failed to fetch:', request.url);
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+// ==========================================
+// BACKGROUND SYNC (opcional)
+// ==========================================
+self.addEventListener('sync', (event) => {
+  console.log('[SW] 🔄 Background sync:', event.tag);
+});
+
+console.log('[SW] ✅ Service Worker script cargado');
