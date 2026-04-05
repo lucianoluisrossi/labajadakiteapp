@@ -193,7 +193,7 @@ export default async function handler(req, res) {
 💥 Ráfagas: <b>${wind.gust.toFixed(1)} kts</b>
 
 ${isEpic ? '🚀 ¡ESTO ES LO QUE ESPERABAS!' : '🔥 ¡Momento de salir!'}
-🔗 <a href="https://test02-labajadakite.vercel.app">Ver cámara en vivo →</a>`;
+🔗 <a href="https://labajadakite.app">Ver cámara en vivo →</a>`;
 
     // Telegram
     try { await sendToChannel(msg); } catch(e) {
