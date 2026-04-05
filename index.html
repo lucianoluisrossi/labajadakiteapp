@@ -912,6 +912,21 @@
     <script src="/_vercel/insights/script.js"></script>
     <script type="module" src="/app.js?v=3"></script>
 
+    <!-- Service Worker Registration para PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .then(function(registration) {
+                        console.log('✅ Service Worker registrado correctamente');
+                    })
+                    .catch(function(error) {
+                        console.log('❌ Error registrando Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+
     <!-- === TEMA SWITCHER === -->
     <script>
         (function() {
