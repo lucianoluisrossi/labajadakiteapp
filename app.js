@@ -285,28 +285,21 @@ try {
         }
     }
 
-    // --- BANNER DE SOPORTE (1 vez por día, solo si no es VIP, después de 3 visitas) ---
-    const supportBanner = document.getElementById('support-banner');
-    const supportBannerBtn = document.getElementById('support-banner-btn');
-    const supportBannerClose = document.getElementById('support-banner-close');
-
+    // --- MODAL VIP: mostrar 1 vez por día si no es VIP ---
     let supportBannerInitialized = false;
     function initSupportBanner(isVip) {
-        if (!supportBanner || isVip || supportBannerInitialized) return;
+        if (isVip || supportBannerInitialized) return;
         supportBannerInitialized = true;
+        const today = new Date().toISOString().slice(0, 10);
+        const lastShown = localStorage.getItem('vipModalLastShown');
+        if (lastShown === today) return;
         setTimeout(() => {
-            supportBanner.classList.remove('hidden');
-        }, 2000);
+            if (vipModal) {
+                vipModal.classList.remove('hidden');
+                localStorage.setItem('vipModalLastShown', today);
+            }
+        }, 3000);
     }
-
-    if (supportBannerClose) supportBannerClose.addEventListener('click', () => {
-        supportBanner.classList.add('hidden');
-    });
-
-    if (supportBannerBtn) supportBannerBtn.addEventListener('click', () => {
-        supportBanner.classList.add('hidden');
-        if (vipModal) vipModal.classList.remove('hidden');
-    });
     function closeVipModalAndOpenLink() {
         if (vipModal) vipModal.classList.add('hidden');
         if (window._pendingAlertLink) {
