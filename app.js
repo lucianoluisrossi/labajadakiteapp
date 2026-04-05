@@ -356,6 +356,7 @@ try {
             const snap = await getDoc(doc(db, 'usuarios', user.uid));
             if (snap.exists() && snap.data().role === 'admin') {
                 isAdmin = true;
+                if (novedadesSection) novedadesSection.classList.remove('hidden');
                 if (novedadAddBtn) { novedadAddBtn.classList.remove('hidden'); novedadAddBtn.classList.add('flex'); }
             }
         } catch(e) { console.warn('Error leyendo rol usuario:', e); }
@@ -364,7 +365,8 @@ try {
     function renderNovedades(docs) {
         if (!novedadesList) return;
         if (docs.length === 0) {
-            if (novedadesSection) novedadesSection.classList.add('hidden');
+            if (!isAdmin && novedadesSection) novedadesSection.classList.add('hidden');
+            novedadesList.innerHTML = '';
             return;
         }
         if (novedadesSection) novedadesSection.classList.remove('hidden');
