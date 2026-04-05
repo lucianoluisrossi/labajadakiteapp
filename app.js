@@ -250,6 +250,7 @@ try {
 		updateDeviceAnalytics(user);
         updateAuthUI(user);
         updateVipUI(user);
+        updateNovedadesAdminUI(user);
     });
 
     // --- VIP SUBSCRIPTION ---
@@ -333,6 +334,124 @@ try {
     const alertWhatsappBtn = document.getElementById('alert-whatsapp-btn');
     if (alertTelegramBtn) alertTelegramBtn.addEventListener('click', (e) => handleAlertBtnClick(e, alertTelegramBtn.href));
     if (alertWhatsappBtn) alertWhatsappBtn.addEventListener('click', (e) => handleAlertBtnClick(e, alertWhatsappBtn.href));
+
+    // --- NOVEDADES DEL SPOT ---
+    let isAdmin = false;
+    const novedadesSection  = document.getElementById('novedades-section');
+    const novedadesList     = document.getElementById('novedades-list');
+    const novedadAddBtn     = document.getElementById('novedad-add-btn');
+    const novedadModal      = document.getElementById('novedad-modal');
+    const novedadModalClose = document.getElementById('novedad-modal-close');
+    const novedadModalTitle = document.getElementById('novedad-modal-title');
+    const novedadTitulo     = document.getElementById('novedad-titulo');
+    const novedadTexto      = document.getElementById('novedad-texto');
+    const novedadEditId     = document.getElementById('novedad-edit-id');
+    const novedadSaveBtn    = document.getElementById('novedad-save-btn');
+
+    async function updateNovedadesAdminUI(user) {
+        isAdmin = false;
+        if (novedadAddBtn) { novedadAddBtn.classList.add('hidden'); novedadAddBtn.classList.remove('flex'); }
+        if (!user) return;
+        try {
+            const snap = await getDoc(doc(db, 'usuarios', user.uid));
+            if (snap.exists() && snap.data().role === 'admin') {
+                isAdmin = true;
+                if (novedadAddBtn) { novedadAddBtn.classList.remove('hidden'); novedadAddBtn.classList.add('flex'); }
+            }
+        } catch(e) { console.warn('Error leyendo rol usuario:', e); }
+    }
+
+    function renderNovedades(docs) {
+        if (!novedadesList) return;
+        if (docs.length === 0) {
+            if (novedadesSection) novedadesSection.classList.add('hidden');
+            return;
+        }
+        if (novedadesSection) novedadesSection.classList.remove('hidden');
+        novedadesList.innerHTML = docs.map(d => {
+            const data = d.data();
+            const fecha = data.fecha?.toDate ? data.fecha.toDate().toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) : '';
+            const adminBtns = isAdmin ? `
+                <div class="flex gap-2 mt-2">
+                    <button onclick="editNovedad('${d.id}')" class="text-[10px] text-blue-500 hover:text-blue-700 font-semibold">✏️ Editar</button>
+                    <button onclick="deleteNovedad('${d.id}')" class="text-[10px] text-red-400 hover:text-red-600 font-semibold">🗑 Eliminar</button>
+                </div>` : '';
+            return `
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4">
+                <div class="flex items-start justify-between gap-2 mb-1">
+                    <p class="text-sm font-extrabold text-gray-800 leading-tight">${data.titulo || ''}</p>
+                    <span class="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">${fecha}</span>
+                </div>
+                <p class="text-xs text-gray-600 leading-relaxed">${(data.texto || '').replace(/\n/g, '<br>')}</p>
+                ${adminBtns}
+            </div>`;
+        }).join('');
+    }
+
+    // Listener en tiempo real
+    onSnapshot(
+        query(collection(db, 'novedades'), orderBy('fecha', 'desc'), limit(10)),
+        (snap) => renderNovedades(snap.docs),
+        (e) => console.warn('Error novedades:', e)
+    );
+
+    // Abrir modal nueva novedad
+    if (novedadAddBtn) novedadAddBtn.addEventListener('click', () => {
+        novedadEditId.value = '';
+        novedadTitulo.value = '';
+        novedadTexto.value = '';
+        if (novedadModalTitle) novedadModalTitle.textContent = 'Nueva novedad';
+        if (novedadSaveBtn) novedadSaveBtn.textContent = 'Publicar';
+        novedadModal.classList.remove('hidden');
+    });
+
+    function closeNovedadModal() { if (novedadModal) novedadModal.classList.add('hidden'); }
+    if (novedadModalClose) novedadModalClose.addEventListener('click', closeNovedadModal);
+    if (novedadModal) novedadModal.addEventListener('click', (e) => { if (e.target === novedadModal) closeNovedadModal(); });
+
+    // Guardar (crear o editar)
+    if (novedadSaveBtn) novedadSaveBtn.addEventListener('click', async () => {
+        const titulo = novedadTitulo.value.trim();
+        const texto  = novedadTexto.value.trim();
+        if (!titulo || !texto) return;
+        novedadSaveBtn.disabled = true;
+        try {
+            const editId = novedadEditId.value;
+            if (editId) {
+                await updateDoc(doc(db, 'novedades', editId), { titulo, texto });
+            } else {
+                await addDoc(collection(db, 'novedades'), {
+                    titulo, texto,
+                    fecha: serverTimestamp(),
+                    creadoPor: currentUser?.displayName || 'Admin'
+                });
+            }
+            closeNovedadModal();
+        } catch(e) { console.error('Error guardando novedad:', e); }
+        novedadSaveBtn.disabled = false;
+    });
+
+    // Editar — expuesto globalmente para los botones inline
+    window.editNovedad = async (id) => {
+        try {
+            const snap = await getDoc(doc(db, 'novedades', id));
+            if (!snap.exists()) return;
+            const data = snap.data();
+            novedadEditId.value = id;
+            novedadTitulo.value = data.titulo || '';
+            novedadTexto.value  = data.texto  || '';
+            if (novedadModalTitle) novedadModalTitle.textContent = 'Editar novedad';
+            if (novedadSaveBtn) novedadSaveBtn.textContent = 'Guardar cambios';
+            novedadModal.classList.remove('hidden');
+        } catch(e) { console.error('Error cargando novedad:', e); }
+    };
+
+    // Eliminar
+    window.deleteNovedad = async (id) => {
+        if (!confirm('¿Eliminar esta novedad?')) return;
+        try { await deleteDoc(doc(db, 'novedades', id)); }
+        catch(e) { console.error('Error eliminando novedad:', e); }
+    };
 
     console.log("🚀 App iniciada.");
 
