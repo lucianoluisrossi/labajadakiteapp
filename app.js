@@ -330,6 +330,7 @@ try {
 
     // --- NOVEDADES DEL SPOT ---
     let isAdmin = false;
+    let lastNovedadesDocs = [];
     const novedadesSection  = document.getElementById('novedades-section');
     const novedadesList     = document.getElementById('novedades-list');
     const novedadAddBtn     = document.getElementById('novedad-add-btn');
@@ -351,11 +352,14 @@ try {
                 isAdmin = true;
                 if (novedadesSection) novedadesSection.classList.remove('hidden');
                 if (novedadAddBtn) { novedadAddBtn.classList.remove('hidden'); novedadAddBtn.classList.add('flex'); }
+                // Re-renderizar con isAdmin ya seteado
+                if (lastNovedadesDocs.length > 0) renderNovedades(lastNovedadesDocs);
             }
         } catch(e) { console.warn('Error leyendo rol usuario:', e); }
     }
 
     function renderNovedades(docs) {
+        lastNovedadesDocs = docs;
         if (!novedadesList) return;
         if (docs.length === 0) {
             if (!isAdmin && novedadesSection) novedadesSection.classList.add('hidden');
