@@ -367,21 +367,27 @@ try {
             return;
         }
         if (novedadesSection) novedadesSection.classList.remove('hidden');
+        const MAX_CHARS = 120;
         novedadesList.innerHTML = docs.map(d => {
             const data = d.data();
             const fecha = data.fecha?.toDate ? data.fecha.toDate().toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) : '';
+            const texto = data.texto || '';
+            const truncado = texto.length > MAX_CHARS;
+            const textoVisible = truncado ? texto.slice(0, MAX_CHARS).trimEnd() + '…' : texto;
             const adminBtns = isAdmin ? `
                 <div class="flex gap-2 mt-2">
                     <button onclick="editNovedad('${d.id}')" class="text-[10px] text-blue-500 hover:text-blue-700 font-semibold">✏️ Editar</button>
                     <button onclick="deleteNovedad('${d.id}')" class="text-[10px] text-red-400 hover:text-red-600 font-semibold">🗑 Eliminar</button>
                 </div>` : '';
+            const verMasBtn = truncado ? `<button onclick="verNovedadCompleta('${d.id}')" class="text-[10px] text-blue-500 hover:text-blue-700 font-semibold mt-1 block">Ver más →</button>` : '';
             return `
             <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4">
                 <div class="flex items-start justify-between gap-2 mb-1">
                     <p class="text-sm font-extrabold text-gray-800 leading-tight">${data.titulo || ''}</p>
                     <span class="text-[10px] text-gray-400 flex-shrink-0 mt-0.5">${fecha}</span>
                 </div>
-                <p class="text-xs text-gray-600 leading-relaxed">${(data.texto || '').replace(/\n/g, '<br>')}</p>
+                <p class="text-xs text-gray-600 leading-relaxed">${textoVisible.replace(/\n/g, '<br>')}</p>
+                ${verMasBtn}
                 ${adminBtns}
             </div>`;
         }).join('');
@@ -450,6 +456,34 @@ try {
         if (!confirm('¿Eliminar esta novedad?')) return;
         try { await deleteDoc(doc(db, 'novedades', id)); }
         catch(e) { console.error('Error eliminando novedad:', e); }
+    };
+
+    // Ver novedad completa
+    window.verNovedadCompleta = (id) => {
+        const d = lastNovedadesDocs.find(d => d.id === id);
+        if (!d) return;
+        const data = d.data();
+        const fecha = data.fecha?.toDate ? data.fecha.toDate().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+        // Crear modal dinámico
+        const existing = document.getElementById('novedad-read-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'novedad-read-modal';
+        modal.className = 'fixed inset-0 z-[200] bg-black/60 flex items-end sm:items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-5 relative max-h-[80vh] flex flex-col">
+                <button id="novedad-read-close" class="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold leading-none">&times;</button>
+                <p class="text-[10px] text-gray-400 mb-1">${fecha}</p>
+                <h3 class="text-base font-extrabold text-gray-800 mb-3 pr-6">${data.titulo || ''}</h3>
+                <p class="text-sm text-gray-600 leading-relaxed overflow-y-auto">${(data.texto || '').replace(/\n/g, '<br>')}</p>
+            </div>`;
+        document.body.appendChild(modal);
+
+        const close = () => modal.remove();
+        modal.querySelector('#novedad-read-close').addEventListener('click', close);
+        modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
     };
 
     console.log("🚀 App iniciada.");
