@@ -266,11 +266,13 @@ try {
             return;
         }
         try {
-            const res = await fetch(`/api/vip-status?email=${encodeURIComponent(user.email)}`);
+            const res = await fetch(`/api/vip-status?email=${encodeURIComponent(user.email)}&uid=${encodeURIComponent(user.uid)}`);
             const data = await res.json();
             if (data.active) {
                 if (vipBadge) { vipBadge.classList.remove('hidden'); vipBadge.classList.add('flex'); }
                 initSupportBanner(true);
+                const mpSection = document.getElementById('mp-email-section');
+                if (mpSection) mpSection.classList.add('hidden');
             } else {
                 if (vipBadge) { vipBadge.classList.add('hidden'); vipBadge.classList.remove('flex'); }
                 initSupportBanner(false);
@@ -283,6 +285,48 @@ try {
             console.warn('VIP check error', e);
             initSupportBanner(false);
         }
+    }
+
+    // Mostrar sección email MP solo cuando el modal VIP está abierto y hay usuario logueado no-VIP
+    if (vipModal) {
+        const observer = new MutationObserver(() => {
+            const mpSection = document.getElementById('mp-email-section');
+            if (!mpSection) return;
+            if (!vipModal.classList.contains('hidden') && currentUser) {
+                mpSection.classList.remove('hidden');
+            } else {
+                mpSection.classList.add('hidden');
+            }
+        });
+        observer.observe(vipModal, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Guardar email de MP alternativo
+    const mpEmailSave = document.getElementById('mp-email-save');
+    const mpEmailInput = document.getElementById('mp-email-input');
+    const mpEmailFeedback = document.getElementById('mp-email-feedback');
+    if (mpEmailSave) mpEmailSave.addEventListener('click', async () => {
+        const mpEmail = mpEmailInput?.value.trim();
+        if (!mpEmail || !mpEmail.includes('@')) {
+            showMpFeedback('Ingresá un email válido', 'error'); return;
+        }
+        if (!currentUser) { showMpFeedback('Tenés que estar logueado', 'error'); return; }
+        mpEmailSave.disabled = true;
+        try {
+            await setDoc(doc(db, 'usuarios', currentUser.uid), { mp_email: mpEmail }, { merge: true });
+            showMpFeedback('Email vinculado. Verificando...', 'ok');
+            setTimeout(() => updateVipUI(currentUser), 1000);
+        } catch(e) {
+            showMpFeedback('Error al guardar. Intentá de nuevo.', 'error');
+        }
+        mpEmailSave.disabled = false;
+    });
+
+    function showMpFeedback(msg, type) {
+        if (!mpEmailFeedback) return;
+        mpEmailFeedback.textContent = msg;
+        mpEmailFeedback.className = `text-[10px] text-center mt-1.5 ${type === 'error' ? 'text-red-500' : 'text-green-600'}`;
+        mpEmailFeedback.classList.remove('hidden');
     }
 
     // --- MODAL VIP: mostrar 1 vez por día si no es VIP ---

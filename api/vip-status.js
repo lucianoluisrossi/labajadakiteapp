@@ -18,56 +18,46 @@ async function searchMPByEmail(email) {
 export default async function handler(req, res) {
     if (req.method !== 'GET') return res.status(405).end();
 
-    const { email } = req.query;
+    const { email, uid } = req.query;
     if (!email) return res.status(400).json({ error: 'email requerido' });
 
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase error' });
 
     try {
-        // 1. Buscar por email en Firestore (doc guardado con email)
-        const docId = email.replace(/[.#$[\]@]/g, '_');
-        const doc = await db.collection(VIP_COLLECTION).doc(docId).get();
-        if (doc.exists && doc.data().active === true) {
-            return res.status(200).json({ active: true, status: doc.data().status });
-        }
-
-        // 2. Buscar por payer_id en Firestore (cuando MP no devuelve email)
-        const snapshot = await db.collection(VIP_COLLECTION)
-            .where('active', '==', true)
-            .get();
-        // Si hay docs activos, buscar si alguno matchea via MP API
-        if (!snapshot.empty) {
-            const mp = await searchMPByEmail(email);
-            if (mp && (mp.status === 'authorized' || mp.status === 'active')) {
-                // Guardar el email para futuras consultas
-                const payerDocId = `payer_${mp.payer_id}`;
-                await db.collection(VIP_COLLECTION).doc(docId).set({
-                    email,
-                    preapproval_id: mp.id,
-                    payer_id: mp.payer_id,
-                    status: mp.status,
-                    active: true,
-                    next_payment_date: mp.next_payment_date || null
-                }, { merge: true });
-                // También actualizar el doc por payer_id con el email
-                await db.collection(VIP_COLLECTION).doc(payerDocId).set({ email }, { merge: true });
-                return res.status(200).json({ active: true, status: mp.status });
+        // Obtener mp_email alternativo si el usuario lo registró
+        let altEmail = null;
+        if (uid) {
+            const userDoc = await db.collection('usuarios').doc(uid).get();
+            if (userDoc.exists && userDoc.data().mp_email) {
+                altEmail = userDoc.data().mp_email;
             }
         }
 
-        // 3. Consultar MP directamente por email como último recurso
-        const mp = await searchMPByEmail(email);
-        if (mp && (mp.status === 'authorized' || mp.status === 'active')) {
-            await db.collection(VIP_COLLECTION).doc(docId).set({
-                email,
-                preapproval_id: mp.id,
-                payer_id: mp.payer_id,
-                status: mp.status,
-                active: true,
-                next_payment_date: mp.next_payment_date || null
-            }, { merge: true });
-            return res.status(200).json({ active: true, status: mp.status });
+        // Helper: chequear un email en Firestore + MP API
+        async function checkEmail(emailToCheck) {
+            const docId = emailToCheck.replace(/[.#$[\]@]/g, '_');
+            const d = await db.collection(VIP_COLLECTION).doc(docId).get();
+            if (d.exists && d.data().active === true) return { active: true, status: d.data().status };
+            const mp = await searchMPByEmail(emailToCheck);
+            if (mp && (mp.status === 'authorized' || mp.status === 'active')) {
+                await db.collection(VIP_COLLECTION).doc(docId).set({
+                    email: emailToCheck, preapproval_id: mp.id, payer_id: mp.payer_id,
+                    status: mp.status, active: true, next_payment_date: mp.next_payment_date || null
+                }, { merge: true });
+                return { active: true, status: mp.status };
+            }
+            return null;
+        }
+
+        // 1. Chequear email de la app
+        const result = await checkEmail(email);
+        if (result) return res.status(200).json(result);
+
+        // 2. Chequear mp_email alternativo si existe y es distinto
+        if (altEmail && altEmail.toLowerCase() !== email.toLowerCase()) {
+            const altResult = await checkEmail(altEmail);
+            if (altResult) return res.status(200).json(altResult);
         }
 
         return res.status(200).json({ active: false });

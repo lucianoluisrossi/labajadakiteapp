@@ -901,6 +901,19 @@
                     Suscribirme con MercadoPago
                 </a>
                 <p class="text-[10px] text-gray-400 text-center mt-2">Podés cancelar cuando quieras desde MercadoPago</p>
+
+                <!-- Vincular email de MP distinto -->
+                <div id="mp-email-section" class="hidden mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-[11px] text-gray-500 text-center mb-2">¿Pagaste con otro email de MercadoPago?</p>
+                    <div class="flex gap-2">
+                        <input id="mp-email-input" type="email" placeholder="tu@email.com"
+                            class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-sky-400 text-gray-900 bg-white">
+                        <button id="mp-email-save" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors active:scale-95">
+                            Vincular
+                        </button>
+                    </div>
+                    <p id="mp-email-feedback" class="hidden text-[10px] text-center mt-1.5"></p>
+                </div>
             </div>
             <button id="vip-modal-close" class="absolute top-4 right-4 text-white text-2xl font-bold leading-none">&times;</button>
         </div>
