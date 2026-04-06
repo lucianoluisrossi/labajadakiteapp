@@ -405,6 +405,18 @@ try {
         } catch(e) { console.warn('Error leyendo rol usuario:', e); }
     }
 
+    function updateNovedadBadge(docs) {
+        const badge = document.getElementById('novedad-badge');
+        if (!badge || docs.length === 0) return;
+        const lastSeen = localStorage.getItem('novedadLastSeen');
+        const latest = docs[0].data().fecha?.toDate?.()?.getTime?.() || 0;
+        if (!lastSeen || Number(lastSeen) < latest) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
     function renderNovedades(docs) {
         lastNovedadesDocs = docs;
         if (!novedadesList) return;
@@ -414,6 +426,7 @@ try {
             return;
         }
         if (novedadesSection) novedadesSection.classList.remove('hidden');
+        updateNovedadBadge(docs);
         const MAX_CHARS = 120;
         novedadesList.innerHTML = docs.map(d => {
             const data = d.data();
@@ -510,6 +523,10 @@ try {
         const d = lastNovedadesDocs.find(d => d.id === id);
         if (!d) return;
         const data = d.data();
+        // Marcar como leída (usar la novedad más reciente como referencia)
+        const latest = lastNovedadesDocs[0]?.data().fecha?.toDate?.()?.getTime?.() || 0;
+        localStorage.setItem('novedadLastSeen', String(latest));
+        updateNovedadBadge(lastNovedadesDocs);
         const fecha = data.fecha?.toDate ? data.fecha.toDate().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
         // Crear modal dinámico
