@@ -308,6 +308,20 @@
                 <div id="novedades-list" class="flex flex-col gap-3"></div>
             </div>
 
+            <!-- PANEL ADMIN VIP -->
+            <div id="admin-vip-panel" class="hidden mt-4 bg-gray-50 border border-gray-200 rounded-2xl p-4">
+                <p class="text-xs text-gray-500 uppercase font-extrabold tracking-widest mb-3">⚙️ Admin — Gestión VIP</p>
+                <!-- Dar VIP -->
+                <div class="flex gap-2 mb-3">
+                    <input id="admin-vip-email" type="email" placeholder="email del usuario"
+                        class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400 text-gray-900 bg-white placeholder-gray-400">
+                    <button id="admin-vip-add" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors active:scale-95 whitespace-nowrap">Dar VIP</button>
+                </div>
+                <p id="admin-vip-feedback" class="hidden text-[10px] text-center mb-3"></p>
+                <!-- Lista VIPs activos -->
+                <div id="admin-vip-list" class="flex flex-col gap-2"></div>
+            </div>
+
             <!-- MODAL NOVEDAD -->
             <div id="novedad-modal" class="hidden fixed inset-0 z-[200] bg-black/60 flex items-end sm:items-center justify-center p-4">
                 <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-5 relative">
