@@ -389,7 +389,7 @@ try {
     async function updateNovedadesAdminUI(user) {
         isAdmin = false;
         if (novedadAddBtn) { novedadAddBtn.classList.add('hidden'); novedadAddBtn.classList.remove('flex'); }
-        if (!user) return;
+        if (!user) { toggleAdminVipPanel(false); return; }
         try {
             const snap = await getDoc(doc(db, 'usuarios', user.uid));
             if (snap.exists() && snap.data().role === 'admin') {
@@ -398,6 +398,9 @@ try {
                 if (novedadAddBtn) { novedadAddBtn.classList.remove('hidden'); novedadAddBtn.classList.add('flex'); }
                 // Re-renderizar con isAdmin ya seteado
                 if (lastNovedadesDocs.length > 0) renderNovedades(lastNovedadesDocs);
+                toggleAdminVipPanel(true);
+            } else {
+                toggleAdminVipPanel(false);
             }
         } catch(e) { console.warn('Error leyendo rol usuario:', e); }
     }
@@ -574,15 +577,6 @@ try {
         if (show) { adminVipPanel.classList.remove('hidden'); initAdminVipPanel(); }
         else adminVipPanel.classList.add('hidden');
     }
-
-    // Mostrar panel admin según rol
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) { toggleAdminVipPanel(false); return; }
-        try {
-            const snap = await getDoc(doc(db, 'usuarios', user.uid));
-            toggleAdminVipPanel(snap.exists() && snap.data().role === 'admin');
-        } catch(e) {}
-    });
 
     // Dar VIP
     if (adminVipAdd) adminVipAdd.addEventListener('click', async () => {
