@@ -1286,9 +1286,9 @@ try {
         }
     }
     
-    async function fetchWeatherData() {
-        showSkeletons(true);
-        errorEl.classList.add('hidden'); 
+    async function fetchWeatherData(silent = false) {
+        if (!silent) showSkeletons(true);
+        errorEl.classList.add('hidden');
         let json;
         try {
             try {
@@ -1498,13 +1498,13 @@ try {
     }
 
     fetchWeatherData();
-    setInterval(fetchWeatherData, 30000);
+    setInterval(() => fetchWeatherData(true), 30000);
     setInterval(updateTimeAgo, 5000);
 
     // Refrescar datos al volver al foco (unlock, cambio de app, etc.)
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-            fetchWeatherData();
+            fetchWeatherData(true); // silencioso — sin skeletons
         }
     });
 

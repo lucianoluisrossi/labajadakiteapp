@@ -1,6 +1,6 @@
 // Service Worker - La Bajada Kite App
-const CACHE_NAME = 'labajada-cache-v1';
-const RUNTIME_CACHE = 'labajada-runtime-v1';
+const CACHE_NAME = 'labajada-cache-v2';
+const RUNTIME_CACHE = 'labajada-runtime-v2';
 
 // Archivos críticos que deben estar cacheados
 const CRITICAL_ASSETS = [
@@ -8,7 +8,11 @@ const CRITICAL_ASSETS = [
   '/index.html',
   '/app.js',
   '/style.css',
-  '/manifest.json'
+  '/manifest.json',
+  '/logo.png',
+  '/logo-mariana.png',
+  '/logo3.jpg',
+  '/ux-improvements.js'
 ];
 
 // ==========================================
@@ -19,14 +23,12 @@ self.addEventListener('install', (event) => {
   self.skipWaiting(); // Activar inmediatamente
 
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[SW] 📦 Cacheando archivos críticos...');
-        return cache.addAll(CRITICAL_ASSETS)
-          .catch((error) => {
-            console.warn('[SW] ⚠️ No se pudieron cachear todos los assets (puede ser normal):', error.message);
-          });
-      })
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      console.log('[SW] 📦 Cacheando archivos críticos...');
+      try { await cache.addAll(CRITICAL_ASSETS); }
+      catch(e) { console.warn('[SW] ⚠️ No se pudieron cachear todos los assets:', e.message); }
+    })()
   );
 });
 
