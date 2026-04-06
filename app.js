@@ -539,6 +539,15 @@ try {
     const adminVipAdd      = document.getElementById('admin-vip-add');
     const adminVipFeedback = document.getElementById('admin-vip-feedback');
     const adminVipList     = document.getElementById('admin-vip-list');
+    const adminVipToggle   = document.getElementById('admin-vip-toggle');
+    const adminVipBody     = document.getElementById('admin-vip-body');
+    const adminVipChevron  = document.getElementById('admin-vip-chevron');
+
+    if (adminVipToggle) adminVipToggle.addEventListener('click', () => {
+        const open = !adminVipBody.classList.contains('hidden');
+        adminVipBody.classList.toggle('hidden', open);
+        adminVipChevron.style.transform = open ? '' : 'rotate(180deg)';
+    });
 
     function showAdminFeedback(msg, type) {
         if (!adminVipFeedback) return;
