@@ -245,12 +245,26 @@ try {
     }
 
     // --- LISTENER DE ESTADO DE AUTENTICACIÓN (dentro de DOMContentLoaded) ---
+    let vipUnsubscribe = null;
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
 		updateDeviceAnalytics(user);
         updateAuthUI(user);
         updateVipUI(user);
         updateNovedadesAdminUI(user);
+
+        // Escuchar cambios en tiempo real del doc VIP del usuario
+        if (vipUnsubscribe) { vipUnsubscribe(); vipUnsubscribe = null; }
+        if (user?.email) {
+            const docId = user.email.replace(/[.#$[\]@]/g, '_');
+            vipUnsubscribe = onSnapshot(doc(db, 'kiter_vip', docId), (snap) => {
+                const isActive = snap.exists() && snap.data()?.active === true;
+                if (vipBadge) {
+                    vipBadge.classList.toggle('hidden', !isActive);
+                    vipBadge.classList.toggle('flex', isActive);
+                }
+            });
+        }
     });
 
     // --- VIP SUBSCRIPTION ---
