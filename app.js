@@ -265,6 +265,14 @@ try {
                     vipBadge.classList.toggle('hidden', !currentUserIsVip);
                     vipBadge.classList.toggle('flex', currentUserIsVip);
                 }
+                // Si es VIP, ocultar sección de email alternativo y cerrar modal
+                const mpSection = document.getElementById('mp-email-section');
+                if (currentUserIsVip) {
+                    if (mpSection) mpSection.classList.add('hidden');
+                    if (vipModal) vipModal.classList.add('hidden');
+                } else {
+                    if (mpSection) mpSection.classList.remove('hidden');
+                }
                 // Decidir si mostrar modal VIP aquí, con estado VIP ya confirmado
                 if (window._openVipAfterLogin) {
                     window._openVipAfterLogin = false;
@@ -307,18 +315,21 @@ try {
         }
     }
 
-    // Mostrar sección email MP solo cuando el modal VIP está abierto y hay usuario logueado no-VIP
-    if (vipModal) {
-        const observer = new MutationObserver(() => {
-            const mpSection = document.getElementById('mp-email-section');
-            if (!mpSection) return;
-            if (!vipModal.classList.contains('hidden') && currentUser) {
-                mpSection.classList.remove('hidden');
-            } else {
-                mpSection.classList.add('hidden');
+    // Al volver del checkout de MP, destacar el campo de email alternativo
+    if (localStorage.getItem('mpCheckoutStarted') === 'true') {
+        localStorage.removeItem('mpCheckoutStarted');
+        // Esperar a que se resuelva el estado VIP antes de decidir
+        setTimeout(() => {
+            if (!currentUserIsVip) {
+                const mpSection = document.getElementById('mp-email-section');
+                const mpTitle = document.getElementById('mp-email-title');
+                const mpInput = document.getElementById('mp-email-input');
+                if (mpSection) mpSection.classList.add('ring-2', 'ring-sky-400', 'rounded-xl', 'p-2');
+                if (mpTitle) mpTitle.innerHTML = '¿Ya pagaste? Si usaste <strong>otro email en MercadoPago</strong>, vinculalo acá para activar tu VIP.';
+                if (mpInput) mpInput.focus();
+                if (vipModal) vipModal.classList.remove('hidden');
             }
-        });
-        observer.observe(vipModal, { attributes: true, attributeFilter: ['class'] });
+        }, 2000);
     }
 
     // Guardar email de MP alternativo

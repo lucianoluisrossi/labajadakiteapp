@@ -930,16 +930,17 @@
                     <span class="text-gray-400 text-sm">/mes</span>
                 </div>
                 <a id="btn-go-mp" href="https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=947a5399fa3c4350b9e1e48ea33714e2&back_url=https://labajadakite.app" target="_blank" rel="noopener"
+                   onclick="localStorage.setItem('mpCheckoutStarted','true')"
                    class="block w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3 rounded-xl text-center transition-colors shadow-md text-sm">
                     Suscribirme con MercadoPago
                 </a>
                 <p class="text-[10px] text-gray-400 text-center mt-2">Podés cancelar cuando quieras desde MercadoPago</p>
 
                 <!-- Vincular email de MP distinto -->
-                <div id="mp-email-section" class="hidden mt-4 pt-4 border-t border-gray-100">
-                    <p class="text-[11px] text-gray-500 text-center mb-2">¿Pagaste con otro email de MercadoPago?</p>
+                <div id="mp-email-section" class="mt-4 pt-4 border-t border-gray-100">
+                    <p id="mp-email-title" class="text-[11px] text-gray-500 text-center mb-2">¿Tu cuenta de MercadoPago usa otro email? Vinculalo para activar tu VIP.</p>
                     <div class="flex gap-2">
-                        <input id="mp-email-input" type="email" placeholder="tu@email.com"
+                        <input id="mp-email-input" type="email" placeholder="email de MercadoPago"
                             class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-sky-400 text-gray-900 bg-white">
                         <button id="mp-email-save" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors active:scale-95">
                             Vincular
