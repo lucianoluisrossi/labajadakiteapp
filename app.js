@@ -265,6 +265,13 @@ try {
                     vipBadge.classList.toggle('hidden', !currentUserIsVip);
                     vipBadge.classList.toggle('flex', currentUserIsVip);
                 }
+                // Decidir si mostrar modal VIP aquí, con estado VIP ya confirmado
+                if (window._openVipAfterLogin) {
+                    window._openVipAfterLogin = false;
+                    if (!currentUserIsVip) {
+                        setTimeout(() => { if (vipModal) vipModal.classList.remove('hidden'); }, 400);
+                    }
+                }
             });
         }
     });
@@ -286,7 +293,6 @@ try {
             const data = await res.json();
             if (data.active) {
                 currentUserIsVip = true;
-                window._openVipAfterLogin = false;
                 if (vipBadge) { vipBadge.classList.remove('hidden'); vipBadge.classList.add('flex'); }
                 initSupportBanner(true);
                 const mpSection = document.getElementById('mp-email-section');
@@ -294,10 +300,6 @@ try {
             } else {
                 if (vipBadge) { vipBadge.classList.add('hidden'); vipBadge.classList.remove('flex'); }
                 initSupportBanner(false);
-                if (window._openVipAfterLogin && !currentUserIsVip) {
-                    window._openVipAfterLogin = false;
-                    setTimeout(() => { if (vipModal) vipModal.classList.remove('hidden'); }, 400);
-                }
             }
         } catch(e) {
             console.warn('VIP check error', e);
