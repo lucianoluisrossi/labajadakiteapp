@@ -492,6 +492,9 @@ try {
         (e) => console.warn('Error novedades:', e)
     );
 
+    const novedadNotifyWa = document.getElementById('novedad-notify-wa');
+    const novedadWaLabel  = document.getElementById('novedad-wa-label');
+
     // Abrir modal nueva novedad
     if (novedadAddBtn) novedadAddBtn.addEventListener('click', () => {
         novedadEditId.value = '';
@@ -499,6 +502,8 @@ try {
         novedadTexto.value = '';
         if (novedadModalTitle) novedadModalTitle.textContent = 'Nueva novedad';
         if (novedadSaveBtn) novedadSaveBtn.textContent = 'Publicar';
+        if (novedadWaLabel) novedadWaLabel.classList.remove('hidden');
+        if (novedadNotifyWa) novedadNotifyWa.checked = false;
         novedadModal.classList.remove('hidden');
     });
 
@@ -522,6 +527,19 @@ try {
                     fecha: serverTimestamp(),
                     creadoPor: currentUser?.displayName || 'Admin'
                 });
+                // Notificar suscriptores WA si el checkbox está marcado
+                if (novedadNotifyWa?.checked) {
+                    novedadSaveBtn.textContent = 'Enviando WA...';
+                    try {
+                        const r = await fetch('/api/notify-novedades', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ titulo, texto })
+                        });
+                        const j = await r.json();
+                        console.log(`[novedades] WA enviado a ${j.sent}/${j.total} suscriptores`);
+                    } catch(e) { console.error('Error notificando WA:', e); }
+                }
             }
             closeNovedadModal();
         } catch(e) { console.error('Error guardando novedad:', e); }
@@ -539,6 +557,7 @@ try {
             novedadTexto.value  = data.texto  || '';
             if (novedadModalTitle) novedadModalTitle.textContent = 'Editar novedad';
             if (novedadSaveBtn) novedadSaveBtn.textContent = 'Guardar cambios';
+            if (novedadWaLabel) novedadWaLabel.classList.add('hidden');
             novedadModal.classList.remove('hidden');
         } catch(e) { console.error('Error cargando novedad:', e); }
     };
@@ -2500,6 +2519,9 @@ try {
         if (novedadTitulo) novedadTitulo.value = '';
         if (novedadTexto) novedadTexto.value = '';
         if (novedadModalTitle) novedadModalTitle.textContent = 'Nueva Novedad';
+        if (novedadSaveBtn) novedadSaveBtn.textContent = 'Publicar';
+        if (novedadWaLabel) novedadWaLabel.classList.remove('hidden');
+        if (novedadNotifyWa) novedadNotifyWa.checked = false;
         if (novedadModal) novedadModal.classList.remove('hidden');
     });
 
