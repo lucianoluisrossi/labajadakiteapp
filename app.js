@@ -1,7 +1,7 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInAnonymously, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, deleteDoc, updateDoc, getDoc, setDoc, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, deleteDoc, updateDoc, getDoc, setDoc, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ⭐ MEJORAS UX/UI
 import './ux-improvements.js';
@@ -419,6 +419,7 @@ try {
     async function updateNovedadesAdminUI(user) {
         isAdmin = false;
         if (novedadAddBtn) { novedadAddBtn.classList.add('hidden'); novedadAddBtn.classList.remove('flex'); }
+        if (topbarAdminBtn) topbarAdminBtn.classList.add('hidden');
         if (!user) { toggleAdminVipPanel(false); return; }
         try {
             const snap = await getDoc(doc(db, 'usuarios', user.uid));
@@ -426,6 +427,7 @@ try {
                 isAdmin = true;
                 if (novedadesSection) novedadesSection.classList.remove('hidden');
                 if (novedadAddBtn) { novedadAddBtn.classList.remove('hidden'); novedadAddBtn.classList.add('flex'); }
+                if (topbarAdminBtn) topbarAdminBtn.classList.remove('hidden');
                 // Re-renderizar con isAdmin ya seteado
                 if (lastNovedadesDocs.length > 0) renderNovedades(lastNovedadesDocs);
                 toggleAdminVipPanel(true);
@@ -666,6 +668,8 @@ try {
     const viewDashboard = document.getElementById('view-dashboard');
     const viewCommunity = document.getElementById('view-community');
     const viewClassifieds = document.getElementById('view-classifieds');
+    const viewAdmin = document.getElementById('view-admin');
+    const topbarAdminBtn = document.getElementById('topbar-admin-btn');
     const backToHomeBtn = document.getElementById('back-to-home');
     const backToHomeClassifieds = document.getElementById('back-to-home-classifieds');
     const fabContainer = document.getElementById('fab-container');
@@ -709,12 +713,13 @@ try {
 
     function switchView(viewName) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
         // Ocultar todas las vistas
         if(viewDashboard) viewDashboard.classList.add('hidden');
         if(viewCommunity) viewCommunity.classList.add('hidden');
         if(viewClassifieds) viewClassifieds.classList.add('hidden');
-        
+        if(viewAdmin) viewAdmin.classList.add('hidden');
+
         if (viewName === 'dashboard') {
             if(viewDashboard) viewDashboard.classList.remove('hidden');
             // Mostrar FABs de comunidad y clasificados, ocultar boton volver
@@ -732,6 +737,11 @@ try {
             if(fabContainer) fabContainer.classList.add('hidden');
             if(fabBackWeather) fabBackWeather.classList.remove('hidden');
             markClassifiedsAsRead();
+        } else if (viewName === 'admin') {
+            if(viewAdmin) viewAdmin.classList.remove('hidden');
+            if(fabContainer) fabContainer.classList.add('hidden');
+            if(fabBackWeather) fabBackWeather.classList.add('hidden');
+            initAdminPanel();
         }
     }
     
@@ -748,6 +758,9 @@ try {
 
     if (backToHomeBtn) backToHomeBtn.addEventListener('click', () => switchView('dashboard'));
     if (backToHomeClassifieds) backToHomeClassifieds.addEventListener('click', () => switchView('dashboard'));
+    if (topbarAdminBtn) topbarAdminBtn.addEventListener('click', () => switchView('admin'));
+    const adminBackBtn = document.getElementById('admin-back-btn');
+    if (adminBackBtn) adminBackBtn.addEventListener('click', () => switchView('dashboard'));
     if (fabCommunity) fabCommunity.addEventListener('click', () => switchView('community'));
     const notifBadge = document.getElementById('notification-badge');
     if (notifBadge) notifBadge.addEventListener('click', () => switchView('community'));
@@ -2180,6 +2193,323 @@ try {
 
     // Iniciar carga de clasificados
     loadClassifieds();
+
+    // ============================================
+    // PANEL DE ADMINISTRADOR
+    // ============================================
+
+    // Acordeones del panel admin — carga lazy al abrir
+    document.querySelectorAll('.admin-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.dataset.target;
+            const body = document.getElementById(targetId);
+            if (!body) return;
+            const wasHidden = body.classList.contains('hidden');
+            body.classList.toggle('hidden');
+            if (wasHidden) {
+                if (targetId === 'admin-body-novedades') loadAdminNovedades();
+                else if (targetId === 'admin-body-vip') initAdminVip2();
+                else if (targetId === 'admin-body-pagos') loadAdminPaymentLog();
+                else if (targetId === 'admin-body-chat') loadAdminMessages();
+                else if (targetId === 'admin-body-galeria') loadAdminGallery();
+                else if (targetId === 'admin-body-clasificados') loadAdminClassifieds();
+                else if (targetId === 'admin-body-suscriptores') loadAdminSubscribers();
+            }
+        });
+    });
+
+    async function loadAdminStats() {
+        const sets = [
+            { id: 'stat-vip',          col: 'kiter_vip',              filter: where('active', '==', true) },
+            { id: 'stat-telegram',     col: 'telegram_subscribers',   filter: null },
+            { id: 'stat-whatsapp',     col: 'greenapi_subscribers',   filter: null },
+            { id: 'stat-mensajes',     col: 'kiter_board',            filter: null },
+            { id: 'stat-fotos',        col: 'daily_gallery_meta',     filter: null },
+            { id: 'stat-clasificados', col: 'classifieds',            filter: null },
+        ];
+        for (const s of sets) {
+            const el = document.getElementById(s.id);
+            if (!el) continue;
+            try {
+                const q = s.filter ? query(collection(db, s.col), s.filter) : collection(db, s.col);
+                const snap = await getDocs(q);
+                el.textContent = snap.size;
+            } catch(e) { el.textContent = '?'; }
+        }
+    }
+
+    async function loadAdminNovedades() {
+        const list = document.getElementById('admin-novedades-list');
+        if (!list) return;
+        list.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+        try {
+            const snap = await getDocs(query(collection(db, 'novedades'), orderBy('fecha', 'desc'), limit(20)));
+            if (snap.empty) { list.innerHTML = '<p class="text-xs text-gray-400">Sin novedades.</p>'; return; }
+            list.innerHTML = snap.docs.map(d => {
+                const data = d.data();
+                const titulo = (data.titulo || '(sin título)').substring(0, 50);
+                const fecha = data.fecha?.toDate ? data.fecha.toDate().toLocaleDateString('es-AR') : '';
+                return `<div class="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-2 gap-2">
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-gray-800 truncate">${titulo}</p>
+                        <p class="text-[10px] text-gray-400">${fecha}</p>
+                    </div>
+                    <div class="flex gap-2 shrink-0">
+                        <button onclick="editNovedad('${d.id}')" class="text-sky-500 text-xs font-bold hover:underline">Editar</button>
+                        <button onclick="deleteNovedad('${d.id}')" class="text-red-500 text-xs font-bold hover:underline">Borrar</button>
+                    </div>
+                </div>`;
+            }).join('');
+        } catch(e) { list.innerHTML = '<p class="text-xs text-red-400">Error al cargar.</p>'; }
+    }
+
+    let adminVip2Unsubscribe = null;
+
+    function initAdminVip2() {
+        const list = document.getElementById('admin-vip-list2');
+        if (!list || adminVip2Unsubscribe) return;
+        adminVip2Unsubscribe = onSnapshot(
+            query(collection(db, 'kiter_vip'), where('active', '==', true)),
+            snap => {
+                if (snap.empty) { list.innerHTML = '<p class="text-xs text-gray-400">Sin VIPs activos.</p>'; return; }
+                list.innerHTML = snap.docs.map(d => {
+                    const email = d.data().email || d.id;
+                    return `<div class="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-2 gap-2">
+                        <p class="text-xs text-gray-700 truncate">${email}</p>
+                        <button onclick="adminQuitarVip('${d.id}')" class="text-red-500 text-xs font-bold hover:underline shrink-0">Quitar</button>
+                    </div>`;
+                }).join('');
+            },
+            e => console.warn('Error admin VIP2:', e)
+        );
+    }
+
+    const adminVipAdd2 = document.getElementById('admin-vip-add2');
+    const adminVipEmail2 = document.getElementById('admin-vip-email2');
+    const adminVipFeedback2 = document.getElementById('admin-vip-feedback2');
+
+    function showAdminFeedback2(msg, type) {
+        if (!adminVipFeedback2) return;
+        adminVipFeedback2.textContent = msg;
+        adminVipFeedback2.className = `text-[10px] text-center mb-3 ${type === 'ok' ? 'text-green-600' : 'text-red-500'}`;
+        adminVipFeedback2.classList.remove('hidden');
+        setTimeout(() => adminVipFeedback2.classList.add('hidden'), 3000);
+    }
+
+    if (adminVipAdd2) adminVipAdd2.addEventListener('click', async () => {
+        const email = adminVipEmail2?.value.trim().toLowerCase();
+        if (!email || !email.includes('@')) { showAdminFeedback2('Email inválido', 'error'); return; }
+        adminVipAdd2.disabled = true;
+        try {
+            const docId = email.replace(/[.#$[\]@]/g, '_');
+            await setDoc(doc(db, 'kiter_vip', docId), { email, active: true, status: 'authorized', manual: true }, { merge: true });
+            showAdminFeedback2(`VIP activado: ${email}`, 'ok');
+            if (adminVipEmail2) adminVipEmail2.value = '';
+        } catch(e) { showAdminFeedback2('Error al dar VIP', 'error'); }
+        finally { adminVipAdd2.disabled = false; }
+    });
+
+    async function loadAdminPaymentLog() {
+        const list = document.getElementById('admin-pagos-list');
+        if (!list) return;
+        list.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+        try {
+            const snap = await getDocs(query(collection(db, 'mp_webhook_log'), orderBy('timestamp', 'desc'), limit(20)));
+            if (snap.empty) { list.innerHTML = '<p class="text-xs text-gray-400">Sin registros.</p>'; return; }
+            list.innerHTML = snap.docs.map(d => {
+                const data = d.data();
+                const fecha = data.timestamp?.toDate ? data.timestamp.toDate().toLocaleString('es-AR') : '';
+                const color = data.result === 'ok' ? 'text-green-600' : 'text-red-500';
+                return `<div class="bg-white border border-gray-200 rounded-xl px-3 py-2">
+                    <div class="flex justify-between items-center gap-2">
+                        <p class="text-xs font-bold ${color}">${(data.result || '?').toUpperCase()} — ${data.status || ''}</p>
+                        <p class="text-[10px] text-gray-400 shrink-0">${fecha}</p>
+                    </div>
+                    <p class="text-[11px] text-gray-600 truncate">${data.payer_email || data.preapproval_id || ''}</p>
+                    ${data.reason ? `<p class="text-[10px] text-orange-500">${data.reason}</p>` : ''}
+                </div>`;
+            }).join('');
+        } catch(e) { list.innerHTML = '<p class="text-xs text-red-400">Error al cargar.</p>'; }
+    }
+
+    async function loadAdminMessages() {
+        const list = document.getElementById('admin-chat-list');
+        if (!list) return;
+        list.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+        try {
+            const snap = await getDocs(query(collection(db, 'kiter_board'), orderBy('timestamp', 'desc'), limit(30)));
+            if (snap.empty) { list.innerHTML = '<p class="text-xs text-gray-400">Sin mensajes.</p>'; return; }
+            list.innerHTML = snap.docs.map(d => {
+                const data = d.data();
+                const texto = (data.text || data.message || '').substring(0, 80);
+                const autor = data.displayName || data.userName || 'anon';
+                return `<div class="flex items-start justify-between bg-white border border-gray-200 rounded-xl px-3 py-2 gap-2">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-bold text-gray-500">${autor}</p>
+                        <p class="text-xs text-gray-700 break-words">${texto}</p>
+                    </div>
+                    <button onclick="adminDeleteMessage('${d.id}')" class="text-red-500 text-xs hover:text-red-700 shrink-0">✕</button>
+                </div>`;
+            }).join('');
+        } catch(e) { list.innerHTML = '<p class="text-xs text-red-400">Error al cargar.</p>'; }
+    }
+
+    window.adminDeleteMessage = async (id) => {
+        if (!confirm('¿Eliminar este mensaje?')) return;
+        try { await deleteDoc(doc(db, 'kiter_board', id)); loadAdminMessages(); }
+        catch(e) { console.error('Error eliminando mensaje:', e); }
+    };
+
+    const adminChatClear = document.getElementById('admin-chat-clear');
+    if (adminChatClear) adminChatClear.addEventListener('click', async () => {
+        if (!confirm('¿Limpiar TODOS los mensajes del chat?')) return;
+        try {
+            const snap = await getDocs(collection(db, 'kiter_board'));
+            await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+            loadAdminMessages();
+        } catch(e) { console.error('Error limpiando chat:', e); }
+    });
+
+    async function loadAdminGallery() {
+        const list = document.getElementById('admin-galeria-list');
+        if (!list) return;
+        list.innerHTML = '<p class="text-xs text-gray-400 col-span-3">Cargando...</p>';
+        try {
+            const snap = await getDocs(query(collection(db, 'daily_gallery_meta'), orderBy('uploadedAt', 'desc'), limit(30)));
+            if (snap.empty) { list.innerHTML = '<p class="text-xs text-gray-400 col-span-3">Sin fotos.</p>'; return; }
+            list.innerHTML = snap.docs.map(d => {
+                const url = d.data().url || '';
+                return `<div class="relative group">
+                    <img src="${url}" class="w-full aspect-square object-cover rounded-xl" loading="lazy">
+                    <button onclick="adminDeletePhoto('${d.id}')" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                </div>`;
+            }).join('');
+        } catch(e) { list.innerHTML = '<p class="text-xs text-red-400 col-span-3">Error al cargar.</p>'; }
+    }
+
+    window.adminDeletePhoto = async (id) => {
+        if (!confirm('¿Eliminar esta foto?')) return;
+        try { await deleteDoc(doc(db, 'daily_gallery_meta', id)); loadAdminGallery(); }
+        catch(e) { console.error('Error eliminando foto:', e); }
+    };
+
+    const adminGaleriaClear = document.getElementById('admin-galeria-clear');
+    if (adminGaleriaClear) adminGaleriaClear.addEventListener('click', async () => {
+        if (!confirm('¿Limpiar TODA la galería?')) return;
+        try {
+            const snap = await getDocs(collection(db, 'daily_gallery_meta'));
+            await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+            loadAdminGallery();
+        } catch(e) { console.error('Error limpiando galería:', e); }
+    });
+
+    async function loadAdminClassifieds() {
+        const list = document.getElementById('admin-clasificados-list');
+        if (!list) return;
+        list.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+        try {
+            const snap = await getDocs(query(collection(db, 'classifieds'), orderBy('createdAt', 'desc'), limit(30)));
+            if (snap.empty) { list.innerHTML = '<p class="text-xs text-gray-400">Sin clasificados.</p>'; return; }
+            list.innerHTML = snap.docs.map(d => {
+                const data = d.data();
+                const titulo = (data.title || data.titulo || '(sin título)').substring(0, 50);
+                const autor = data.sellerName || data.userName || 'anon';
+                return `<div class="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-2 gap-2">
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-gray-800 truncate">${titulo}</p>
+                        <p class="text-[10px] text-gray-400">${autor}</p>
+                    </div>
+                    <button onclick="adminDeleteClassified('${d.id}')" class="text-red-500 text-xs font-bold hover:underline shrink-0">Borrar</button>
+                </div>`;
+            }).join('');
+        } catch(e) { list.innerHTML = '<p class="text-xs text-red-400">Error al cargar.</p>'; }
+    }
+
+    window.adminDeleteClassified = async (id) => {
+        if (!confirm('¿Eliminar este clasificado?')) return;
+        try { await deleteDoc(doc(db, 'classifieds', id)); loadAdminClassifieds(); }
+        catch(e) { console.error('Error eliminando clasificado:', e); }
+    };
+
+    async function loadAdminSubscribers() {
+        const telegramList = document.getElementById('admin-telegram-list');
+        const whatsappList = document.getElementById('admin-whatsapp-list');
+        if (telegramList) {
+            telegramList.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+            try {
+                const snap = await getDocs(collection(db, 'telegram_subscribers'));
+                if (snap.empty) { telegramList.innerHTML = '<p class="text-xs text-gray-400">Sin suscriptores.</p>'; }
+                else {
+                    telegramList.innerHTML = snap.docs.map(d => {
+                        const data = d.data();
+                        return `<div class="bg-white border border-gray-200 rounded-xl px-3 py-1.5">
+                            <p class="text-xs text-gray-700">${data.chatId || d.id}</p>
+                            ${data.firstName ? `<p class="text-[10px] text-gray-400">${data.firstName}</p>` : ''}
+                        </div>`;
+                    }).join('');
+                }
+            } catch(e) { telegramList.innerHTML = '<p class="text-xs text-red-400">Error.</p>'; }
+        }
+        if (whatsappList) {
+            whatsappList.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+            try {
+                const snap = await getDocs(collection(db, 'greenapi_subscribers'));
+                if (snap.empty) { whatsappList.innerHTML = '<p class="text-xs text-gray-400">Sin suscriptores.</p>'; }
+                else {
+                    whatsappList.innerHTML = snap.docs.map(d => {
+                        const data = d.data();
+                        return `<div class="bg-white border border-gray-200 rounded-xl px-3 py-1.5">
+                            <p class="text-xs text-gray-700">${data.chatId || d.id}</p>
+                        </div>`;
+                    }).join('');
+                }
+            } catch(e) { whatsappList.innerHTML = '<p class="text-xs text-red-400">Error.</p>'; }
+        }
+    }
+
+    const adminTestAlertBtn = document.getElementById('admin-test-alert');
+    const adminTestAlertResult = document.getElementById('admin-test-alert-result');
+    if (adminTestAlertBtn) adminTestAlertBtn.addEventListener('click', async () => {
+        adminTestAlertBtn.disabled = true;
+        adminTestAlertBtn.textContent = 'Enviando...';
+        if (adminTestAlertResult) adminTestAlertResult.classList.add('hidden');
+        try {
+            const res = await fetch('/api/telegram-alert?test=true');
+            const json = await res.json();
+            if (adminTestAlertResult) {
+                adminTestAlertResult.textContent = json.ok ? '✅ Alerta enviada correctamente' : `⚠️ ${JSON.stringify(json)}`;
+                adminTestAlertResult.className = `text-[10px] text-center mt-2 ${json.ok ? 'text-green-600' : 'text-orange-500'}`;
+                adminTestAlertResult.classList.remove('hidden');
+            }
+        } catch(e) {
+            if (adminTestAlertResult) {
+                adminTestAlertResult.textContent = `❌ Error: ${e.message}`;
+                adminTestAlertResult.className = 'text-[10px] text-center mt-2 text-red-500';
+                adminTestAlertResult.classList.remove('hidden');
+            }
+        } finally {
+            adminTestAlertBtn.disabled = false;
+            adminTestAlertBtn.textContent = '⚡ Enviar alerta de prueba';
+        }
+    });
+
+    // Botón agregar novedad desde panel admin
+    const adminNovedadAdd = document.getElementById('admin-novedad-add');
+    if (adminNovedadAdd) adminNovedadAdd.addEventListener('click', () => {
+        if (novedadEditId) novedadEditId.value = '';
+        if (novedadTitulo) novedadTitulo.value = '';
+        if (novedadTexto) novedadTexto.value = '';
+        if (novedadModalTitle) novedadModalTitle.textContent = 'Nueva Novedad';
+        if (novedadModal) novedadModal.classList.remove('hidden');
+    });
+
+    let adminPanelInitialized = false;
+    function initAdminPanel() {
+        loadAdminStats();
+        if (!adminPanelInitialized) {
+            adminPanelInitialized = true;
+        }
+    }
 
     // ============================================
     // TABS GALERÍA: FOTOS / VIDEOS
