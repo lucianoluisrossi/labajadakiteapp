@@ -32,13 +32,14 @@ export default async function handler(req, res) {
     const { type, data } = req.body || {};
     console.log('MP Webhook recibido:', type, data);
 
-    // Solo nos interesan eventos de suscripción
-    if (type !== 'subscription_preapproval') {
-        return res.status(200).json({ ok: true, ignored: true });
-    }
-
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase error' });
+
+    // Solo nos interesan eventos de suscripción, pero logueamos todo
+    if (type !== 'subscription_preapproval') {
+        await saveLog(db, { type, preapproval_id: data?.id, result: 'ignored', reason: `tipo no manejado: ${type}` });
+        return res.status(200).json({ ok: true, ignored: true });
+    }
 
     try {
         const subscription = await getSubscriptionStatus(data.id);
