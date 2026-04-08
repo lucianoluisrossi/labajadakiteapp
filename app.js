@@ -182,10 +182,6 @@ try {
         const classifiedsPublishContainer = document.getElementById('classifieds-publish-container');
         const loginPromptClassifieds = document.getElementById('login-prompt-classifieds');
         
-        // Elementos de notificaciones
-        const notifLoginRequired = document.getElementById('notif-login-required');
-        const notifSettingsLogged = document.getElementById('notif-settings-logged');
-
         const topbarLoginBtn = document.getElementById('topbar-login-btn');
         const topbarUserBtn = document.getElementById('topbar-user-btn');
         const topbarUserPhoto = document.getElementById('topbar-user-photo');
@@ -218,10 +214,6 @@ try {
             if (classifiedsPublishContainer) classifiedsPublishContainer.classList.remove('hidden');
             if (loginPromptClassifieds) loginPromptClassifieds.classList.add('hidden');
             
-            // Notificaciones: Mostrar configuración
-            if (notifLoginRequired) notifLoginRequired.classList.add('hidden');
-            if (notifSettingsLogged) notifSettingsLogged.classList.remove('hidden');
-            
             console.log("✅ Usuario logueado:", user.displayName);
         } else {
             // Usuario no logueado
@@ -233,10 +225,6 @@ try {
             if (loginPromptGallery) loginPromptGallery.classList.remove('hidden');
             if (classifiedsPublishContainer) classifiedsPublishContainer.classList.add('hidden');
             if (loginPromptClassifieds) loginPromptClassifieds.classList.remove('hidden');
-            
-            // Notificaciones: Mostrar login requerido
-            if (notifLoginRequired) notifLoginRequired.classList.remove('hidden');
-            if (notifSettingsLogged) notifSettingsLogged.classList.add('hidden');
             
             if (topbarLoginBtn) { topbarLoginBtn.classList.remove('hidden'); topbarLoginBtn.classList.add('flex'); }
             if (topbarUserBtn) { topbarUserBtn.classList.add('hidden'); topbarUserBtn.classList.remove('flex'); }
@@ -928,8 +916,6 @@ try {
     const btnGoogleLogin = document.getElementById('btn-google-login');
     const btnLogout = document.getElementById('btn-logout');
     const btnGoogleLoginClassifieds = document.getElementById('btn-google-login-classifieds');
-    const btnLoginForNotifications = document.getElementById('login-for-notifications');
-    
     if (btnGoogleLogin) {
         btnGoogleLogin.addEventListener('click', () => {
             window.loginWithGoogle();
@@ -938,13 +924,6 @@ try {
     
     if (btnGoogleLoginClassifieds) {
         btnGoogleLoginClassifieds.addEventListener('click', () => {
-            window.loginWithGoogle();
-        });
-    }
-    
-    if (btnLoginForNotifications) {
-        btnLoginForNotifications.addEventListener('click', () => {
-            console.log('👆 Click login notificaciones');
             window.loginWithGoogle();
         });
     }
@@ -1671,23 +1650,6 @@ try {
         btnWelcomeClasificadosClose.addEventListener('click', async () => {
             welcomeClasificadosModal.classList.add('hidden');
             
-            // Intentar activar notificaciones
-            if (window.pushManager) {
-                const granted = await window.pushManager.requestPermission();
-                if (granted) {
-                    console.log('✅ Notificaciones activadas desde el modal');
-                    // Marcar como no volver a mostrar si activa
-                    localStorage.setItem(WELCOME_CLASIFICADOS_DISABLED, 'true');
-                    
-                    // Scroll al panel de notificaciones para mostrar la configuración
-                    setTimeout(() => {
-                        const notificationsCard = document.getElementById('notifications-card');
-                        if (notificationsCard) {
-                            notificationsCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }, 500);
-                }
-            }
         });
     }
 
@@ -2259,43 +2221,6 @@ try {
         switchTab('fotos');
     }
 
-    // ============================================
-    // SCROLL AUTOMÁTICO AL VENIR DE NOTIFICACIÓN
-    // ============================================
-    
-    // Detectar si viene de una notificación
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromNotification = urlParams.get('from_notification');
-    
-    if (fromNotification === 'true') {
-        console.log('🔔 Usuario viene de notificación - Haciendo scroll al panel de viento');
-        
-        // Esperar a que la página cargue completamente
-        setTimeout(() => {
-            const windPanel = document.getElementById('wind-highlight-card');
-            
-            if (windPanel) {
-                // Hacer scroll suave al panel de viento
-                windPanel.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-                
-                // Agregar highlight temporal (animación de atención)
-                windPanel.classList.add('ring-4', 'ring-blue-500', 'ring-opacity-75');
-                
-                // Quitar highlight después de 3 segundos
-                setTimeout(() => {
-                    windPanel.classList.remove('ring-4', 'ring-blue-500', 'ring-opacity-75');
-                }, 3000);
-                
-                console.log('✅ Scroll completado y panel resaltado');
-            }
-            
-            // Limpiar URL (quitar parámetro)
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }, 1000); // 1 segundo para que todo cargue
-    }
 });
 } catch (e) {
     console.error("❌ Error inicializando Firebase:", e);
