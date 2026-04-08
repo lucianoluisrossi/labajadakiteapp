@@ -403,7 +403,7 @@ try {
     if (alertWhatsappBtn) alertWhatsappBtn.addEventListener('click', (e) => handleAlertBtnClick(e, alertWhatsappBtn.href));
 
     // --- NOVEDADES DEL SPOT ---
-    let isAdmin = false;
+    let canEditNovedades = false;  // rol "admin" o "editor" → puede crear/editar/borrar novedades
     let lastNovedadesDocs = [];
     const novedadesSection  = document.getElementById('novedades-section');
     const novedadesList     = document.getElementById('novedades-list');
@@ -418,17 +418,22 @@ try {
 
     async function updateNovedadesAdminUI(user) {
         isAdmin = false;
+        canEditNovedades = false;
         if (novedadAddBtn) { novedadAddBtn.classList.add('hidden'); novedadAddBtn.classList.remove('flex'); }
         if (topbarAdminBtn) topbarAdminBtn.classList.add('hidden');
         if (!user) return;
         try {
             const snap = await getDoc(doc(db, 'usuarios', user.uid));
-            if (snap.exists() && snap.data().role === 'admin') {
-                isAdmin = true;
+            const role = snap.exists() ? snap.data().role : null;
+            if (role === 'admin') {
+                canEditNovedades = true;
+                if (topbarAdminBtn) topbarAdminBtn.classList.remove('hidden');
+            } else if (role === 'editor') {
+                canEditNovedades = true;
+            }
+            if (canEditNovedades) {
                 if (novedadesSection) novedadesSection.classList.remove('hidden');
                 if (novedadAddBtn) { novedadAddBtn.classList.remove('hidden'); novedadAddBtn.classList.add('flex'); }
-                if (topbarAdminBtn) topbarAdminBtn.classList.remove('hidden');
-                // Re-renderizar con isAdmin ya seteado
                 if (lastNovedadesDocs.length > 0) renderNovedades(lastNovedadesDocs);
             }
         } catch(e) { console.warn('Error leyendo rol usuario:', e); }
@@ -450,7 +455,7 @@ try {
         lastNovedadesDocs = docs;
         if (!novedadesList) return;
         if (docs.length === 0) {
-            if (!isAdmin && novedadesSection) novedadesSection.classList.add('hidden');
+            if (!canEditNovedades && novedadesSection) novedadesSection.classList.add('hidden');
             novedadesList.innerHTML = '';
             return;
         }
@@ -463,7 +468,7 @@ try {
             const texto = data.texto || '';
             const truncado = texto.length > MAX_CHARS;
             const textoVisible = truncado ? texto.slice(0, MAX_CHARS).trimEnd() + '…' : texto;
-            const adminBtns = isAdmin ? `
+            const adminBtns = canEditNovedades ? `
                 <div class="flex gap-2 mt-2">
                     <button onclick="editNovedad('${d.id}')" class="text-[10px] text-blue-500 hover:text-blue-700 font-semibold">✏️ Editar</button>
                     <button onclick="deleteNovedad('${d.id}')" class="text-[10px] text-red-400 hover:text-red-600 font-semibold">🗑 Eliminar</button>
