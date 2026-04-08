@@ -245,6 +245,7 @@ try {
     }
 
     // --- LISTENER DE ESTADO DE AUTENTICACIÓN (dentro de DOMContentLoaded) ---
+    let currentUserIsVip = false;
     let vipUnsubscribe = null;
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
@@ -255,13 +256,14 @@ try {
 
         // Escuchar cambios en tiempo real del doc VIP del usuario
         if (vipUnsubscribe) { vipUnsubscribe(); vipUnsubscribe = null; }
+        if (!user) { currentUserIsVip = false; return; }
         if (user?.email) {
             const docId = user.email.replace(/[.#$[\]@]/g, '_');
             vipUnsubscribe = onSnapshot(doc(db, 'kiter_vip', docId), (snap) => {
-                const isActive = snap.exists() && snap.data()?.active === true;
+                currentUserIsVip = snap.exists() && snap.data()?.active === true;
                 if (vipBadge) {
-                    vipBadge.classList.toggle('hidden', !isActive);
-                    vipBadge.classList.toggle('flex', isActive);
+                    vipBadge.classList.toggle('hidden', !currentUserIsVip);
+                    vipBadge.classList.toggle('flex', currentUserIsVip);
                 }
             });
         }
@@ -283,6 +285,8 @@ try {
             const res = await fetch(`/api/vip-status?email=${encodeURIComponent(user.email)}&uid=${encodeURIComponent(user.uid)}`);
             const data = await res.json();
             if (data.active) {
+                currentUserIsVip = true;
+                window._openVipAfterLogin = false;
                 if (vipBadge) { vipBadge.classList.remove('hidden'); vipBadge.classList.add('flex'); }
                 initSupportBanner(true);
                 const mpSection = document.getElementById('mp-email-section');
@@ -290,7 +294,7 @@ try {
             } else {
                 if (vipBadge) { vipBadge.classList.add('hidden'); vipBadge.classList.remove('flex'); }
                 initSupportBanner(false);
-                if (window._openVipAfterLogin) {
+                if (window._openVipAfterLogin && !currentUserIsVip) {
                     window._openVipAfterLogin = false;
                     setTimeout(() => { if (vipModal) vipModal.classList.remove('hidden'); }, 400);
                 }
@@ -381,11 +385,14 @@ try {
     // --- BOTONES DE ALERTA (WhatsApp / Telegram) — requieren login + modal apoyo ---
     function handleAlertBtnClick(e, url) {
         e.preventDefault();
-        window._pendingAlertLink = url;
         if (!currentUser) {
+            window._pendingAlertLink = url;
             window._openVipAfterLogin = true;
             window.loginWithGoogle && window.loginWithGoogle();
+        } else if (currentUserIsVip) {
+            window.open(url, '_blank', 'noopener');
         } else {
+            window._pendingAlertLink = url;
             if (vipModal) vipModal.classList.remove('hidden');
         }
     }
