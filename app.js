@@ -417,7 +417,6 @@ try {
     const novedadSaveBtn    = document.getElementById('novedad-save-btn');
 
     async function updateNovedadesAdminUI(user) {
-        isAdmin = false;
         canEditNovedades = false;
         if (novedadAddBtn) { novedadAddBtn.classList.add('hidden'); novedadAddBtn.classList.remove('flex'); }
         if (topbarAdminBtn) topbarAdminBtn.classList.add('hidden');
