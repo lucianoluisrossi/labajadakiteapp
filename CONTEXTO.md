@@ -59,22 +59,31 @@
 - `currentUserIsVip` — booleano sincronizado en tiempo real con `onSnapshot` a `kiter_vip`
 - `fetchWeatherData(silent)` — carga datos Ecowitt. `silent=true` no muestra skeletons
 - `updateVipUI(user)` — chequea VIP pasando `email` + `uid` al endpoint
-- `updateNovedadesAdminUI(user)` — lee `usuarios/{uid}.role`, activa controles admin si es `"admin"`
+- `updateNovedadesAdminUI(user)` — lee `usuarios/{uid}.role`; activa controles según rol
+  - `role: "admin"` → `canEditNovedades = true` + muestra botón ⚙️ del panel admin
+  - `role: "editor"` → `canEditNovedades = true`, sin acceso al panel admin
+- `canEditNovedades` — booleano; controla botones editar/borrar en cards y botón `+`
 - `renderNovedades(docs)` — renderiza cards con truncado a 120 chars + botón "Ver más"
 - `updateNovedadBadge(docs)` — muestra punto pulsante si hay novedad no leída (localStorage `novedadLastSeen`)
 - `window.editNovedad(id)` / `window.deleteNovedad(id)` / `window.verNovedadCompleta(id)` — globales para botones inline
 - `window.adminQuitarVip(docId)` — quita VIP desde panel admin
-- Panel admin VIP colapsable con `onSnapshot` a `kiter_vip` donde `active == true`
+- Panel admin (`view-admin`) — visible solo para `role: "admin"`, accesible via botón ⚙️ en topbar
 - Refresh silencioso en `visibilitychange` (volver de otra app o desbloqueo)
 - Modal VIP: nunca se muestra a usuarios VIP. La decisión de mostrar usa `onSnapshot` (no el fetch HTTP) para evitar race conditions
 - Al volver del checkout de MP (`localStorage.mpCheckoutStarted`), destaca el campo de email alternativo
 
 ### `/sw.js`
-- Service Worker v3 (`labajada-cache-v3`)
+- Service Worker v4 (`labajada-cache-v4`)
 - Cache-first para assets estáticos (HTML, JS, CSS, logos, imágenes)
 - Network-first para `/api/*`
 - Caché de: `index.html`, `app.js`, `style.css`, `manifest.json`, `logo.png`, `logo-mariana.png`, `logo3.jpg`, `ux-improvements.js`
 - **No tiene push notifications** — sistema web push fue eliminado
+
+### `/api/notify-novedades.js`
+- `POST /api/notify-novedades` — body: `{ titulo, texto }`
+- Lee todos los docs de `greenapi_subscribers` con `active: true`
+- Envía mensaje WhatsApp a cada suscriptor via Green API con delay de 1s entre envíos
+- Responde `{ ok: true, sent: N, total: N }`
 
 ### `/api/telegram-alert.js`
 - Cron `*/15 * * * *` — verifica condiciones y envía alertas
@@ -130,7 +139,11 @@
 - Header degradado naranja/ámbar visible
 - Punto blanco pulsante cuando hay novedad no leída
 - Textos largos truncados a 120 chars con modal "Ver más"
-- Admin puede crear, editar y eliminar novedades
+- `role: "editor"` o `role: "admin"` pueden crear, editar y eliminar novedades
+- Al publicar, opción de **notificar a suscriptores de WhatsApp** via `/api/notify-novedades`
+  - Checkbox visible solo al crear (no al editar)
+  - Envía a todos los `greenapi_subscribers` con `active: true`
+  - Delay de 1s entre mensajes para respetar rate limit de Green API
 
 ### Alertas de viento
 - **Telegram**: canal `@labajadaWindAlert` (usuario se une desde el botón)
@@ -138,6 +151,18 @@
   - Botón en app abre WhatsApp con texto `Suscribirme a alertas`
   - Webhook maneja suscripciones on-demand
 - ~~Web Push~~ — eliminado (dead code, nunca completado)
+
+### Panel de Administrador
+- Accesible via botón ⚙️ en topbar (solo `role: "admin"`)
+- **Stats**: VIPs activos, suscriptores Telegram/WhatsApp, mensajes, fotos, clasificados
+- **Gestión VIP**: dar/quitar VIP por email con lista en tiempo real (`onSnapshot`)
+- **Historial de pagos MP**: últimos 20 eventos del webhook con estado, email y razón
+- **Moderación chat**: ver mensajes, borrar individual o limpiar todo
+- **Moderación galería**: grid de fotos con borrar individual o limpiar todo
+- **Moderación clasificados**: lista con borrado (sin restricción de userId)
+- **Suscriptores**: lista Telegram y WhatsApp
+- **Test alerta**: dispara `/api/telegram-alert?test=true` y muestra resultado
+- Acordeones con carga lazy (datos solo al abrir cada sección)
 
 ### Comunidad
 - Chat en tiempo real (Firestore `kiter_board`)
@@ -169,11 +194,17 @@ Invoke-RestMethod -Uri "https://api.mercadopago.com/preapproval/search?payer_ema
 
 ## Roles de usuario en Firestore
 
-Para dar rol admin a un usuario:
+| `role` | Novedades (crear/editar/borrar) | Panel Admin |
+|--------|--------------------------------|-------------|
+| `"admin"` | ✅ | ✅ |
+| `"editor"` | ✅ | ❌ |
+| _(sin rol)_ | ❌ | ❌ |
+
+Para asignar un rol:
 ```
 Colección: usuarios
 Documento: {UID de Firebase Auth}
-Campo: role → "admin" (string)
+Campo: role → "admin" | "editor" (string)
 ```
 
 Para dar VIP manualmente desde admin panel o directo en Firestore:
