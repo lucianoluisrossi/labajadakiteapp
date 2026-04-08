@@ -420,7 +420,7 @@ try {
         isAdmin = false;
         if (novedadAddBtn) { novedadAddBtn.classList.add('hidden'); novedadAddBtn.classList.remove('flex'); }
         if (topbarAdminBtn) topbarAdminBtn.classList.add('hidden');
-        if (!user) { toggleAdminVipPanel(false); return; }
+        if (!user) return;
         try {
             const snap = await getDoc(doc(db, 'usuarios', user.uid));
             if (snap.exists() && snap.data().role === 'admin') {
@@ -430,9 +430,6 @@ try {
                 if (topbarAdminBtn) topbarAdminBtn.classList.remove('hidden');
                 // Re-renderizar con isAdmin ya seteado
                 if (lastNovedadesDocs.length > 0) renderNovedades(lastNovedadesDocs);
-                toggleAdminVipPanel(true);
-            } else {
-                toggleAdminVipPanel(false);
             }
         } catch(e) { console.warn('Error leyendo rol usuario:', e); }
     }
@@ -601,77 +598,6 @@ try {
         modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
     };
 
-    // --- PANEL ADMIN VIP ---
-    const adminVipPanel    = document.getElementById('admin-vip-panel');
-    const adminVipEmail    = document.getElementById('admin-vip-email');
-    const adminVipAdd      = document.getElementById('admin-vip-add');
-    const adminVipFeedback = document.getElementById('admin-vip-feedback');
-    const adminVipList     = document.getElementById('admin-vip-list');
-    const adminVipToggle   = document.getElementById('admin-vip-toggle');
-    const adminVipBody     = document.getElementById('admin-vip-body');
-    const adminVipChevron  = document.getElementById('admin-vip-chevron');
-
-    if (adminVipToggle) adminVipToggle.addEventListener('click', () => {
-        const open = !adminVipBody.classList.contains('hidden');
-        adminVipBody.classList.toggle('hidden', open);
-        adminVipChevron.style.transform = open ? '' : 'rotate(180deg)';
-    });
-
-    function showAdminFeedback(msg, type) {
-        if (!adminVipFeedback) return;
-        adminVipFeedback.textContent = msg;
-        adminVipFeedback.className = `text-[10px] text-center mb-3 ${type === 'error' ? 'text-red-500' : 'text-green-600'}`;
-        adminVipFeedback.classList.remove('hidden');
-        setTimeout(() => adminVipFeedback.classList.add('hidden'), 3000);
-    }
-
-    function renderAdminVipList(docs) {
-        if (!adminVipList) return;
-        if (docs.length === 0) { adminVipList.innerHTML = '<p class="text-[10px] text-gray-400 text-center">No hay VIPs activos</p>'; return; }
-        adminVipList.innerHTML = docs.map(d => {
-            const data = d.data();
-            return `<div class="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-2">
-                <span class="text-xs text-gray-700 truncate">${data.email || d.id}</span>
-                <button onclick="adminQuitarVip('${d.id}')" class="text-[10px] text-red-400 hover:text-red-600 font-semibold ml-2 flex-shrink-0">Quitar</button>
-            </div>`;
-        }).join('');
-    }
-
-    // Cargar lista VIPs (solo cuando el panel está visible)
-    let adminVipUnsubscribe = null;
-    function initAdminVipPanel() {
-        if (!adminVipPanel || adminVipUnsubscribe) return;
-        adminVipUnsubscribe = onSnapshot(
-            query(collection(db, 'kiter_vip'), where('active', '==', true)),
-            snap => renderAdminVipList(snap.docs),
-            e => console.warn('Error admin VIP list:', e)
-        );
-    }
-
-    // Mostrar/ocultar panel según rol admin
-    function toggleAdminVipPanel(show) {
-        if (!adminVipPanel) return;
-        if (show) { adminVipPanel.classList.remove('hidden'); initAdminVipPanel(); }
-        else adminVipPanel.classList.add('hidden');
-    }
-
-    // Dar VIP
-    if (adminVipAdd) adminVipAdd.addEventListener('click', async () => {
-        const email = adminVipEmail?.value.trim().toLowerCase();
-        if (!email || !email.includes('@')) { showAdminFeedback('Email inválido', 'error'); return; }
-        adminVipAdd.disabled = true;
-        try {
-            const docId = email.replace(/[.#$[\]@]/g, '_');
-            await setDoc(doc(db, 'kiter_vip', docId), {
-                email, active: true, status: 'authorized',
-                grantedBy: currentUser?.email || 'admin',
-                grantedAt: serverTimestamp()
-            }, { merge: true });
-            adminVipEmail.value = '';
-            showAdminFeedback(`✓ VIP activado para ${email}`, 'ok');
-        } catch(e) { showAdminFeedback('Error al guardar', 'error'); }
-        adminVipAdd.disabled = false;
-    });
 
     // Quitar VIP
     window.adminQuitarVip = async (docId) => {
@@ -2226,8 +2152,7 @@ try {
             const wasHidden = body.classList.contains('hidden');
             body.classList.toggle('hidden');
             if (wasHidden) {
-                if (targetId === 'admin-body-novedades') loadAdminNovedades();
-                else if (targetId === 'admin-body-vip') initAdminVip2();
+                if (targetId === 'admin-body-vip') initAdminVip2();
                 else if (targetId === 'admin-body-pagos') loadAdminPaymentLog();
                 else if (targetId === 'admin-body-chat') loadAdminMessages();
                 else if (targetId === 'admin-body-galeria') loadAdminGallery();
@@ -2257,30 +2182,6 @@ try {
         }
     }
 
-    async function loadAdminNovedades() {
-        const list = document.getElementById('admin-novedades-list');
-        if (!list) return;
-        list.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
-        try {
-            const snap = await getDocs(query(collection(db, 'novedades'), orderBy('fecha', 'desc'), limit(20)));
-            if (snap.empty) { list.innerHTML = '<p class="text-xs text-gray-400">Sin novedades.</p>'; return; }
-            list.innerHTML = snap.docs.map(d => {
-                const data = d.data();
-                const titulo = (data.titulo || '(sin título)').substring(0, 50);
-                const fecha = data.fecha?.toDate ? data.fecha.toDate().toLocaleDateString('es-AR') : '';
-                return `<div class="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-2 gap-2">
-                    <div class="min-w-0">
-                        <p class="text-xs font-bold text-gray-800 truncate">${titulo}</p>
-                        <p class="text-[10px] text-gray-400">${fecha}</p>
-                    </div>
-                    <div class="flex gap-2 shrink-0">
-                        <button onclick="editNovedad('${d.id}')" class="text-sky-500 text-xs font-bold hover:underline">Editar</button>
-                        <button onclick="deleteNovedad('${d.id}')" class="text-red-500 text-xs font-bold hover:underline">Borrar</button>
-                    </div>
-                </div>`;
-            }).join('');
-        } catch(e) { list.innerHTML = '<p class="text-xs text-red-400">Error al cargar.</p>'; }
-    }
 
     let adminVip2Unsubscribe = null;
 
@@ -2512,18 +2413,6 @@ try {
         }
     });
 
-    // Botón agregar novedad desde panel admin
-    const adminNovedadAdd = document.getElementById('admin-novedad-add');
-    if (adminNovedadAdd) adminNovedadAdd.addEventListener('click', () => {
-        if (novedadEditId) novedadEditId.value = '';
-        if (novedadTitulo) novedadTitulo.value = '';
-        if (novedadTexto) novedadTexto.value = '';
-        if (novedadModalTitle) novedadModalTitle.textContent = 'Nueva Novedad';
-        if (novedadSaveBtn) novedadSaveBtn.textContent = 'Publicar';
-        if (novedadWaLabel) novedadWaLabel.classList.remove('hidden');
-        if (novedadNotifyWa) novedadNotifyWa.checked = false;
-        if (novedadModal) novedadModal.classList.remove('hidden');
-    });
 
     let adminPanelInitialized = false;
     function initAdminPanel() {
