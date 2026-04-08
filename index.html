@@ -166,6 +166,10 @@
                     <img id="topbar-user-photo" src="" alt="" class="w-6 h-6 rounded-full border border-gray-300 object-cover">
                     <span id="topbar-user-name" class="text-[10px] font-bold text-gray-700 max-w-[60px] truncate"></span>
                 </button>
+                <!-- Botón Admin -->
+                <button id="topbar-admin-btn" class="hidden p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Panel Admin">
+                    <svg class="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
                 <!-- Selector de tema -->
                 <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Cambiar tema de visualización">
                     <span id="theme-icon" class="text-base leading-none">☀️</span>
@@ -854,6 +858,153 @@
                 <div id="classifieds-list" class="space-y-3 max-h-[70vh] overflow-y-auto">
                     <p id="classifieds-loading" class="text-center text-gray-400 text-sm py-4">Cargando clasificados...</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- VISTA ADMIN -->
+        <div id="view-admin" class="hidden fade-in mt-4 pb-24">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-black text-gray-800 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Panel Admin
+                </h2>
+                <button id="admin-back-btn" class="text-sm text-sky-600 font-bold hover:underline flex items-center gap-1">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                    Volver
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <div class="bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+                    <p class="text-2xl font-black text-amber-500" id="stat-vip">—</p>
+                    <p class="text-[10px] text-gray-500 font-bold mt-0.5">VIP activos</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+                    <p class="text-2xl font-black text-sky-500" id="stat-telegram">—</p>
+                    <p class="text-[10px] text-gray-500 font-bold mt-0.5">Telegram</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+                    <p class="text-2xl font-black text-green-500" id="stat-whatsapp">—</p>
+                    <p class="text-[10px] text-gray-500 font-bold mt-0.5">WhatsApp</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+                    <p class="text-2xl font-black text-blue-500" id="stat-mensajes">—</p>
+                    <p class="text-[10px] text-gray-500 font-bold mt-0.5">Mensajes</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+                    <p class="text-2xl font-black text-purple-500" id="stat-fotos">—</p>
+                    <p class="text-[10px] text-gray-500 font-bold mt-0.5">Fotos</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+                    <p class="text-2xl font-black text-orange-500" id="stat-clasificados">—</p>
+                    <p class="text-[10px] text-gray-500 font-bold mt-0.5">Clasificados</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+
+                <!-- NOVEDADES -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-novedades">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">📢 Novedades</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-novedades" class="hidden px-4 pb-4">
+                        <button id="admin-novedad-add" class="mb-3 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors active:scale-95">+ Nueva novedad</button>
+                        <div id="admin-novedades-list" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- VIP -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-vip">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">🪁 Gestión VIP</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-vip" class="hidden px-4 pb-4">
+                        <div class="flex gap-2 mb-3 mt-1">
+                            <input id="admin-vip-email2" type="email" placeholder="email del usuario" class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-sky-400 text-gray-900 bg-white placeholder-gray-400">
+                            <button id="admin-vip-add2" class="bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors active:scale-95 whitespace-nowrap">Dar VIP</button>
+                        </div>
+                        <p id="admin-vip-feedback2" class="hidden text-[10px] text-center mb-3"></p>
+                        <div id="admin-vip-list2" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- PAGOS -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-pagos">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">💳 Historial de Pagos</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-pagos" class="hidden px-4 pb-4">
+                        <div id="admin-pagos-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- CHAT -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-chat">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">💬 Chat</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-chat" class="hidden px-4 pb-4">
+                        <button id="admin-chat-clear" class="mb-3 bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors active:scale-95">🗑 Limpiar todo el chat</button>
+                        <div id="admin-chat-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- GALERÍA -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-galeria">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">📸 Galería</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-galeria" class="hidden px-4 pb-4">
+                        <button id="admin-galeria-clear" class="mb-3 bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors active:scale-95">🗑 Limpiar toda la galería</button>
+                        <div id="admin-galeria-list" class="grid grid-cols-3 gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- CLASIFICADOS -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-clasificados">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">🏷 Clasificados</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-clasificados" class="hidden px-4 pb-4">
+                        <div id="admin-clasificados-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- SUSCRIPTORES -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-suscriptores">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">🔔 Suscriptores Alertas</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-suscriptores" class="hidden px-4 pb-4">
+                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-2 mt-1">Telegram</p>
+                        <div id="admin-telegram-list" class="space-y-1.5 mb-4"></div>
+                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-2">WhatsApp</p>
+                        <div id="admin-whatsapp-list" class="space-y-1.5"></div>
+                    </div>
+                </div>
+
+                <!-- TEST ALERTAS -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-alertas">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">🧪 Test Alertas</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-alertas" class="hidden px-4 pb-4">
+                        <p class="text-xs text-gray-500 mb-3 mt-1">Envía una alerta de prueba a todos los canales ignorando condiciones de viento y anti-spam.</p>
+                        <button id="admin-test-alert" class="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors active:scale-95">⚡ Enviar alerta de prueba</button>
+                        <p id="admin-test-alert-result" class="hidden text-[10px] text-center mt-2"></p>
+                    </div>
+                </div>
+
             </div>
         </div>
 
