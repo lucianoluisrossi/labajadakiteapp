@@ -351,7 +351,15 @@ try {
         const today = new Date().toISOString().slice(0, 10);
         const lastShown = localStorage.getItem('vipModalLastShown');
         if (lastShown === today) return;
-        setTimeout(() => {
+        setTimeout(async () => {
+            // Doble chequeo: verificar Firestore antes de mostrar el modal
+            if (currentUser?.email) {
+                const docId = currentUser.email.replace(/[.#$[\]@]/g, '_');
+                try {
+                    const snap = await getDoc(doc(db, 'kiter_vip', docId));
+                    if (snap.exists() && snap.data()?.active === true) return;
+                } catch(e) { /* si falla el chequeo, no mostrar el modal */ return; }
+            }
             if (vipModal) {
                 vipModal.classList.remove('hidden');
                 localStorage.setItem('vipModalLastShown', today);
