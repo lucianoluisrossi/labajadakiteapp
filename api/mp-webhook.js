@@ -15,6 +15,17 @@ async function getSubscriptionStatus(preapprovalId) {
     return await res.json();
 }
 
+async function saveLog(db, entry) {
+    try {
+        await db.collection('mp_webhook_log').add({
+            ...entry,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (e) {
+        console.error('Error guardando log:', e.message);
+    }
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
 
@@ -31,19 +42,20 @@ export default async function handler(req, res) {
 
     try {
         const subscription = await getSubscriptionStatus(data.id);
-        if (!subscription) return res.status(200).json({ ok: true, ignored: 'no subscription data' });
-
-        console.log('Subscription data:', JSON.stringify(subscription));
+        if (!subscription) {
+            await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: 'no subscription data from MP API' });
+            return res.status(200).json({ ok: true, ignored: 'no subscription data' });
+        }
 
         const { status, payer_email, payer_id, id, next_payment_date } = subscription;
         const isActive = status === 'authorized' || status === 'active';
 
-        // Usar email si existe, sino usar payer_id como fallback
         const emailKey = payer_email || null;
         if (!emailKey && !payer_id) {
-            console.error('No payer_email ni payer_id en la suscripción:', subscription);
+            await saveLog(db, { type, preapproval_id: id, status, result: 'error', reason: 'no payer_email ni payer_id' });
             return res.status(200).json({ ok: true, ignored: 'no payer identifier' });
         }
+
         const docId = emailKey
             ? emailKey.replace(/[.#$[\]@]/g, '_')
             : `payer_${payer_id}`;
@@ -56,11 +68,13 @@ export default async function handler(req, res) {
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
+        await saveLog(db, { type, preapproval_id: id, payer_email, status, active: isActive, result: 'ok' });
         console.log(`✅ VIP actualizado: ${payer_email} → ${status}`);
         return res.status(200).json({ ok: true });
 
     } catch (error) {
         console.error('Error procesando webhook MP:', error);
+        await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: error.message }).catch(() => {});
         return res.status(500).json({ error: error.message });
     }
 }
