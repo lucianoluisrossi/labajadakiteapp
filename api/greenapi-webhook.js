@@ -28,11 +28,19 @@ export default async function handler(req, res) {
 
     // Solo procesar mensajes entrantes de texto
     if (body?.typeWebhook !== 'incomingMessageReceived') return res.status(200).json({ ok: true });
-    if (body?.messageData?.typeMessage !== 'textMessage') return res.status(200).json({ ok: true });
+
+    const typeMessage = body?.messageData?.typeMessage;
+    const isText = typeMessage === 'textMessage' || typeMessage === 'extendedTextMessage';
+    if (!isText) return res.status(200).json({ ok: true });
 
     const chatId  = body?.senderData?.chatId || '';
     const name    = body?.senderData?.senderName || 'Kitero';
-    const text    = (body?.messageData?.textMessageData?.textMessage || '').trim().toLowerCase();
+    // extendedTextMessage usa una estructura diferente para el texto
+    const text    = (
+        body?.messageData?.textMessageData?.textMessage ||
+        body?.messageData?.extendedTextMessageData?.text ||
+        ''
+    ).trim().toLowerCase();
 
     // Ignorar mensajes de grupos (terminan en @g.us)
     if (chatId.endsWith('@g.us')) return res.status(200).json({ ok: true });
