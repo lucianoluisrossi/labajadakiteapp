@@ -29,16 +29,18 @@ export default async function handler(req, res) {
     // Solo procesar mensajes entrantes de texto
     if (body?.typeWebhook !== 'incomingMessageReceived') return res.status(200).json({ ok: true });
 
-    const typeMessage = body?.messageData?.typeMessage;
+    // Green API puede enviar estructura anidada (messageData) o plana (raíz)
+    const typeMessage = body?.messageData?.typeMessage || body?.typeMessage;
     const isText = typeMessage === 'textMessage' || typeMessage === 'extendedTextMessage';
     if (!isText) return res.status(200).json({ ok: true });
 
-    const chatId  = body?.senderData?.chatId || '';
-    const name    = body?.senderData?.senderName || 'Kitero';
-    // extendedTextMessage usa una estructura diferente para el texto
+    const chatId  = body?.senderData?.chatId || body?.chatId || '';
+    const name    = body?.senderData?.senderName || body?.senderName || 'Kitero';
     const text    = (
         body?.messageData?.textMessageData?.textMessage ||
         body?.messageData?.extendedTextMessageData?.text ||
+        body?.extendedTextMessage?.text ||
+        body?.textMessage ||
         ''
     ).trim().toLowerCase();
 
