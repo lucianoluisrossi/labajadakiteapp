@@ -81,6 +81,40 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
     }
 
+    // Pago autorizado de suscripción recurrente
+    if (type === 'subscription_authorized_payment') {
+        try {
+            const payment = await getPaymentDetails(data?.id);
+            if (!payment) {
+                await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: 'no payment data from MP API' });
+                return res.status(200).json({ ok: true });
+            }
+            const payerEmail = payment.payer?.email || null;
+            const paymentStatus = payment.status;
+            const isApproved = paymentStatus === 'approved';
+            if (!payerEmail) {
+                await saveLog(db, { type, preapproval_id: data?.id, status: paymentStatus, result: 'error', reason: 'no payer email' });
+                return res.status(200).json({ ok: true });
+            }
+            const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
+            if (isApproved) {
+                await db.collection(VIP_COLLECTION).doc(docId).set({
+                    email: payerEmail,
+                    payment_id: payment.id,
+                    status: 'authorized',
+                    active: true,
+                    updated_at: admin.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            }
+            await saveLog(db, { type, preapproval_id: String(payment.id), payer_email: payerEmail, status: paymentStatus, active: isApproved, result: 'ok' });
+            console.log(`✅ Subscription payment procesado: ${payerEmail} → ${paymentStatus}`);
+        } catch (error) {
+            console.error('Error procesando subscription_authorized_payment:', error);
+            await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: error.message }).catch(() => {});
+        }
+        return res.status(200).json({ ok: true });
+    }
+
     // Tipos no manejados — logueamos para diagnóstico
     if (type !== 'subscription_preapproval') {
         await saveLog(db, { type, preapproval_id: data?.id, result: 'ignored', reason: `tipo no manejado: ${type}` });
