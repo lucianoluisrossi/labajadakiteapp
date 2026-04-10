@@ -2402,18 +2402,42 @@ try {
                         const data = d.data();
                         const nombre = data.name || data.senderName || '—';
                         const fecha = data.subscribedAt?.toDate ? data.subscribedAt.toDate().toLocaleDateString('es-AR') : '';
+                        const cid = data.chatId || d.id;
                         return `<div class="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
                             <div class="min-w-0">
                                 <p class="text-xs font-bold text-gray-700 truncate">${nombre}</p>
-                                <p class="text-[10px] text-gray-400">${data.chatId || d.id}</p>
+                                <p class="text-[10px] text-gray-400">${cid}</p>
                             </div>
-                            <p class="text-[10px] text-gray-400 shrink-0">${fecha}</p>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <p class="text-[10px] text-gray-400">${fecha}</p>
+                                <button onclick="adminSendReminder('${cid}', '${nombre.replace(/'/g, "\\'")}', this)"
+                                    class="text-[10px] bg-green-500 hover:bg-green-600 text-white font-bold px-2 py-1 rounded-lg transition-colors active:scale-95">
+                                    📨
+                                </button>
+                            </div>
                         </div>`;
                     }).join('');
                 }
             } catch(e) { whatsappList.innerHTML = '<p class="text-xs text-red-400">Error.</p>'; }
         }
     }
+
+    window.adminSendReminder = async (chatId, nombre, btn) => {
+        if (!confirm(`¿Enviar recordatorio VIP a ${nombre}?`)) return;
+        btn.disabled = true;
+        btn.textContent = '⏳';
+        try {
+            const r = await fetch('/api/send-whatsapp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chatId, nombre })
+            });
+            const json = await r.json();
+            btn.textContent = json.ok ? '✅' : '❌';
+        } catch(e) {
+            btn.textContent = '❌';
+        }
+    };
 
     const adminTestAlertBtn = document.getElementById('admin-test-alert');
     const adminTestAlertResult = document.getElementById('admin-test-alert-result');
