@@ -23,6 +23,18 @@ async function getPaymentDetails(paymentId) {
     return await res.json();
 }
 
+async function getPayerEmail(payerId) {
+    if (!payerId) return null;
+    try {
+        const res = await fetch(`https://api.mercadopago.com/users/${payerId}`, {
+            headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` }
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.email || null;
+    } catch(e) { return null; }
+}
+
 async function saveLog(db, entry) {
     try {
         await db.collection('mp_webhook_log').add({
@@ -144,15 +156,15 @@ export default async function handler(req, res) {
             return res.status(200).json({ ok: true, ignored: 'no subscription data' });
         }
 
-        const { status, payer_email, payer_id, id, next_payment_date } = subscription;
+        const { status, payer_id, id, next_payment_date } = subscription;
+        // Intentar obtener email: del campo directo o consultando al usuario de MP
+        const payer_email = subscription.payer_email || await getPayerEmail(payer_id) || '';
         const isActive = status === 'authorized' || status === 'active';
-
-        const emailKey = payer_email || null;
 
         // Si no hay email, buscar el documento por preapproval_id en kiter_vip
         let docId = null;
-        if (emailKey) {
-            docId = emailKey.replace(/[.#$[\]@]/g, '_');
+        if (payer_email) {
+            docId = payer_email.replace(/[.#$[\]@]/g, '_');
         } else {
             const existing = await db.collection(VIP_COLLECTION).where('preapproval_id', '==', id).limit(1).get();
             if (!existing.empty) {
