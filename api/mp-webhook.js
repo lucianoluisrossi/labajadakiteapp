@@ -132,16 +132,27 @@ export default async function handler(req, res) {
         const isActive = status === 'authorized' || status === 'active';
 
         const emailKey = payer_email || null;
-        if (!emailKey && !payer_id) {
-            await saveLog(db, { type, preapproval_id: id, status, result: 'error', reason: 'no payer_email ni payer_id' });
-            return res.status(200).json({ ok: true, ignored: 'no payer identifier' });
+
+        // Si no hay email, buscar el documento por preapproval_id en kiter_vip
+        let docId = null;
+        if (emailKey) {
+            docId = emailKey.replace(/[.#$[\]@]/g, '_');
+        } else {
+            const existing = await db.collection(VIP_COLLECTION).where('preapproval_id', '==', id).limit(1).get();
+            if (!existing.empty) {
+                docId = existing.docs[0].id;
+            } else if (payer_id) {
+                docId = `payer_${payer_id}`;
+            }
         }
 
-        const docId = emailKey
-            ? emailKey.replace(/[.#$[\]@]/g, '_')
-            : `payer_${payer_id}`;
+        if (!docId) {
+            await saveLog(db, { type, preapproval_id: id, status, result: 'error', reason: 'no se encontró documento VIP para actualizar' });
+            return res.status(200).json({ ok: true });
+        }
+
         await db.collection(VIP_COLLECTION).doc(docId).set({
-            email: payer_email,
+            email: payer_email || undefined,
             preapproval_id: id,
             status,
             active: isActive,
