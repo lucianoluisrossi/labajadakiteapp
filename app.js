@@ -2184,6 +2184,19 @@ try {
                 el.textContent = snap.size;
             } catch(e) { el.textContent = '?'; }
         }
+        // Visitantes únicos y con cuenta
+        try {
+            const snapVisitantes = await getDocs(collection(db, 'app_devices'));
+            const elV = document.getElementById('stat-visitantes');
+            const elR = document.getElementById('stat-registrados');
+            if (elV) elV.textContent = snapVisitantes.size;
+            if (elR) elR.textContent = snapVisitantes.docs.filter(d => d.data().userId).length;
+        } catch(e) {
+            const elV = document.getElementById('stat-visitantes');
+            const elR = document.getElementById('stat-registrados');
+            if (elV) elV.textContent = '?';
+            if (elR) elR.textContent = '?';
+        }
     }
 
 
