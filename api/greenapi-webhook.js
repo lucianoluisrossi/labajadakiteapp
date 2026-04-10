@@ -6,8 +6,8 @@
 import { initFirebase } from './_firebase.js';
 import admin from 'firebase-admin';
 
-const SUBSCRIBE_KEYWORDS   = ['hola', 'join', 'quiero', 'suscribir', 'alertas', 'start', 'si', 'sí'];
-const UNSUBSCRIBE_KEYWORDS = ['stop', 'chau', 'salir', 'cancelar', 'baja', 'no'];
+const SUBSCRIBE_TEXT   = 'suscribirme a alertas';
+const UNSUBSCRIBE_TEXT = 'stop';
 const COLLECTION           = 'greenapi_subscribers';
 
 async function sendReply(chatId, message) {
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase no disponible' });
 
-    if (SUBSCRIBE_KEYWORDS.some(k => text.includes(k))) {
+    if (text === SUBSCRIBE_TEXT) {
         await db.collection(COLLECTION).doc(chatId).set({
             chatId, name, active: true,
             subscribedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -68,7 +68,7 @@ Para dejar de recibir alertas mandá *STOP*.`
         return res.status(200).json({ ok: true, action: 'subscribed' });
     }
 
-    if (UNSUBSCRIBE_KEYWORDS.some(k => text.includes(k))) {
+    if (text === UNSUBSCRIBE_TEXT) {
         await db.collection(COLLECTION).doc(chatId).set({
             active: false,
             unsubscribedAt: admin.firestore.FieldValue.serverTimestamp()
