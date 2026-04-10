@@ -2374,14 +2374,19 @@ try {
         if (telegramList) {
             telegramList.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
             try {
-                const snap = await getDocs(collection(db, 'telegram_subscribers'));
+                const snap = await getDocs(query(collection(db, 'telegram_subscribers'), orderBy('subscribedAt', 'desc')));
                 if (snap.empty) { telegramList.innerHTML = '<p class="text-xs text-gray-400">Sin suscriptores.</p>'; }
                 else {
                     telegramList.innerHTML = snap.docs.map(d => {
                         const data = d.data();
-                        return `<div class="bg-white border border-gray-200 rounded-xl px-3 py-1.5">
-                            <p class="text-xs text-gray-700">${data.chatId || d.id}</p>
-                            ${data.firstName ? `<p class="text-[10px] text-gray-400">${data.firstName}</p>` : ''}
+                        const nombre = data.firstName || data.username || '—';
+                        const fecha = data.subscribedAt?.toDate ? data.subscribedAt.toDate().toLocaleDateString('es-AR') : '';
+                        return `<div class="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-gray-700 truncate">${nombre}</p>
+                                <p class="text-[10px] text-gray-400">${data.chatId || d.id}</p>
+                            </div>
+                            <p class="text-[10px] text-gray-400 shrink-0">${fecha}</p>
                         </div>`;
                     }).join('');
                 }
@@ -2390,13 +2395,19 @@ try {
         if (whatsappList) {
             whatsappList.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
             try {
-                const snap = await getDocs(collection(db, 'greenapi_subscribers'));
+                const snap = await getDocs(query(collection(db, 'greenapi_subscribers'), orderBy('subscribedAt', 'desc')));
                 if (snap.empty) { whatsappList.innerHTML = '<p class="text-xs text-gray-400">Sin suscriptores.</p>'; }
                 else {
                     whatsappList.innerHTML = snap.docs.map(d => {
                         const data = d.data();
-                        return `<div class="bg-white border border-gray-200 rounded-xl px-3 py-1.5">
-                            <p class="text-xs text-gray-700">${data.chatId || d.id}</p>
+                        const nombre = data.name || data.senderName || '—';
+                        const fecha = data.subscribedAt?.toDate ? data.subscribedAt.toDate().toLocaleDateString('es-AR') : '';
+                        return `<div class="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-gray-700 truncate">${nombre}</p>
+                                <p class="text-[10px] text-gray-400">${data.chatId || d.id}</p>
+                            </div>
+                            <p class="text-[10px] text-gray-400 shrink-0">${fecha}</p>
                         </div>`;
                     }).join('');
                 }
