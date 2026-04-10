@@ -122,8 +122,24 @@ export default async function handler(req, res) {
     }
 
     try {
-        const subscription = await getSubscriptionStatus(data.id);
+        let subscription = await getSubscriptionStatus(data.id);
         if (!subscription) {
+            // MP a veces envía un payment ID en lugar de preapproval ID — intentar como pago
+            const payment = await getPaymentDetails(data.id);
+            if (payment?.payer?.email && payment?.status) {
+                const payerEmail = payment.payer.email;
+                const isApproved = payment.status === 'approved';
+                const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
+                if (isApproved) {
+                    await db.collection(VIP_COLLECTION).doc(docId).set({
+                        email: payerEmail, payment_id: payment.id,
+                        status: 'authorized', active: true,
+                        updated_at: admin.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+                await saveLog(db, { type, preapproval_id: String(data.id), payer_email: payerEmail, status: payment.status, active: isApproved, result: 'ok', reason: 'fallback a payment API' });
+                return res.status(200).json({ ok: true });
+            }
             await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: 'no subscription data from MP API' });
             return res.status(200).json({ ok: true, ignored: 'no subscription data' });
         }
