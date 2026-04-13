@@ -5,7 +5,7 @@
 - **Backend**: Vercel Serverless Functions (`/api/*.js`, ES Modules)
 - **Base de datos**: Firebase Firestore (tiempo real)
 - **Auth**: Firebase Auth (Google Sign-In)
-- **Hosting**: Vercel → dominio `labajadakite.app`
+- **Hosting**: Vercel → dominio `labajadakite.app` (redirige a `www.labajadakite.app`)
 - **Repositorio**: `github.com/lucianoluisrossi/labajadakiteapp`
 
 ---
@@ -36,11 +36,12 @@
 | `wind_history` | Lecturas de viento (campo `v`: velocidad, `t`: timestamp) |
 | `telegram_alerts` | Control anti-spam alertas (`last_alert` doc) |
 | `telegram_subscribers` | Suscriptores bot Telegram individual |
-| `greenapi_subscribers` | Suscriptores WhatsApp on-demand (Green API) |
+| `greenapi_subscribers` | Suscriptores WhatsApp on-demand (`chatId`, `name`, `active`, `subscribedAt`) |
 | `kiter_vip` | Suscriptores VIP (`email`, `active`, `status`, `preapproval_id`) |
-| `usuarios` | Perfiles de usuario (`role: "admin"`, `mp_email`) |
+| `usuarios` | Perfiles de usuario (`role: "admin" | "editor"`, `mp_email`) |
 | `novedades` | Novedades del spot (`titulo`, `texto`, `fecha`, `creadoPor`) |
-| `mp_webhook_log` | Log persistente de cada evento recibido del webhook de MP (`type`, `payer_email`, `status`, `active`, `result`, `reason`, `timestamp`) |
+| `mp_webhook_log` | Log de cada evento MP (`type`, `payer_email`, `status`, `active`, `result`, `reason`, `timestamp`) |
+| `app_devices` | Registro de visitas únicas por dispositivo/usuario |
 
 ---
 
@@ -49,9 +50,10 @@
 ### `/index.html`
 - SPA principal
 - Secciones: viento hero, historial 6hs, novedades, alertas, escuelas kite, comunidad, galería, clasificados, windguru
-- Modales: VIP, novedad (crear/editar), novedad completa (leer)
-- Panel admin VIP (colapsable, solo visible para `role: "admin"`)
+- Modales: VIP, novedad (crear/editar con checkbox de notificación WA), novedad completa (leer)
 - Botón MP tiene `onclick="localStorage.setItem('mpCheckoutStarted','true')"` para detectar retorno del checkout
+- **No tiene** panel VIP colapsable en el home (fue eliminado) — gestión VIP solo en panel admin
+- `app.js?v=4` como cache buster
 
 ### `/app.js`
 - Toda la lógica del cliente
@@ -71,6 +73,7 @@
 - Refresh silencioso en `visibilitychange` (volver de otra app o desbloqueo)
 - Modal VIP: nunca se muestra a usuarios VIP. La decisión de mostrar usa `onSnapshot` (no el fetch HTTP) para evitar race conditions
 - Al volver del checkout de MP (`localStorage.mpCheckoutStarted`), destaca el campo de email alternativo
+- **Panel admin JS completo**: acordeones con carga lazy, stats (VIPs, suscriptores TG/WA, mensajes, fotos, clasificados, visitantes únicos, usuarios registrados), gestión VIP, historial pagos MP, moderación chat/galería/clasificados, suscriptores con nombre y fecha, botón recordatorio VIP individual por WA
 
 ### `/sw.js`
 - Service Worker v4 (`labajada-cache-v4`)
@@ -85,6 +88,12 @@
 - Envía mensaje WhatsApp a cada suscriptor via Green API con delay de 1s entre envíos
 - Responde `{ ok: true, sent: N, total: N }`
 
+### `/api/send-whatsapp.js`
+- `POST /api/send-whatsapp` — body: `{ chatId, nombre }`
+- Envía mensaje de recordatorio VIP prearmado a un suscriptor específico
+- Mensaje invita al usuario a suscribirse como Kiter VIP para apoyar la app y acceder a funciones de comunidad
+- Responde `{ ok: true }` o error
+
 ### `/api/telegram-alert.js`
 - Cron `*/15 * * * *` — verifica condiciones y envía alertas
 - Condiciones: promedio ≥14 kts en últimas 30min, dirección on-shore, hora 9-19hs AR (UTC-3)
@@ -95,10 +104,12 @@
 
 ### `/api/greenapi-webhook.js`
 - Recibe mensajes entrantes de WhatsApp via Green API
-- Palabras clave para suscribir: `hola`, `join`, `quiero`, `suscribir`, `alertas`, `start`, `si`, `sí`
-- Palabras clave para desuscribir: `stop`, `chau`, `salir`, `basta`, `cancelar`, `no`
+- **Suscripción**: solo texto exacto `suscribirme a alertas` (case-insensitive)
+- **Desuscripción**: solo texto exacto `stop` (case-insensitive)
+- Soporta tipos `textMessage` y `extendedTextMessage`
+- Soporta payload anidado (`messageData.*`) y plano (`body.*`)
 - Ignora mensajes de grupos (`chatId.endsWith('@g.us')`)
-- Guarda en colección `greenapi_subscribers`
+- Guarda en colección `greenapi_subscribers` con `chatId`, `name`, `active`, `subscribedAt`
 
 ### `/api/vip-status.js`
 - `GET /api/vip-status?email=X&uid=Y`
@@ -107,10 +118,16 @@
 - Consulta MP API si no encuentra en Firestore, y si encuentra crea el doc automáticamente
 
 ### `/api/mp-webhook.js`
-- Recibe notificaciones de MercadoPago (`subscription_preapproval`)
-- Guarda/actualiza doc en `kiter_vip` con `email`, `status`, `active`, `payer_id`
+- Recibe notificaciones de MercadoPago
+- Maneja 4 tipos de eventos:
+  - `payment` — pago individual: obtiene email, activa VIP si `status: approved`
+  - `subscription_authorized_payment` — pago recurrente de suscripción: igual que `payment`
+  - `subscription_preapproval` — alta/baja/modificación de suscripción: actualiza `kiter_vip` con `status`, `active`, `next_payment_date`
+  - Cualquier otro tipo — logueado como `result: "ignored"` para diagnóstico
+- Funciones auxiliares: `getSubscriptionStatus(id)`, `getPaymentDetails(id)`, `getPayerEmail(payerId)` (consulta `GET /users/{id}`)
+- Si `payer_email` está vacío en `subscription_preapproval`: intenta `getPayerEmail(payer_id)`, luego busca por `preapproval_id` en `kiter_vip`, finalmente crea doc `payer_{id}`
 - Guarda log en `mp_webhook_log` con resultado de cada evento
-- Si las credenciales de Firebase fallan: error visible en Vercel Logs y sin doc en `mp_webhook_log`
+- **Nota**: `email: payer_email || null` (no `|| undefined` — Firestore no acepta undefined)
 
 ---
 
@@ -132,7 +149,6 @@
 - Modal VIP: 1 vez/día para no-VIP, nunca para VIP (verificado en Firestore antes de mostrar)
 - Sección de email alternativo de MP siempre visible en el modal
 - Al volver del checkout sin VIP activo: campo resaltado con mensaje específico
-- **Panel admin** (solo `role: "admin"`): dar/quitar VIP por email, lista en tiempo real
 - Logs de webhooks en `mp_webhook_log` para diagnóstico
 
 ### Novedades del Spot
@@ -149,18 +165,19 @@
 - **Telegram**: canal `@labajadaWindAlert` (usuario se une desde el botón)
 - **WhatsApp**: via Green API, instancia `+34 637 499 277`
   - Botón en app abre WhatsApp con texto `Suscribirme a alertas`
-  - Webhook maneja suscripciones on-demand
+  - Webhook procesa suscripción/desuscripción con texto **exacto**
 - ~~Web Push~~ — eliminado (dead code, nunca completado)
 
 ### Panel de Administrador
 - Accesible via botón ⚙️ en topbar (solo `role: "admin"`)
-- **Stats**: VIPs activos, suscriptores Telegram/WhatsApp, mensajes, fotos, clasificados
+- **Stats**: VIPs activos, suscriptores Telegram, suscriptores WhatsApp, mensajes, fotos, clasificados, visitantes únicos (app_devices), usuarios registrados
 - **Gestión VIP**: dar/quitar VIP por email con lista en tiempo real (`onSnapshot`)
 - **Historial de pagos MP**: últimos 20 eventos del webhook con estado, email y razón
 - **Moderación chat**: ver mensajes, borrar individual o limpiar todo
 - **Moderación galería**: grid de fotos con borrar individual o limpiar todo
 - **Moderación clasificados**: lista con borrado (sin restricción de userId)
-- **Suscriptores**: lista Telegram y WhatsApp
+- **Suscriptores WhatsApp**: lista con nombre, fecha de suscripción y botón para enviar recordatorio VIP individual
+- **Suscriptores Telegram**: lista
 - **Test alerta**: dispara `/api/telegram-alert?test=true` y muestra resultado
 - Acordeones con carga lazy (datos solo al abrir cada sección)
 
@@ -182,13 +199,14 @@ Si un usuario pagó y no se activó el VIP:
 ```powershell
 $headers = @{ "Content-Type" = "application/json" }
 $body = '{"type":"subscription_preapproval","data":{"id":"ID_REAL"}}'
-Invoke-RestMethod -Uri "https://labajadakite.app/api/mp-webhook" -Method POST -Headers $headers -Body $body
+Invoke-RestMethod -Uri "https://www.labajadakite.app/api/mp-webhook" -Method POST -Headers $headers -Body $body
 ```
 3. Para buscar el ID por email:
 ```powershell
 $headers = @{ "Authorization" = "Bearer MP_ACCESS_TOKEN" }
 Invoke-RestMethod -Uri "https://api.mercadopago.com/preapproval/search?payer_email=EMAIL" -Method GET -Headers $headers | ConvertTo-Json -Depth 5
 ```
+> **Importante**: usar siempre `www.labajadakite.app` en la URL del webhook de MP. El dominio sin www hace un redirect 307 y MP no sigue redirects.
 
 ---
 
@@ -222,7 +240,7 @@ Campos: email, active: true, status: "authorized"
 |---|---|---|
 | Firebase Auth | ✅ | `labajadakite.app` en Authorized Domains |
 | Green API webhook | ✅ | `https://labajadakite.app/api/greenapi-webhook` |
-| MercadoPago webhooks | ✅ | URL producción + eventos: Planes y suscripciones + Pagos |
+| MercadoPago webhooks | ✅ | URL: `https://www.labajadakite.app/api/mp-webhook` (con www) + eventos: Planes y suscripciones + Pagos |
 | MercadoPago credenciales | ✅ | Token y plan de producción configurados en Vercel |
 | Vercel dominio | ✅ | `labajadakite.app` activo |
 

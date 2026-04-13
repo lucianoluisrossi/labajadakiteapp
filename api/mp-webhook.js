@@ -180,7 +180,7 @@ export default async function handler(req, res) {
         }
 
         await db.collection(VIP_COLLECTION).doc(docId).set({
-            email: payer_email || undefined,
+            email: payer_email || null,
             preapproval_id: id,
             status,
             active: isActive,
