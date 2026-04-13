@@ -55,37 +55,65 @@ export default async function handler(req, res) {
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase error' });
 
+    // Helper compartido para procesar un pago (payment o subscription_authorized_payment)
+    async function processPaymentEvent(eventType, rawId) {
+        let payment = await getPaymentDetails(rawId);
+        let usedFallback = false;
+
+        if (!payment) {
+            // MP a veces envía un preapproval ID en lugar de un payment ID — intentar como suscripción
+            const subscription = await getSubscriptionStatus(rawId);
+            if (subscription) {
+                const payerEmail = subscription.payer_email || await getPayerEmail(subscription.payer_id) || null;
+                const isActive = subscription.status === 'authorized' || subscription.status === 'active';
+                if (payerEmail) {
+                    const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
+                    if (isActive) {
+                        await db.collection(VIP_COLLECTION).doc(docId).set({
+                            email: payerEmail,
+                            preapproval_id: subscription.id,
+                            status: subscription.status,
+                            active: true,
+                            updated_at: admin.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                    }
+                    await saveLog(db, { type: eventType, preapproval_id: String(rawId), payer_email: payerEmail, status: subscription.status, active: isActive, result: 'ok', reason: 'fallback a subscription API' });
+                    console.log(`✅ ${eventType} procesado via fallback subscription: ${payerEmail} → ${subscription.status}`);
+                    return;
+                }
+            }
+            await saveLog(db, { type: eventType, preapproval_id: rawId, result: 'error', reason: 'no payment data from MP API' });
+            return;
+        }
+
+        const payerEmail = payment.payer?.email || null;
+        const paymentStatus = payment.status;
+        const isApproved = paymentStatus === 'approved';
+
+        if (!payerEmail) {
+            await saveLog(db, { type: eventType, preapproval_id: rawId, status: paymentStatus, result: 'error', reason: 'no payer email en payment' });
+            return;
+        }
+
+        const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
+        if (isApproved) {
+            await db.collection(VIP_COLLECTION).doc(docId).set({
+                email: payerEmail,
+                payment_id: payment.id,
+                status: 'authorized',
+                active: true,
+                updated_at: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        }
+
+        await saveLog(db, { type: eventType, preapproval_id: String(payment.id), payer_email: payerEmail, status: paymentStatus, active: isApproved, result: 'ok' });
+        console.log(`✅ ${eventType} procesado: ${payerEmail} → ${paymentStatus}`);
+    }
+
     // Pago de suscripción
     if (type === 'payment') {
         try {
-            const payment = await getPaymentDetails(data?.id);
-            if (!payment) {
-                await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: 'no payment data from MP API' });
-                return res.status(200).json({ ok: true });
-            }
-
-            const payerEmail = payment.payer?.email || null;
-            const paymentStatus = payment.status; // approved, rejected, cancelled, etc.
-            const isApproved = paymentStatus === 'approved';
-
-            if (!payerEmail) {
-                await saveLog(db, { type, preapproval_id: data?.id, status: paymentStatus, result: 'error', reason: 'no payer email en payment' });
-                return res.status(200).json({ ok: true });
-            }
-
-            const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
-            if (isApproved) {
-                await db.collection(VIP_COLLECTION).doc(docId).set({
-                    email: payerEmail,
-                    payment_id: payment.id,
-                    status: 'authorized',
-                    active: true,
-                    updated_at: admin.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            }
-
-            await saveLog(db, { type, preapproval_id: String(payment.id), payer_email: payerEmail, status: paymentStatus, active: isApproved, result: 'ok' });
-            console.log(`✅ Payment procesado: ${payerEmail} → ${paymentStatus}`);
+            await processPaymentEvent(type, data?.id);
         } catch (error) {
             console.error('Error procesando payment webhook:', error);
             await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: error.message }).catch(() => {});
@@ -96,30 +124,7 @@ export default async function handler(req, res) {
     // Pago autorizado de suscripción recurrente
     if (type === 'subscription_authorized_payment') {
         try {
-            const payment = await getPaymentDetails(data?.id);
-            if (!payment) {
-                await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: 'no payment data from MP API' });
-                return res.status(200).json({ ok: true });
-            }
-            const payerEmail = payment.payer?.email || null;
-            const paymentStatus = payment.status;
-            const isApproved = paymentStatus === 'approved';
-            if (!payerEmail) {
-                await saveLog(db, { type, preapproval_id: data?.id, status: paymentStatus, result: 'error', reason: 'no payer email' });
-                return res.status(200).json({ ok: true });
-            }
-            const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
-            if (isApproved) {
-                await db.collection(VIP_COLLECTION).doc(docId).set({
-                    email: payerEmail,
-                    payment_id: payment.id,
-                    status: 'authorized',
-                    active: true,
-                    updated_at: admin.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            }
-            await saveLog(db, { type, preapproval_id: String(payment.id), payer_email: payerEmail, status: paymentStatus, active: isApproved, result: 'ok' });
-            console.log(`✅ Subscription payment procesado: ${payerEmail} → ${paymentStatus}`);
+            await processPaymentEvent(type, data?.id);
         } catch (error) {
             console.error('Error procesando subscription_authorized_payment:', error);
             await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: error.message }).catch(() => {});
