@@ -970,6 +970,18 @@
                         <p class="text-[10px] text-gray-400 uppercase font-bold mb-2 mt-1">Telegram</p>
                         <div id="admin-telegram-list" class="space-y-1.5 mb-4"></div>
                         <p class="text-[10px] text-gray-400 uppercase font-bold mb-2">WhatsApp</p>
+                        <!-- Formulario alta manual WA -->
+                        <div class="flex gap-2 mb-3">
+                            <input id="admin-wa-phone" type="tel" placeholder="Nro sin 0 ni 15 (ej: 2983123456)"
+                                class="flex-1 text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-green-400" />
+                            <input id="admin-wa-name" type="text" placeholder="Nombre"
+                                class="w-24 text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-green-400" />
+                            <button id="admin-wa-subscribe-btn"
+                                class="text-xs bg-green-500 hover:bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg transition-colors active:scale-95 shrink-0">
+                                + Alta
+                            </button>
+                        </div>
+                        <p id="admin-wa-subscribe-msg" class="text-xs text-gray-500 mb-2 hidden"></p>
                         <div id="admin-whatsapp-list" class="space-y-1.5"></div>
                     </div>
                 </div>

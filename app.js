@@ -2439,6 +2439,38 @@ try {
         }
     };
 
+    const adminWaSubscribeBtn = document.getElementById('admin-wa-subscribe-btn');
+    if (adminWaSubscribeBtn) adminWaSubscribeBtn.addEventListener('click', async () => {
+        const phoneInput = document.getElementById('admin-wa-phone');
+        const nameInput  = document.getElementById('admin-wa-name');
+        const msgEl      = document.getElementById('admin-wa-subscribe-msg');
+        const phone = (phoneInput?.value || '').trim();
+        if (!phone) { phoneInput?.focus(); return; }
+        adminWaSubscribeBtn.disabled = true;
+        adminWaSubscribeBtn.textContent = '⏳';
+        if (msgEl) { msgEl.textContent = ''; msgEl.classList.add('hidden'); }
+        try {
+            const r = await fetch('/api/admin-subscribe-wa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, name: nameInput?.value?.trim() || '' })
+            });
+            const json = await r.json();
+            if (json.ok) {
+                if (msgEl) { msgEl.textContent = `✅ Suscripto: ${json.chatId}`; msgEl.className = 'text-xs text-green-600 mb-2'; msgEl.classList.remove('hidden'); }
+                phoneInput.value = '';
+                if (nameInput) nameInput.value = '';
+                await loadAdminSubscribers();
+            } else {
+                if (msgEl) { msgEl.textContent = `❌ ${json.error || 'Error'}`; msgEl.className = 'text-xs text-red-500 mb-2'; msgEl.classList.remove('hidden'); }
+            }
+        } catch(e) {
+            if (msgEl) { msgEl.textContent = `❌ ${e.message}`; msgEl.className = 'text-xs text-red-500 mb-2'; msgEl.classList.remove('hidden'); }
+        }
+        adminWaSubscribeBtn.disabled = false;
+        adminWaSubscribeBtn.textContent = '+ Alta';
+    });
+
     const adminTestAlertBtn = document.getElementById('admin-test-alert');
     const adminTestAlertResult = document.getElementById('admin-test-alert-result');
     if (adminTestAlertBtn) adminTestAlertBtn.addEventListener('click', async () => {
