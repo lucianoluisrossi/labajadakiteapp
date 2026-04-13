@@ -2184,16 +2184,36 @@ try {
                 el.textContent = snap.size;
             } catch(e) { el.textContent = '?'; }
         }
-        // Visitantes únicos y con cuenta
+        // Visitantes — delegar a loadVisitantesStat con la fecha seleccionada
+        const dateInput = document.getElementById('admin-visitantes-date');
+        await loadVisitantesStat(dateInput?.value || null);
+    }
+
+    async function loadVisitantesStat(dateStr) {
+        const elV = document.getElementById('stat-visitantes');
+        const elR = document.getElementById('stat-registrados');
+        if (!elV && !elR) return;
+        if (elV) elV.textContent = '…';
+        if (elR) elR.textContent = '…';
         try {
-            const snapVisitantes = await getDocs(collection(db, 'app_devices'));
-            const elV = document.getElementById('stat-visitantes');
-            const elR = document.getElementById('stat-registrados');
-            if (elV) elV.textContent = snapVisitantes.size;
-            if (elR) elR.textContent = snapVisitantes.docs.filter(d => d.data().userId).length;
+            let q;
+            if (dateStr) {
+                // Rango del día seleccionado en hora local AR (UTC-3)
+                const [y, m, d] = dateStr.split('-').map(Number);
+                const start = new Date(y, m - 1, d, 0, 0, 0, 0);
+                const end   = new Date(y, m - 1, d, 23, 59, 59, 999);
+                q = query(
+                    collection(db, 'app_devices'),
+                    where('lastSeen', '>=', Timestamp.fromDate(start)),
+                    where('lastSeen', '<=', Timestamp.fromDate(end))
+                );
+            } else {
+                q = collection(db, 'app_devices');
+            }
+            const snap = await getDocs(q);
+            if (elV) elV.textContent = snap.size;
+            if (elR) elR.textContent = snap.docs.filter(d => d.data().userId).length;
         } catch(e) {
-            const elV = document.getElementById('stat-visitantes');
-            const elR = document.getElementById('stat-registrados');
             if (elV) elV.textContent = '?';
             if (elR) elR.textContent = '?';
         }
@@ -2497,6 +2517,19 @@ try {
         }
     });
 
+
+    // Setear fecha de hoy en el selector de visitantes
+    const adminVisitantesDateInput = document.getElementById('admin-visitantes-date');
+    if (adminVisitantesDateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm   = String(today.getMonth() + 1).padStart(2, '0');
+        const dd   = String(today.getDate()).padStart(2, '0');
+        adminVisitantesDateInput.value = `${yyyy}-${mm}-${dd}`;
+        adminVisitantesDateInput.addEventListener('change', () => {
+            loadVisitantesStat(adminVisitantesDateInput.value || null);
+        });
+    }
 
     let adminPanelInitialized = false;
     function initAdminPanel() {
