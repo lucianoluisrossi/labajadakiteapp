@@ -265,7 +265,7 @@ try {
                 if (window._openVipAfterLogin) {
                     window._openVipAfterLogin = false;
                     if (!currentUserIsVip) {
-                        setTimeout(() => { if (vipModal) vipModal.classList.remove('hidden'); }, 400);
+                        setTimeout(() => showVipModal(), 400);
                     }
                 }
             });
@@ -277,6 +277,23 @@ try {
     const btnSubscribe = document.getElementById('btn-subscribe');
     const vipModal = document.getElementById('vip-modal');
     const vipModalClose = document.getElementById('vip-modal-close');
+
+    async function showVipModal() {
+        if (!vipModal) return;
+        vipModal.classList.remove('hidden');
+        // Social proof: cargar count de VIPs activos
+        const spEl = document.getElementById('vip-social-proof');
+        if (spEl) {
+            try {
+                const snap = await getDocs(query(collection(db, 'kiter_vip'), where('active', '==', true)));
+                const count = snap.size;
+                if (count > 0) {
+                    spEl.textContent = `${count} kiter${count === 1 ? '' : 's'} ya apoyan La Bajada 🪁`;
+                    spEl.classList.remove('hidden');
+                }
+            } catch(e) { /* silencioso */ }
+        }
+    }
 
     async function updateVipUI(user) {
         if (!user) {
@@ -315,7 +332,7 @@ try {
                 if (mpSection) mpSection.classList.add('ring-2', 'ring-sky-400', 'rounded-xl', 'p-2');
                 if (mpTitle) mpTitle.innerHTML = '¿Ya pagaste? Si usaste <strong>otro email en MercadoPago</strong>, vinculalo acá para activar tu VIP.';
                 if (mpInput) mpInput.focus();
-                if (vipModal) vipModal.classList.remove('hidden');
+                showVipModal();
             }
         }, 2000);
     }
@@ -366,7 +383,7 @@ try {
                 } catch(e) { /* si falla el chequeo, no mostrar el modal */ return; }
             }
             if (vipModal) {
-                vipModal.classList.remove('hidden');
+                showVipModal();
                 localStorage.setItem('vipModalLastShown', today);
             }
         }, 3000);
@@ -394,7 +411,7 @@ try {
             window.open(url, '_blank', 'noopener');
         } else {
             window._pendingAlertLink = url;
-            if (vipModal) vipModal.classList.remove('hidden');
+            showVipModal();
         }
     }
     const alertTelegramBtn = document.getElementById('alert-telegram-btn');
