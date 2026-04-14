@@ -272,6 +272,19 @@ try {
         }
     });
 
+    // Listener de campaña VIP — muestra modal a no-VIPs cuando el admin lo activa
+    onSnapshot(doc(db, 'app_config', 'vip_modal_campaign'), (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (!data?.active || !data?.triggeredAt) return;
+        if (currentUserIsVip) return;
+        const campaignTs = data.triggeredAt?.toMillis?.() || 0;
+        const lastShown = parseInt(localStorage.getItem('vipCampaignLastShown') || '0', 10);
+        if (campaignTs <= lastShown) return;
+        localStorage.setItem('vipCampaignLastShown', String(campaignTs));
+        setTimeout(() => { if (!currentUserIsVip) showVipModal(); }, 800);
+    });
+
     // --- VIP SUBSCRIPTION ---
     const vipBadge = document.getElementById('vip-badge');
     const btnSubscribe = document.getElementById('btn-subscribe');
@@ -2506,6 +2519,24 @@ try {
         }
         adminWaSubscribeBtn.disabled = false;
         adminWaSubscribeBtn.textContent = '+ Alta';
+    });
+
+    const adminVipCampaignBtn = document.getElementById('admin-vip-campaign-btn');
+    if (adminVipCampaignBtn) adminVipCampaignBtn.addEventListener('click', async () => {
+        const msgEl = document.getElementById('admin-vip-campaign-msg');
+        adminVipCampaignBtn.disabled = true;
+        adminVipCampaignBtn.textContent = '⏳ Activando...';
+        try {
+            await setDoc(doc(db, 'app_config', 'vip_modal_campaign'), {
+                active: true,
+                triggeredAt: serverTimestamp()
+            });
+            if (msgEl) { msgEl.textContent = '✅ Modal activado — se mostrará a los no-VIP conectados'; msgEl.className = 'text-xs text-center mt-1.5 text-green-600'; msgEl.classList.remove('hidden'); }
+        } catch(e) {
+            if (msgEl) { msgEl.textContent = `❌ ${e.message}`; msgEl.className = 'text-xs text-center mt-1.5 text-red-500'; msgEl.classList.remove('hidden'); }
+        }
+        adminVipCampaignBtn.disabled = false;
+        adminVipCampaignBtn.textContent = '📣 Mostrar modal VIP a no-suscriptos';
     });
 
     const adminResolvePayerBtn = document.getElementById('admin-resolve-payer-btn');
