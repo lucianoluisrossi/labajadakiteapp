@@ -2508,6 +2508,40 @@ try {
         adminWaSubscribeBtn.textContent = '+ Alta';
     });
 
+    const adminResolvePayerBtn = document.getElementById('admin-resolve-payer-btn');
+    if (adminResolvePayerBtn) adminResolvePayerBtn.addEventListener('click', async () => {
+        if (!confirm('¿Resolver todos los docs payer_* consultando MercadoPago?')) return;
+        const resultEl = document.getElementById('admin-resolve-payer-result');
+        adminResolvePayerBtn.disabled = true;
+        adminResolvePayerBtn.textContent = '⏳ Consultando MP...';
+        if (resultEl) { resultEl.innerHTML = ''; resultEl.classList.add('hidden'); }
+        try {
+            const r = await fetch('/api/admin-resolve-payer-docs', { method: 'POST' });
+            const json = await r.json();
+            if (resultEl) {
+                const lines = [];
+                if (json.resolved === 0 && json.failed === 0) {
+                    lines.push('✅ No hay docs huérfanos payer_*');
+                } else {
+                    lines.push(`✅ Resueltos: ${json.resolved} | ❌ Fallidos: ${json.failed}`);
+                    (json.results || []).forEach(item => {
+                        if (item.status === 'resolved') {
+                            lines.push(`→ ${item.docId} → ${item.email}`);
+                        } else {
+                            lines.push(`→ ${item.docId}: ${item.reason || item.status}`);
+                        }
+                    });
+                }
+                resultEl.innerHTML = lines.map(l => `<p>${l}</p>`).join('');
+                resultEl.classList.remove('hidden');
+            }
+        } catch(e) {
+            if (resultEl) { resultEl.innerHTML = `<p class="text-red-500">❌ ${e.message}</p>`; resultEl.classList.remove('hidden'); }
+        }
+        adminResolvePayerBtn.disabled = false;
+        adminResolvePayerBtn.textContent = '🔧 Resolver docs huérfanos payer_*';
+    });
+
     const adminTestAlertBtn = document.getElementById('admin-test-alert');
     const adminTestAlertResult = document.getElementById('admin-test-alert-result');
     if (adminTestAlertBtn) adminTestAlertBtn.addEventListener('click', async () => {
