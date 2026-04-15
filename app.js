@@ -1,6 +1,6 @@
 // app.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInAnonymously, signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, doc, deleteDoc, updateDoc, getDoc, setDoc, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ⭐ MEJORAS UX/UI
@@ -58,6 +58,25 @@ try {
     classifiedsCollection = collection(db, "classifieds");
 
     console.log("✅ Firebase inicializado.");
+
+    // ========================================
+    // MAGIC LINK: completar login si es callback
+    // ========================================
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+        let emailForSignIn = localStorage.getItem('emailForSignIn');
+        if (!emailForSignIn) {
+            emailForSignIn = window.prompt('Confirmá tu email para completar el acceso:');
+        }
+        if (emailForSignIn) {
+            signInWithEmailLink(auth, emailForSignIn, window.location.href)
+                .then(() => {
+                    localStorage.removeItem('emailForSignIn');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    console.log('✅ Magic link login exitoso');
+                })
+                .catch(e => console.error('❌ Error magic link:', e.message));
+        }
+    }
 
     // ========================================
     // ANALYTICS: ID único por dispositivo + Datos de usuario
@@ -161,6 +180,59 @@ try {
         }
     }
 
+    const ACTION_CODE_SETTINGS = {
+        url: 'https://www.labajadakite.app',
+        handleCodeInApp: true
+    };
+
+    async function sendMagicLink(email) {
+        await sendSignInLinkToEmail(auth, email, ACTION_CODE_SETTINGS);
+        localStorage.setItem('emailForSignIn', email);
+    }
+
+    function showLoginModal() {
+        const modal = document.getElementById('modal-login');
+        if (modal) {
+            modal.classList.remove('hidden');
+            const statusEl = document.getElementById('magic-link-status');
+            const emailInput = document.getElementById('login-magic-email');
+            if (statusEl) { statusEl.textContent = ''; statusEl.classList.add('hidden'); }
+            if (emailInput) emailInput.value = '';
+        }
+    }
+    window.showLoginModal = showLoginModal;
+
+    // Handlers del modal login
+    const modalLogin = document.getElementById('modal-login');
+    const modalLoginClose = document.getElementById('modal-login-close');
+    if (modalLoginClose) modalLoginClose.addEventListener('click', () => modalLogin?.classList.add('hidden'));
+    if (modalLogin) modalLogin.addEventListener('click', (e) => { if (e.target === modalLogin) modalLogin.classList.add('hidden'); });
+
+    const btnGoogleLoginModal = document.getElementById('btn-google-login-modal');
+    if (btnGoogleLoginModal) btnGoogleLoginModal.addEventListener('click', async () => {
+        modalLogin?.classList.add('hidden');
+        await loginWithGoogle();
+    });
+
+    const btnMagicLinkSend = document.getElementById('btn-magic-link-send');
+    if (btnMagicLinkSend) btnMagicLinkSend.addEventListener('click', async () => {
+        const emailInput = document.getElementById('login-magic-email');
+        const statusEl = document.getElementById('magic-link-status');
+        const email = (emailInput?.value || '').trim();
+        if (!email) { emailInput?.focus(); return; }
+        btnMagicLinkSend.disabled = true;
+        btnMagicLinkSend.textContent = 'Enviando...';
+        try {
+            await sendMagicLink(email);
+            if (statusEl) { statusEl.textContent = `✅ Link enviado a ${email} — revisá tu bandeja`; statusEl.className = 'text-xs text-center text-green-600'; statusEl.classList.remove('hidden'); }
+            if (emailInput) emailInput.value = '';
+        } catch(e) {
+            if (statusEl) { statusEl.textContent = `❌ ${e.message}`; statusEl.className = 'text-xs text-center text-red-500'; statusEl.classList.remove('hidden'); }
+        }
+        btnMagicLinkSend.disabled = false;
+        btnMagicLinkSend.textContent = 'Enviar link de acceso';
+    });
+
     // Exponer funciones globalmente para uso en eventos
     window.loginWithGoogle = loginWithGoogle;
     window.logout = logout;
@@ -190,7 +262,7 @@ try {
         if (topbarLoginBtn) {
             topbarLoginBtn.onclick = () => {
                 window._openVipAfterLogin = true;
-                window.loginWithGoogle && window.loginWithGoogle();
+                showLoginModal();
             };
         }
         if (topbarUserBtn) {
@@ -419,7 +491,7 @@ try {
         if (!currentUser) {
             window._pendingAlertLink = url;
             window._openVipAfterLogin = true;
-            window.loginWithGoogle && window.loginWithGoogle();
+            showLoginModal();
         } else if (currentUserIsVip) {
             window.open(url, '_blank', 'noopener');
         } else {
@@ -905,20 +977,11 @@ try {
     const textInput = document.getElementById('message-text');
 
     // --- BOTONES DE LOGIN/LOGOUT ---
-    const btnGoogleLogin = document.getElementById('btn-google-login');
     const btnLogout = document.getElementById('btn-logout');
-    const btnGoogleLoginClassifieds = document.getElementById('btn-google-login-classifieds');
-    if (btnGoogleLogin) {
-        btnGoogleLogin.addEventListener('click', () => {
-            window.loginWithGoogle();
-        });
-    }
-    
-    if (btnGoogleLoginClassifieds) {
-        btnGoogleLoginClassifieds.addEventListener('click', () => {
-            window.loginWithGoogle();
-        });
-    }
+    const btnOpenLoginModal = document.getElementById('btn-open-login-modal');
+    const btnLoginClassifieds = document.getElementById('btn-login-classifieds');
+    if (btnOpenLoginModal) btnOpenLoginModal.addEventListener('click', () => showLoginModal());
+    if (btnLoginClassifieds) btnLoginClassifieds.addEventListener('click', () => showLoginModal());
     
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
