@@ -2255,6 +2255,7 @@ try {
                 else if (targetId === 'admin-body-galeria') loadAdminGallery();
                 else if (targetId === 'admin-body-clasificados') loadAdminClassifieds();
                 else if (targetId === 'admin-body-suscriptores') loadAdminSubscribers();
+                else if (targetId === 'admin-body-forecast') loadAdminForecast();
             }
         });
     });
@@ -2480,6 +2481,65 @@ try {
         try { await deleteDoc(doc(db, 'classifieds', id)); loadAdminClassifieds(); }
         catch(e) { console.error('Error eliminando clasificado:', e); }
     };
+
+    const GOOD_DIRS = ['ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO'];
+    function degToCardinal(deg) {
+        const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+        return dirs[Math.round(deg / 22.5) % 16];
+    }
+
+    async function loadAdminForecast() {
+        const el = document.getElementById('admin-forecast-content');
+        if (!el) return;
+        el.innerHTML = '<p class="text-gray-400">Consultando Open-Meteo...</p>';
+        try {
+            const url = 'https://api.open-meteo.com/v1/forecast?latitude=-37.15&longitude=-59.98&hourly=windspeed_10m,winddirection_10m&windspeed_unit=kn&timezone=America%2FArgentina%2FBuenos_Aires&forecast_days=5';
+            const r = await fetch(url);
+            const json = await r.json();
+            const times = json.hourly.time;
+            const speeds = json.hourly.windspeed_10m;
+            const dirs   = json.hourly.winddirection_10m;
+
+            // Agrupar por día, filtrar 9-19hs
+            const days = {};
+            times.forEach((t, i) => {
+                const [date, time] = t.split('T');
+                const hour = parseInt(time.split(':')[0], 10);
+                if (hour < 9 || hour > 19) return;
+                if (!days[date]) days[date] = [];
+                days[date].push({ hour, speed: speeds[i], dir: dirs[i] });
+            });
+
+            const dayKeys = Object.keys(days).slice(0, 5);
+            if (!dayKeys.length) { el.innerHTML = '<p class="text-gray-400">Sin datos.</p>'; return; }
+
+            let html = '';
+            for (const date of dayKeys) {
+                const [, m, d] = date.split('-');
+                html += `<p class="text-[10px] font-black text-gray-500 uppercase mt-3 mb-1">${d}/${m}</p>`;
+                html += '<div class="space-y-0.5">';
+                for (const { hour, speed, dir } of days[date]) {
+                    const cardinal = degToCardinal(dir);
+                    const onshore  = GOOD_DIRS.includes(cardinal);
+                    const strong   = speed >= 14;
+                    const good     = onshore && strong;
+                    const warn     = strong && !onshore;
+                    const bg = good ? 'bg-green-50 text-green-800' : warn ? 'bg-yellow-50 text-yellow-700' : 'bg-gray-50 text-gray-400';
+                    const icon = good ? '✅' : warn ? '⚠️' : '';
+                    html += `<div class="flex items-center gap-2 px-2 py-0.5 rounded ${bg}">
+                        <span class="w-8 shrink-0 font-bold">${hour}hs</span>
+                        <span class="w-12 shrink-0">${Math.round(speed)} kts</span>
+                        <span class="w-8 shrink-0">${cardinal}</span>
+                        <span>${icon}</span>
+                    </div>`;
+                }
+                html += '</div>';
+            }
+            el.innerHTML = html;
+        } catch(e) {
+            el.innerHTML = `<p class="text-red-400 text-xs">Error: ${e.message}</p>`;
+        }
+    }
 
     async function loadAdminSubscribers() {
         const telegramList = document.getElementById('admin-telegram-list');

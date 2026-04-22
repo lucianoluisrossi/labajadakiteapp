@@ -999,6 +999,17 @@
                     </div>
                 </div>
 
+                <!-- PRONÓSTICO OPEN-METEO -->
+                <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                    <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-forecast">
+                        <span class="text-xs font-extrabold text-gray-500 uppercase tracking-widest">🌬️ Pronóstico Open-Meteo</span>
+                        <svg class="admin-chevron w-4 h-4 text-gray-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="admin-body-forecast" class="hidden px-4 pb-4">
+                        <div id="admin-forecast-content" class="text-xs text-gray-400">Cargando...</div>
+                    </div>
+                </div>
+
                 <!-- TEST ALERTAS -->
                 <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                     <button class="admin-toggle w-full flex items-center justify-between px-4 py-3" data-target="admin-body-alertas">
