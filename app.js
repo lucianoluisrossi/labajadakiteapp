@@ -2255,6 +2255,7 @@ try {
                 else if (targetId === 'admin-body-galeria') loadAdminGallery();
                 else if (targetId === 'admin-body-clasificados') loadAdminClassifieds();
                 else if (targetId === 'admin-body-suscriptores') loadAdminSubscribers();
+                else if (targetId === 'admin-body-nonvip') loadAdminNonVipUsers();
             }
         });
     });
@@ -2480,6 +2481,31 @@ try {
         try { await deleteDoc(doc(db, 'classifieds', id)); loadAdminClassifieds(); }
         catch(e) { console.error('Error eliminando clasificado:', e); }
     };
+
+    async function loadAdminNonVipUsers() {
+        const listEl = document.getElementById('admin-nonvip-list');
+        if (!listEl) return;
+        listEl.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
+        try {
+            const r = await fetch('/api/admin-nonvip-users');
+            const json = await r.json();
+            if (!json.ok) throw new Error(json.error);
+            if (!json.nonVip.length) {
+                listEl.innerHTML = '<p class="text-xs text-gray-400">Todos los usuarios son VIP.</p>';
+                return;
+            }
+            listEl.innerHTML = `<p class="text-[10px] text-gray-400 mb-2">${json.nonVip.length} de ${json.total} usuarios no son VIP</p>` +
+                json.nonVip.map(u => `
+                <div class="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <p class="text-xs font-bold text-gray-700 truncate">${u.name || '—'}</p>
+                        <p class="text-[10px] text-gray-400 truncate">${u.email}</p>
+                    </div>
+                </div>`).join('');
+        } catch(e) {
+            listEl.innerHTML = `<p class="text-xs text-red-400">Error: ${e.message}</p>`;
+        }
+    }
 
     async function loadAdminSubscribers() {
         const telegramList = document.getElementById('admin-telegram-list');
