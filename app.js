@@ -2497,7 +2497,7 @@ try {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    lat: -38.8553, lon: -60.0741,
+                    lat: -38.861195, lon: -60.079119,
                     model: 'ecmwf',
                     parameters: ['wind'],
                     levels: ['surface']
