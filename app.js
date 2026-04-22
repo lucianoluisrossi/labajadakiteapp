@@ -2493,7 +2493,7 @@ try {
         if (!el) return;
         el.innerHTML = '<p class="text-gray-400">Consultando Open-Meteo...</p>';
         try {
-            const url = 'https://api.open-meteo.com/v1/forecast?latitude=-37.15&longitude=-59.98&hourly=windspeed_10m,winddirection_10m&windspeed_unit=kn&timezone=America%2FArgentina%2FBuenos_Aires&forecast_days=5';
+            const url = 'https://api.open-meteo.com/v1/forecast?latitude=-37.15&longitude=-59.98&hourly=windspeed_10m,winddirection_10m&windspeed_unit=kn&timezone=America%2FArgentina%2FBuenos_Aires&forecast_days=5&models=icon_seamless';
             const r = await fetch(url);
             const json = await r.json();
             const times = json.hourly.time;
