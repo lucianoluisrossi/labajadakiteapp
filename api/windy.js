@@ -48,9 +48,8 @@ export default async function handler(req, res) {
         const data = await response.json();
 
         if (!response.ok) {
-            // Si Windy da un error (ej: clave inválida, parámetros incorrectos),
-            // lo reenviamos a tu app para que puedas verlo.
-            throw new Error(data.error || `Error de la API de Windy: ${response.status}`);
+            console.error('Windy API error:', response.status, JSON.stringify(data));
+            throw new Error(JSON.stringify(data) || `HTTP ${response.status}`);
         }
 
         // 8. Devolvemos los datos del pronóstico (viento, etc.) a tu app
