@@ -2494,14 +2494,58 @@ try {
                 listEl.innerHTML = '<p class="text-xs text-gray-400">Todos los usuarios son VIP.</p>';
                 return;
             }
-            listEl.innerHTML = `<p class="text-[10px] text-gray-400 mb-2">${json.nonVip.length} de ${json.total} usuarios no son VIP</p>` +
-                json.nonVip.map(u => `
-                <div class="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
-                    <div class="min-w-0">
-                        <p class="text-xs font-bold text-gray-700 truncate">${u.name || '—'}</p>
-                        <p class="text-[10px] text-gray-400 truncate">${u.email}</p>
-                    </div>
-                </div>`).join('');
+            listEl.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-[10px] text-gray-400">${json.nonVip.length} de ${json.total} no son VIP</p>
+                    <label class="flex items-center gap-1 text-[10px] text-gray-500 cursor-pointer">
+                        <input type="checkbox" id="nonvip-select-all" class="rounded"> Todos
+                    </label>
+                </div>
+                <div class="space-y-1.5 mb-3">
+                    ${json.nonVip.map(u => `
+                    <div class="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center gap-3">
+                        <input type="checkbox" class="nonvip-checkbox rounded shrink-0" data-email="${u.email}" data-name="${(u.name||'').replace(/"/g,'')}" checked>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-gray-700 truncate">${u.name || '—'}</p>
+                            <p class="text-[10px] text-gray-400 truncate">${u.email}</p>
+                        </div>
+                    </div>`).join('')}
+                </div>
+                <button id="admin-nonvip-send-btn" class="w-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-black py-2 rounded-xl transition-colors active:scale-95">
+                    📧 Enviar email a seleccionados
+                </button>
+                <p id="admin-nonvip-send-msg" class="hidden text-xs text-center mt-2"></p>`;
+
+            // Select all toggle
+            document.getElementById('nonvip-select-all').addEventListener('change', (e) => {
+                document.querySelectorAll('.nonvip-checkbox').forEach(cb => cb.checked = e.target.checked);
+            });
+
+            document.getElementById('admin-nonvip-send-btn').addEventListener('click', async () => {
+                const selected = [...document.querySelectorAll('.nonvip-checkbox:checked')]
+                    .map(cb => ({ email: cb.dataset.email, name: cb.dataset.name }));
+                const msgEl = document.getElementById('admin-nonvip-send-msg');
+                if (!selected.length) {
+                    if (msgEl) { msgEl.textContent = 'Seleccioná al menos un usuario.'; msgEl.className = 'text-xs text-center mt-2 text-orange-500'; msgEl.classList.remove('hidden'); }
+                    return;
+                }
+                if (!confirm(`¿Enviar email a ${selected.length} usuario${selected.length > 1 ? 's' : ''}?`)) return;
+                const btn = document.getElementById('admin-nonvip-send-btn');
+                btn.disabled = true; btn.textContent = '⏳ Enviando...';
+                try {
+                    const res = await fetch('/api/admin-send-vip-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ users: selected })
+                    });
+                    const data = await res.json();
+                    if (msgEl) { msgEl.textContent = data.ok ? `✅ Enviado a ${data.sent} usuarios` : `❌ ${data.error}`; msgEl.className = `text-xs text-center mt-2 ${data.ok ? 'text-green-600' : 'text-red-500'}`; msgEl.classList.remove('hidden'); }
+                } catch(e) {
+                    if (msgEl) { msgEl.textContent = `❌ ${e.message}`; msgEl.className = 'text-xs text-center mt-2 text-red-500'; msgEl.classList.remove('hidden'); }
+                }
+                btn.disabled = false; btn.textContent = '📧 Enviar email a seleccionados';
+            });
+
         } catch(e) {
             listEl.innerHTML = `<p class="text-xs text-red-400">Error: ${e.message}</p>`;
         }
