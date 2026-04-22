@@ -2493,21 +2493,53 @@ try {
         if (!el) return;
         el.innerHTML = '<p class="text-gray-400">Consultando Open-Meteo...</p>';
         try {
-            const url = 'https://api.open-meteo.com/v1/forecast?latitude=-37.15&longitude=-59.98&hourly=windspeed_10m,winddirection_10m&windspeed_unit=kn&timezone=America%2FArgentina%2FBuenos_Aires&forecast_days=5&models=icon_seamless';
-            const r = await fetch(url);
+            const r = await fetch('/api/windy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lat: -37.15, lon: -59.98,
+                    model: 'gfs',
+                    parameters: ['wind', 'windGust'],
+                    levels: ['surface'],
+                    hours: 120
+                })
+            });
             const json = await r.json();
-            const times = json.hourly.time;
-            const speeds = json.hourly.windspeed_10m;
-            const dirs   = json.hourly.winddirection_10m;
+            if (json.error) throw new Error(json.error);
 
-            // Agrupar por día, filtrar 9-19hs
+            // Windy devuelve wind_u-surface y wind_v-surface en m/s + timestamps en ms
+            const timestamps = json.ts;
+            const uArr = json['wind_u-surface'];
+            const vArr = json['wind_v-surface'];
+
+            // Convertir a kts y calcular dirección
+            const times  = timestamps.map(ts => new Date(ts).toISOString().replace('Z','').slice(0,16));
+            const speeds = uArr.map((u, i) => {
+                const v = vArr[i];
+                return Math.sqrt(u*u + v*v) * 1.94384; // m/s → kts
+            });
+            const dirs = uArr.map((u, i) => {
+                const v = vArr[i];
+                let deg = Math.atan2(-u, -v) * 180 / Math.PI;
+                return (deg + 360) % 360;
+            });
+
+            // Ajustar timestamps a hora AR (UTC-3)
+            const toARTime = (isoStr) => {
+                const d = new Date(isoStr + 'Z');
+                d.setHours(d.getHours() - 3);
+                return d;
+            };
+
+            // Agrupar por día AR, filtrar 9-19hs
             const days = {};
             times.forEach((t, i) => {
-                const [date, time] = t.split('T');
-                const hour = parseInt(time.split(':')[0], 10);
+                const arDate = toARTime(t);
+                const hour = arDate.getHours();
                 if (hour < 9 || hour > 19) return;
-                if (!days[date]) days[date] = [];
-                days[date].push({ hour, speed: speeds[i], dir: dirs[i] });
+                const dateKey = arDate.toISOString().slice(0, 10);
+                if (!days[dateKey]) days[dateKey] = [];
+                days[dateKey].push({ hour, speed: speeds[i], dir: dirs[i] });
             });
 
             const dayKeys = Object.keys(days).slice(0, 5);
