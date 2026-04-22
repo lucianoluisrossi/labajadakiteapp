@@ -2499,9 +2499,8 @@ try {
                 body: JSON.stringify({
                     lat: -37.15, lon: -59.98,
                     model: 'gfs',
-                    parameters: ['wind', 'windGust'],
-                    levels: ['surface'],
-                    hours: 120
+                    parameters: ['wind'],
+                    levels: ['surface']
                 })
             });
             const json = await r.json();
