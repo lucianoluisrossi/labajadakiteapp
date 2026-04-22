@@ -2498,7 +2498,7 @@ try {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     lat: -37.15, lon: -59.98,
-                    model: 'gfs',
+                    model: 'ecmwf',
                     parameters: ['wind'],
                     levels: ['surface']
                 })
