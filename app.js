@@ -2255,7 +2255,6 @@ try {
                 else if (targetId === 'admin-body-galeria') loadAdminGallery();
                 else if (targetId === 'admin-body-clasificados') loadAdminClassifieds();
                 else if (targetId === 'admin-body-suscriptores') loadAdminSubscribers();
-                else if (targetId === 'admin-body-forecast') loadAdminForecast();
             }
         });
     });
@@ -2481,96 +2480,6 @@ try {
         try { await deleteDoc(doc(db, 'classifieds', id)); loadAdminClassifieds(); }
         catch(e) { console.error('Error eliminando clasificado:', e); }
     };
-
-    const GOOD_DIRS = ['ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO'];
-    function degToCardinal(deg) {
-        const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
-        return dirs[Math.round(deg / 22.5) % 16];
-    }
-
-    async function loadAdminForecast() {
-        const el = document.getElementById('admin-forecast-content');
-        if (!el) return;
-        el.innerHTML = '<p class="text-gray-400">Consultando Open-Meteo...</p>';
-        try {
-            const r = await fetch('/api/windy', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    lat: -38.861195, lon: -60.079119,
-                    model: 'ecmwf',
-                    parameters: ['wind'],
-                    levels: ['surface']
-                })
-            });
-            const json = await r.json();
-            if (json.error) throw new Error(json.error);
-
-            // Windy devuelve wind_u-surface y wind_v-surface en m/s + timestamps en ms
-            const timestamps = json.ts;
-            const uArr = json['wind_u-surface'];
-            const vArr = json['wind_v-surface'];
-
-            // Convertir a kts y calcular dirección
-            const times  = timestamps.map(ts => new Date(ts).toISOString().replace('Z','').slice(0,16));
-            const speeds = uArr.map((u, i) => {
-                const v = vArr[i];
-                return Math.sqrt(u*u + v*v) * 1.94384; // m/s → kts
-            });
-            const dirs = uArr.map((u, i) => {
-                const v = vArr[i];
-                let deg = Math.atan2(-u, -v) * 180 / Math.PI;
-                return (deg + 360) % 360;
-            });
-
-            // Ajustar timestamps a hora AR (UTC-3)
-            const toARTime = (isoStr) => {
-                const d = new Date(isoStr + 'Z');
-                d.setHours(d.getHours() - 3);
-                return d;
-            };
-
-            // Agrupar por día AR, filtrar 9-19hs
-            const days = {};
-            times.forEach((t, i) => {
-                const arDate = toARTime(t);
-                const hour = arDate.getHours();
-                if (hour < 9 || hour > 19) return;
-                const dateKey = arDate.toISOString().slice(0, 10);
-                if (!days[dateKey]) days[dateKey] = [];
-                days[dateKey].push({ hour, speed: speeds[i], dir: dirs[i] });
-            });
-
-            const dayKeys = Object.keys(days).slice(0, 5);
-            if (!dayKeys.length) { el.innerHTML = '<p class="text-gray-400">Sin datos.</p>'; return; }
-
-            let html = '';
-            for (const date of dayKeys) {
-                const [, m, d] = date.split('-');
-                html += `<p class="text-[10px] font-black text-gray-500 uppercase mt-3 mb-1">${d}/${m}</p>`;
-                html += '<div class="space-y-0.5">';
-                for (const { hour, speed, dir } of days[date]) {
-                    const cardinal = degToCardinal(dir);
-                    const onshore  = GOOD_DIRS.includes(cardinal);
-                    const strong   = speed >= 14;
-                    const good     = onshore && strong;
-                    const warn     = strong && !onshore;
-                    const bg = good ? 'bg-green-50 text-green-800' : warn ? 'bg-yellow-50 text-yellow-700' : 'bg-gray-50 text-gray-400';
-                    const icon = good ? '✅' : warn ? '⚠️' : '';
-                    html += `<div class="flex items-center gap-2 px-2 py-0.5 rounded ${bg}">
-                        <span class="w-8 shrink-0 font-bold">${hour}hs</span>
-                        <span class="w-12 shrink-0">${Math.round(speed)} kts</span>
-                        <span class="w-8 shrink-0">${cardinal}</span>
-                        <span>${icon}</span>
-                    </div>`;
-                }
-                html += '</div>';
-            }
-            el.innerHTML = html;
-        } catch(e) {
-            el.innerHTML = `<p class="text-red-400 text-xs">Error: ${e.message}</p>`;
-        }
-    }
 
     async function loadAdminSubscribers() {
         const telegramList = document.getElementById('admin-telegram-list');
