@@ -15,21 +15,26 @@ export default async function handler(req, res) {
     const now = Math.floor(Date.now() / 1000);
     const end = now + 5 * 24 * 3600;
 
-    const url = `https://api.stormglass.io/v2/weather/point?lat=${LAT}&lng=${LNG}&params=windSpeed,windDirection,gust&source=icon&start=${now}&end=${end}`;
+    const url = `https://api.stormglass.io/v2/weather/point?lat=${LAT}&lng=${LNG}&params=windSpeed,windDirection,windGust&source=icon,sg&start=${now}&end=${end}`;
 
     try {
         const r = await fetch(url, { headers: { 'Authorization': STORMGLASS_API_KEY } });
         const data = await r.json();
-        if (!r.ok) return res.status(r.status).json({ error: data.errors?.key || r.status });
+        if (!r.ok) {
+            const msg = data.errors ? JSON.stringify(data.errors) : String(r.status);
+            return res.status(r.status).json({ error: msg });
+        }
+
+        const val = (obj) => obj?.icon ?? obj?.sg ?? 0;
 
         // Filtrar horas relevantes (cada 3h) y convertir a nudos
         const hours = (data.hours || [])
             .filter((_, i) => i % 3 === 0)
             .map(h => ({
                 time: h.time,
-                windKt: Math.round((h.windSpeed?.icon ?? 0) * M_S_TO_KNOTS),
-                gustKt: Math.round((h.gust?.icon ?? 0) * M_S_TO_KNOTS),
-                dir: Math.round(h.windDirection?.icon ?? 0)
+                windKt: Math.round(val(h.windSpeed) * M_S_TO_KNOTS),
+                gustKt: Math.round(val(h.windGust) * M_S_TO_KNOTS),
+                dir: Math.round(val(h.windDirection))
             }));
 
         return res.status(200).json({ ok: true, hours });
