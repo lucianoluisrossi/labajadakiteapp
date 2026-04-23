@@ -2256,6 +2256,7 @@ try {
                 else if (targetId === 'admin-body-clasificados') loadAdminClassifieds();
                 else if (targetId === 'admin-body-suscriptores') loadAdminSubscribers();
                 else if (targetId === 'admin-body-nonvip') loadAdminNonVipUsers();
+                else if (targetId === 'admin-body-forecast') loadAdminForecast();
             }
         });
     });
@@ -2481,6 +2482,51 @@ try {
         try { await deleteDoc(doc(db, 'classifieds', id)); loadAdminClassifieds(); }
         catch(e) { console.error('Error eliminando clasificado:', e); }
     };
+
+    async function loadAdminForecast() {
+        const el = document.getElementById('admin-forecast-content');
+        if (!el) return;
+        el.innerHTML = '<p class="text-xs text-gray-400">Consultando Stormglass...</p>';
+        try {
+            const r = await fetch('/api/stormglass');
+            const json = await r.json();
+            if (!json.ok) throw new Error(json.error);
+
+            const DIRS = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'];
+            const toDir = deg => DIRS[Math.round(deg / 22.5) % 16];
+            const windClass = kt => kt >= 20 ? 'text-green-600 font-black' : kt >= 15 ? 'text-yellow-600 font-bold' : 'text-gray-500';
+
+            // Agrupar por día
+            const byDay = {};
+            json.hours.forEach(h => {
+                const d = new Date(h.time);
+                const key = d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+                if (!byDay[key]) byDay[key] = [];
+                byDay[key].push({ ...h, hour: d.getHours() });
+            });
+
+            let html = '<div class="space-y-3 mt-1">';
+            Object.entries(byDay).forEach(([day, slots]) => {
+                html += `<div>
+                    <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-1">${day}</p>
+                    <div class="grid grid-cols-4 gap-1 text-center text-[10px] text-gray-400 mb-0.5 px-1">
+                        <span>Hora</span><span>Viento</span><span>Ráfaga</span><span>Dir</span>
+                    </div>
+                    ${slots.map(s => `
+                    <div class="grid grid-cols-4 gap-1 text-center text-[10px] bg-white border border-gray-100 rounded-lg px-1 py-1.5">
+                        <span class="text-gray-400">${String(s.hour).padStart(2,'0')}h</span>
+                        <span class="${windClass(s.windKt)}">${s.windKt} kt</span>
+                        <span class="text-gray-400">${s.gustKt} kt</span>
+                        <span class="text-gray-500">${toDir(s.dir)}</span>
+                    </div>`).join('')}
+                </div>`;
+            });
+            html += '</div><p class="text-[9px] text-gray-300 text-center mt-2">Fuente: Stormglass ICON · La Bajada</p>';
+            el.innerHTML = html;
+        } catch(e) {
+            el.innerHTML = `<p class="text-xs text-red-400">Error: ${e.message}</p>`;
+        }
+    }
 
     async function loadAdminNonVipUsers() {
         const listEl = document.getElementById('admin-nonvip-list');
