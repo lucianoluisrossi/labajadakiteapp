@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const now = Math.floor(Date.now() / 1000);
     const end = now + 5 * 24 * 3600;
 
-    const url = `https://api.stormglass.io/v2/weather/point?lat=${LAT}&lng=${LNG}&params=windSpeed,windDirection,windGust&source=icon,sg&start=${now}&end=${end}`;
+    const url = `https://api.stormglass.io/v2/weather/point?lat=${LAT}&lng=${LNG}&params=windSpeed,windDirection,gust&source=icon,sg&start=${now}&end=${end}`;
 
     try {
         const r = await fetch(url, { headers: { 'Authorization': STORMGLASS_API_KEY } });
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
             .map(h => ({
                 time: h.time,
                 windKt: Math.round(val(h.windSpeed) * M_S_TO_KNOTS),
-                gustKt: Math.round(val(h.windGust) * M_S_TO_KNOTS),
+                gustKt: Math.round(val(h.gust) * M_S_TO_KNOTS),
                 dir: Math.round(val(h.windDirection))
             }));
 
