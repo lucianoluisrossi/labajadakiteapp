@@ -9,6 +9,7 @@ const TELEGRAM_API = 'https://api.telegram.org/bot';
 
 // --- Configuración del spot ---
 const WIND_THRESHOLD    = 14;                        // kts mínimos
+const WIND_DANGER       = 31;                        // kts — por encima: alerta viento muy fuerte
 const GOOD_DIRECTIONS   = ['ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSO', 'SO', 'OSO', 'O', 'ONO']; // favorables La Bajada (excluye N, NE, NO, NNE, NNO)
 const CONSISTENCY_MS    = 30 * 60 * 1000;            // ventana consistencia: 30 min
 const MIN_READINGS      = 3;                         // mínimo de lecturas en esa ventana
@@ -183,9 +184,21 @@ export default async function handler(req, res) {
     }
 
     // ✅ Todo OK — enviar alerta al canal
-    const isEpic = ['E', 'ESE'].includes(cardinal);
-    const msg =
-`${isEpic ? '🔥🪁 <b>¡EPICOOO EN LA BAJADA!</b> 🪁🔥' : '🪁 <b>¡Buenas condiciones en La Bajada!</b>'}
+    const avgKt   = parseFloat(consistency.avg);
+    const isDanger = avgKt >= WIND_DANGER;
+    const isEpic   = !isDanger && ['E', 'ESE'].includes(cardinal);
+
+    const msg = isDanger
+? `⚠️ <b>VIENTO MUY FUERTE en La Bajada</b>
+
+💨 Viento: <b>${wind.speed.toFixed(1)} kts</b>
+📊 Promedio 30 min: <b>${consistency.avg} kts</b> (${consistency.count} lecturas)
+🧭 Dirección: <b>${cardinal}</b>
+💥 Ráfagas: <b>${wind.gust.toFixed(1)} kts</b>
+
+🚫 No recomendamos salir al agua. Extremar precauciones.
+🔗 <a href="https://labajadakite.app">Ver condiciones →</a>`
+: `${isEpic ? '🔥🪁 <b>¡EPICOOO EN LA BAJADA!</b> 🪁🔥' : '🪁 <b>¡Buenas condiciones en La Bajada!</b>'}
 
 💨 Viento: <b>${wind.speed.toFixed(1)} kts</b>
 📊 Promedio 30 min: <b>${consistency.avg} kts</b> (${consistency.count} lecturas)
