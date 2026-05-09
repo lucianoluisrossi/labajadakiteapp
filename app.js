@@ -2580,7 +2580,7 @@ try {
         if (whatsappList) {
             whatsappList.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
             try {
-                const snap = await getDocs(query(collection(db, 'greenapi_subscribers'), orderBy('subscribedAt', 'desc')));
+                const snap = await getDocs(query(collection(db, 'greenapi_subscribers'), where('active', '==', true), orderBy('subscribedAt', 'desc')));
                 if (snap.empty) { whatsappList.innerHTML = '<p class="text-xs text-gray-400">Sin suscriptores.</p>'; }
                 else {
                     whatsappList.innerHTML = snap.docs.map(d => {
