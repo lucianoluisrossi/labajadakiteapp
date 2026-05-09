@@ -2323,7 +2323,9 @@ try {
             query(collection(db, 'kiter_vip'), where('active', '==', true)),
             snap => {
                 if (snap.empty) { list.innerHTML = '<p class="text-xs text-gray-400">Sin VIPs activos.</p>'; return; }
-                list.innerHTML = snap.docs.map(d => {
+                const docs = snap.docs.filter(d => !d.id.startsWith('payer_'));
+                if (!docs.length) { list.innerHTML = '<p class="text-xs text-gray-400">Sin VIPs activos.</p>'; return; }
+                list.innerHTML = docs.map(d => {
                     const email = d.data().email || d.id;
                     return `<div class="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-2 gap-2">
                         <p class="text-xs text-gray-700 truncate">${email}</p>
