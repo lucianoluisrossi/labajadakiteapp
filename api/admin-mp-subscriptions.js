@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     if (!db) return res.status(500).json({ error: 'Firebase no disponible' });
 
     try {
-        // Obtener suscripciones activas de MP
+        // Obtener lista de IDs de suscripciones activas
         const mpRes = await fetch('https://api.mercadopago.com/preapproval/search?status=authorized&limit=100', {
             headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` }
         });
@@ -22,7 +22,17 @@ export default async function handler(req, res) {
             return res.status(mpRes.status).json({ error: err.message || mpRes.status });
         }
         const mpData = await mpRes.json();
-        const results = mpData.results || [];
+        const ids = (mpData.results || []).map(r => r.id);
+
+        // Consultar cada suscripción individualmente para obtener payer_email
+        const details = await Promise.all(ids.map(async id => {
+            try {
+                const r = await fetch(`https://api.mercadopago.com/preapproval/${id}`, {
+                    headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` }
+                });
+                return r.ok ? await r.json() : null;
+            } catch { return null; }
+        }));
 
         // Obtener emails VIP activos en Firestore
         const vipSnap = await db.collection('kiter_vip').where('active', '==', true).get();
@@ -34,7 +44,7 @@ export default async function handler(req, res) {
 
         const FREQ = { monthly: 'mensual', days: 'días', years: 'anual' };
 
-        const subscriptions = results.map(s => {
+        const subscriptions = details.filter(Boolean).map(s => {
             const email = (s.payer_email || '').toLowerCase();
             const nextPayment = s.next_payment_date
                 ? new Date(s.next_payment_date).toLocaleDateString('es-AR')
