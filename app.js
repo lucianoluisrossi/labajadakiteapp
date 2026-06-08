@@ -2256,6 +2256,7 @@ try {
                 else if (targetId === 'admin-body-clasificados') loadAdminClassifieds();
                 else if (targetId === 'admin-body-suscriptores') loadAdminSubscribers();
                 else if (targetId === 'admin-body-nonvip') loadAdminNonVipUsers();
+                else if (targetId === 'admin-body-mp-subs') loadAdminMpSubscriptions();
             }
         });
     });
@@ -2482,6 +2483,58 @@ try {
         if (!confirm('¿Eliminar este clasificado?')) return;
         try { await deleteDoc(doc(db, 'classifieds', id)); loadAdminClassifieds(); }
         catch(e) { console.error('Error eliminando clasificado:', e); }
+    };
+
+    async function loadAdminMpSubscriptions() {
+        const el = document.getElementById('admin-mp-subs-list');
+        if (!el) return;
+        el.innerHTML = '<p class="text-xs text-gray-400">Consultando MercadoPago...</p>';
+        try {
+            const r = await fetch('/api/admin-mp-subscriptions');
+            const json = await r.json();
+            if (!json.ok) throw new Error(json.error);
+
+            const { subscriptions, total } = json;
+            if (!subscriptions.length) { el.innerHTML = '<p class="text-xs text-gray-400">Sin suscriptores activos en MP.</p>'; return; }
+
+            el.innerHTML = `
+                <p class="text-[10px] text-gray-400 mb-2 mt-1">${total} suscriptor${total !== 1 ? 'es' : ''} activo${total !== 1 ? 's' : ''} en MP</p>
+                <div class="space-y-2">
+                ${subscriptions.map(s => {
+                    const warn = !s.inFirestore;
+                    return `<div class="bg-white border ${warn ? 'border-orange-300' : 'border-gray-200'} rounded-xl px-3 py-2">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-gray-700 truncate">${s.email || '—'}</p>
+                                <p class="text-[10px] text-gray-400">Próximo cobro: ${s.nextPayment || '—'}</p>
+                                <p class="text-[10px] text-gray-400">$${s.amount} · ${s.frequency}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-1 shrink-0">
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full ${warn ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}">
+                                    ${warn ? '⚠️ sin Firestore' : '✅ OK'}
+                                </span>
+                                ${warn && s.email ? `<button onclick="adminCreateVipFromMp('${s.email}','${s.preapprovalId}')" class="text-[10px] bg-sky-500 hover:bg-sky-600 text-white font-bold px-2 py-0.5 rounded-lg">Crear VIP</button>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('')}
+                </div>`;
+        } catch(e) {
+            el.innerHTML = `<p class="text-xs text-red-400">Error: ${e.message}</p>`;
+        }
+    }
+
+    window.adminCreateVipFromMp = async (email, preapprovalId) => {
+        if (!confirm(`¿Crear VIP para ${email}?`)) return;
+        try {
+            const docId = email.replace(/[.#$[\]@]/g, '_');
+            await setDoc(doc(db, 'kiter_vip', docId), {
+                email, preapproval_id: preapprovalId, active: true,
+                status: 'authorized', manual: true,
+                updated_at: serverTimestamp()
+            }, { merge: true });
+            loadAdminMpSubscriptions();
+        } catch(e) { alert('Error: ' + e.message); }
     };
 
     async function loadAdminNonVipUsers() {
