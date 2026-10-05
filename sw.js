@@ -1,6 +1,6 @@
 // Service Worker - La Bajada Kite App
-const CACHE_NAME = 'labajada-cache-v4';
-const RUNTIME_CACHE = 'labajada-runtime-v4';
+const CACHE_NAME = 'labajada-cache-v5';
+const RUNTIME_CACHE = 'labajada-runtime-v5';
 
 // Archivos críticos que deben estar cacheados
 const CRITICAL_ASSETS = [
