@@ -1,6 +1,6 @@
 // Service Worker - La Bajada Kite App
-const CACHE_NAME = 'labajada-cache-v5';
-const RUNTIME_CACHE = 'labajada-runtime-v5';
+const CACHE_NAME = 'labajada-cache-v6';
+const RUNTIME_CACHE = 'labajada-runtime-v6';
 
 // Archivos críticos que deben estar cacheados
 const CRITICAL_ASSETS = [
@@ -70,13 +70,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first para contenido dinámico, cache first para statics
-  if (url.pathname.includes('/api/') || url.pathname.includes('.json')) {
-    // APIs: Network first
-    event.respondWith(networkFirstStrategy(request));
-  } else {
-    // Assets: Cache first, fallback network
+  // Imágenes: cache first. Todo lo demás (HTML, JS, CSS, APIs): network first,
+  // así los deploys nuevos se ven sin borrar datos de la app.
+  if (request.destination === 'image') {
     event.respondWith(cacheFirstStrategy(request));
+  } else {
+    event.respondWith(networkFirstStrategy(request));
   }
 });
 
