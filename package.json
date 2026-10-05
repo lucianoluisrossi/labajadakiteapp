@@ -4,7 +4,7 @@
   "description": "App del spot de kite La Bajada",
   "type": "module",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "scripts": {
     "build": "tailwindcss -i ./src/input.css -o ./style.css --minify"
