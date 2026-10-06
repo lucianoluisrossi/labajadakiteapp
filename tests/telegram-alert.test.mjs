@@ -71,7 +71,8 @@ test('con gráfico: Telegram sendPhoto y WhatsApp sendFileByUrl con el texto com
     assert.match(sent('sendPhoto')[0].body.caption, /La Bajada/);
     assert.equal(sent('sendFileByUrl').length, 1);
     assert.equal(sent('sendFileByUrl')[0].body.chatId, 'grupo@g.us');
-    assert.doesNotMatch(sent('sendFileByUrl')[0].body.caption, /<b>/);
+    assert.doesNotMatch(sent('sendFileByUrl')[0].body.caption, /<b>|<a /);
+    assert.match(sent('sendFileByUrl')[0].body.caption, /→ https:\/\/labajadakite\.app/);
     assert.equal(sent('sendMessage').length, 0);
 });
 

@@ -306,7 +306,9 @@ ${isEpic ? '🚀 ¡ESTO ES LO QUE ESPERABAS!' : '🔥 ¡Momento de salir!'}
     }
 
     // WhatsApp — texto plano (sin HTML)
-    const waMsg = msg.replace(/<b>/g,'*').replace(/<\/b>/g,'*').replace(/<[^>]+>/g,'');
+    const waMsg = msg.replace(/<b>/g,'*').replace(/<\/b>/g,'*')
+        .replace(/<a href="([^"]+)">([^<]*)<\/a>/g, '$2 $1')
+        .replace(/<[^>]+>/g,'');
 
     // WhatsApp grupos, contactos y suscriptores (Green API)
     const groupSent = await sendToGreenAPITargets(db, waMsg, chartUrl);
