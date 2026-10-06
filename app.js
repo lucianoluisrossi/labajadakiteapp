@@ -499,12 +499,10 @@ try {
             }
         }, 3000);
     }
+    // Cerrar el modal no abre el link de alertas: las alertas son solo VIP
     function closeVipModalAndOpenLink() {
         if (vipModal) vipModal.classList.add('hidden');
-        if (window._pendingAlertLink) {
-            window.open(window._pendingAlertLink, '_blank', 'noopener');
-            window._pendingAlertLink = null;
-        }
+        window._pendingAlertLink = null;
     }
     if (vipModalClose) vipModalClose.addEventListener('click', closeVipModalAndOpenLink);
     if (vipModal) vipModal.addEventListener('click', (e) => {
@@ -521,7 +519,6 @@ try {
         } else if (currentUserIsVip) {
             window.open(url, '_blank', 'noopener');
         } else {
-            window._pendingAlertLink = url;
             showVipModal();
         }
     }
