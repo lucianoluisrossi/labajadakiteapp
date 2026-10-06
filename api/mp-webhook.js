@@ -57,6 +57,19 @@ async function saveLog(db, entry) {
     }
 }
 
+// Fecha hasta la que está pago el VIP: último cobro + un período. Sin cobros devuelve null
+// (no se usa next_payment_date: una suscripción que nunca cobró no tiene período pago).
+// ISO UTC para comparar como string en el cron de vencimiento.
+export function computeVipUntil(subscription) {
+    const last = subscription.summarized?.last_charged_date;
+    if (!last) return null;
+    const { frequency = 1, frequency_type = 'months' } = subscription.auto_recurring || {};
+    const d = new Date(last);
+    if (frequency_type === 'days') d.setUTCDate(d.getUTCDate() + frequency);
+    else d.setUTCMonth(d.getUTCMonth() + frequency);
+    return isNaN(d) ? null : d.toISOString();
+}
+
 // Cada resolver devuelve { subscription, payment? }, { notSubscription: payment } o null si el id no existe.
 async function fromPreapproval(id) {
     const subscription = await getSubscriptionStatus(id);
@@ -163,7 +176,10 @@ export default async function handler(req, res) {
 
         // Intentar obtener email: del campo directo, consultando al usuario de MP o del pago
         const payer_email = subscription.payer_email || await getPayerEmail(payer_id) || payment?.payer?.email || '';
-        const isActive = status === 'authorized' || status === 'active';
+        // Pausada o cancelada: mantiene el VIP hasta el fin del período pago; el cron api/vip-expire lo desactiva
+        const vip_until = computeVipUntil(subscription);
+        const inPaidPeriod = ['paused', 'cancelled'].includes(status) && vip_until && vip_until > new Date().toISOString();
+        const isActive = status === 'authorized' || status === 'active' || Boolean(inPaidPeriod);
 
         // Si no hay email, buscar el documento por preapproval_id en kiter_vip
         let docId = null;
@@ -189,6 +205,7 @@ export default async function handler(req, res) {
             status,
             active: isActive,
             next_payment_date: next_payment_date || null,
+            vip_until,
             ...(payment ? { payment_id: payment.id } : {}),
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
