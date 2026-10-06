@@ -175,7 +175,7 @@ export default async function handler(req, res) {
         }
 
         // Intentar obtener email: del campo directo, consultando al usuario de MP o del pago
-        const payer_email = subscription.payer_email || await getPayerEmail(payer_id) || payment?.payer?.email || '';
+        const payer_email = (subscription.payer_email || await getPayerEmail(payer_id) || payment?.payer?.email || '').trim().toLowerCase();
         // Pausada o cancelada: mantiene el VIP hasta el fin del período pago; el cron api/vip-expire lo desactiva
         const vip_until = computeVipUntil(subscription);
         const inPaidPeriod = ['paused', 'cancelled'].includes(status) && vip_until && vip_until > new Date().toISOString();

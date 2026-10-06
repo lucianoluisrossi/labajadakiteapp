@@ -36,13 +36,14 @@ export default async function handler(req, res) {
 
         // Helper: chequear un email en Firestore + MP API
         async function checkEmail(emailToCheck) {
-            const docId = emailToCheck.replace(/[.#$[\]@]/g, '_');
+            const normalized = emailToCheck.trim().toLowerCase();
+            const docId = normalized.replace(/[.#$[\]@]/g, '_');
             const d = await db.collection(VIP_COLLECTION).doc(docId).get();
             if (d.exists && d.data().active === true) return { active: true, status: d.data().status };
             const mp = await searchMPByEmail(emailToCheck);
             if (mp && (mp.status === 'authorized' || mp.status === 'active')) {
                 await db.collection(VIP_COLLECTION).doc(docId).set({
-                    email: emailToCheck, preapproval_id: mp.id, payer_id: mp.payer_id,
+                    email: normalized, preapproval_id: mp.id, payer_id: mp.payer_id,
                     status: mp.status, active: true, next_payment_date: mp.next_payment_date || null
                 }, { merge: true });
                 return { active: true, status: mp.status };

@@ -325,7 +325,7 @@ try {
             let usuarioLoaded = false;
 
             const watchVipDoc = (email) => {
-                const docId = email.replace(/[.#$[\]@]/g, '_');
+                const docId = email.trim().toLowerCase().replace(/[.#$[\]@]/g, '_');
                 if (watchedVipDocs.has(docId)) return;
                 watchedVipDocs.add(docId);
                 vipUnsubscribers.push(onSnapshot(doc(db, 'kiter_vip', docId), (snap) => {
@@ -453,7 +453,7 @@ try {
     const mpEmailInput = document.getElementById('mp-email-input');
     const mpEmailFeedback = document.getElementById('mp-email-feedback');
     if (mpEmailSave) mpEmailSave.addEventListener('click', async () => {
-        const mpEmail = mpEmailInput?.value.trim();
+        const mpEmail = mpEmailInput?.value.trim().toLowerCase();
         if (!mpEmail || !mpEmail.includes('@')) {
             showMpFeedback('Ingresá un email válido', 'error'); return;
         }
@@ -2553,7 +2553,7 @@ try {
     window.adminCreateVipFromMp = async (email, preapprovalId) => {
         if (!confirm(`¿Crear VIP para ${email}?`)) return;
         try {
-            const docId = email.replace(/[.#$[\]@]/g, '_');
+            const docId = email.trim().toLowerCase().replace(/[.#$[\]@]/g, '_');
             await setDoc(doc(db, 'kiter_vip', docId), {
                 email, preapproval_id: preapprovalId, active: true,
                 status: 'authorized', manual: true,
