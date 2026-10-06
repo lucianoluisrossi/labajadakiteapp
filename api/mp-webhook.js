@@ -103,10 +103,38 @@ export default async function handler(req, res) {
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase error' });
 
+    // Deduplicación por id de notificación. Sin id no se deduplica: type + data.id
+    // no alcanza (un alta y una baja de la misma suscripción comparten data.id).
+    const notificationId = req.body?.id != null ? String(req.body.id) : null;
+    const eventRef = notificationId ? db.collection('mpEvents').doc(notificationId) : null;
+    if (eventRef) {
+        const prev = await eventRef.get();
+        if (prev.exists) {
+            await eventRef.set({ duplicates: admin.firestore.FieldValue.increment(1), last_duplicate_at: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            return res.status(200).json({ ok: true, duplicate: true });
+        }
+    }
+
+    // Solo se registra en mpEvents lo que terminó en 200; si hubo 500, MP reintenta y se reprocesa.
+    const done = async (body) => {
+        if (eventRef) {
+            await eventRef.set({
+                type: type || null,
+                action: req.body?.action || null,
+                data_id: data?.id != null ? String(data.id) : null,
+                request_id: req.headers?.['x-request-id'] || null,
+                raw: req.body,
+                response: body,
+                processed_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
+        return res.status(200).json(body);
+    };
+
     // Tipos no manejados — logueamos para diagnóstico
     if (!RESOLVERS[type]) {
         await saveLog(db, { type, preapproval_id: data?.id, result: 'ignored', reason: `tipo no manejado: ${type}` });
-        return res.status(200).json({ ok: true, ignored: true });
+        return done({ ok: true, ignored: true });
     }
 
     try {
@@ -114,14 +142,14 @@ export default async function handler(req, res) {
 
         if (!resolved) {
             await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: 'no subscription data from MP API' });
-            return res.status(200).json({ ok: true, ignored: 'no subscription data' });
+            return done({ ok: true, ignored: 'no subscription data' });
         }
 
         // Pago suelto (no de suscripción): no da VIP
         if (resolved.notSubscription) {
             const p = resolved.notSubscription;
             await saveLog(db, { type, preapproval_id: String(p.id), payer_email: p.payer?.email || null, status: p.status, result: 'ignored', reason: 'pago sin suscripción asociada' });
-            return res.status(200).json({ ok: true, ignored: 'not a subscription payment' });
+            return done({ ok: true, ignored: 'not a subscription payment' });
         }
 
         const { subscription, payment } = resolved;
@@ -130,7 +158,7 @@ export default async function handler(req, res) {
         // Suscripción de otro plan: no da VIP
         if (MP_PLAN_ID && preapproval_plan_id && preapproval_plan_id !== MP_PLAN_ID) {
             await saveLog(db, { type, preapproval_id: id, status, result: 'ignored', reason: `plan ajeno: ${preapproval_plan_id}` });
-            return res.status(200).json({ ok: true, ignored: 'other plan' });
+            return done({ ok: true, ignored: 'other plan' });
         }
 
         // Intentar obtener email: del campo directo, consultando al usuario de MP o del pago
@@ -152,7 +180,7 @@ export default async function handler(req, res) {
 
         if (!docId) {
             await saveLog(db, { type, preapproval_id: id, status, result: 'error', reason: 'no se encontró documento VIP para actualizar' });
-            return res.status(200).json({ ok: true });
+            return done({ ok: true });
         }
 
         await db.collection(VIP_COLLECTION).doc(docId).set({
@@ -167,7 +195,7 @@ export default async function handler(req, res) {
 
         await saveLog(db, { type, preapproval_id: id, payer_email, status, payment_status: payment?.status || null, active: isActive, result: 'ok' });
         console.log(`✅ VIP actualizado (${type}): ${payer_email} → ${status}`);
-        return res.status(200).json({ ok: true });
+        return done({ ok: true });
 
     } catch (error) {
         console.error('Error procesando webhook MP:', error);
