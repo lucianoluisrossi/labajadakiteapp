@@ -97,6 +97,7 @@ async function getCurrentWind() {
             speed:     parseFloat(wind.wind_speed?.value     || 0),
             gust:      parseFloat(wind.wind_gust?.value      || 0),
             direction: parseInt(wind.wind_direction?.value   || 0),
+            time:      parseInt(wind.wind_speed?.time        || 0),
         };
     } catch (e) {
         console.error('Error obteniendo viento:', e);
@@ -156,6 +157,15 @@ export default async function handler(req, res) {
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase no disponible' });
 
+    // Lectura actual: también se guarda en wind_history (id = hora de la estación) para que el
+    // historial y la consistencia no dependan de que haya usuarios con la app abierta.
+    const wind = await getCurrentWind();
+    if (wind?.time) {
+        await db.collection('wind_history').doc(String(wind.time)).set({
+            v: wind.speed, t: admin.firestore.Timestamp.fromMillis(wind.time * 1000)
+        }).catch(e => console.error('Error escribiendo wind_history:', e.message));
+    }
+
     // 2. Anti-spam: máximo 1 alerta cada 3hs
     if (!isTest) {
         const lastAlert = await getLastAlertTime(db);
@@ -167,7 +177,6 @@ export default async function handler(req, res) {
     }
 
     // 3. Dirección actual on-shore
-    const wind = await getCurrentWind();
     if (!wind) return res.status(500).json({ error: 'No se pudo obtener viento actual' });
 
     const cardinal = degreesToCardinal(wind.direction);
