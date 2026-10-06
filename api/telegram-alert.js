@@ -42,40 +42,63 @@ async function sendToChannel(text) {
     return true;
 }
 
-async function sendViaGreenAPI(chatId, text) {
+// Foto con epígrafe al canal; si falla, la alerta sale como texto
+async function sendPhotoToChannel(photoUrl, caption) {
+    const token  = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (!token || !chatId) throw new Error('Faltan TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID');
+    const res  = await fetch(`${TELEGRAM_API}${token}/sendPhoto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, photo: photoUrl, caption, parse_mode: 'HTML' })
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.description || `HTTP ${res.status}`);
+    return true;
+}
+
+async function greenApiPost(method, body) {
     const instanceId = process.env.GREENAPI_INSTANCE_ID;
     const token      = process.env.GREENAPI_TOKEN;
     if (!instanceId || !token) return false;
     try {
-        const res = await fetch(`https://api.green-api.com/waInstance${instanceId}/sendMessage/${token}`, {
+        const res = await fetch(`https://api.green-api.com/waInstance${instanceId}/${method}/${token}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chatId, message: text })
+            body: JSON.stringify(body)
         });
-        if (!res.ok) { const j = await res.json(); console.error('Green API error:', j); }
+        if (!res.ok) { const j = await res.json().catch(() => ({})); console.error(`Green API ${method} error:`, j); }
         return res.ok;
     } catch (e) {
-        console.error('Error Green API:', e);
+        console.error(`Error Green API ${method}:`, e);
         return false;
     }
 }
 
-async function sendToGreenAPITargets(db, text) {
+// Con imagen: sendFileByUrl con el texto como epígrafe; si falla, texto solo
+async function sendViaGreenAPI(chatId, text, imageUrl = null) {
+    if (imageUrl && await greenApiPost('sendFileByUrl', { chatId, urlFile: imageUrl, fileName: 'viento-la-bajada.png', caption: text })) {
+        return true;
+    }
+    return greenApiPost('sendMessage', { chatId, message: text });
+}
+
+async function sendToGreenAPITargets(db, text, imageUrl = null) {
     const results = [];
 
     // Grupo(s): GREENAPI_GROUP_ID separados por coma
     const groups = (process.env.GREENAPI_GROUP_ID || '').split(',').map(s => s.trim()).filter(Boolean);
-    for (const g of groups) results.push(await sendViaGreenAPI(g, text));
+    for (const g of groups) results.push(await sendViaGreenAPI(g, text, imageUrl));
 
     // Contactos fijos: GREENAPI_CONTACTS separados por coma
     const contacts = (process.env.GREENAPI_CONTACTS || '').split(',').map(s => s.trim()).filter(Boolean);
-    for (const c of contacts) results.push(await sendViaGreenAPI(c, text));
+    for (const c of contacts) results.push(await sendViaGreenAPI(c, text, imageUrl));
 
     // Suscriptores a demanda (desde Firestore)
     try {
         const snap = await db.collection('greenapi_subscribers').where('active', '==', true).get();
         const subs = snap.docs.map(d => d.data().chatId).filter(Boolean);
-        for (const chatId of subs) results.push(await sendViaGreenAPI(chatId, text));
+        for (const chatId of subs) results.push(await sendViaGreenAPI(chatId, text, imageUrl));
     } catch (e) { console.warn('Error cargando suscriptores Green API:', e); }
 
     return results.filter(Boolean).length;
@@ -123,6 +146,56 @@ async function checkConsistency(db) {
         return { ok: false, reason: `Promedio 30 min: ${avg.toFixed(1)} kts (mín ${WIND_THRESHOLD})` };
     }
     return { ok: true, avg: avg.toFixed(1), count: readings.length };
+}
+
+// Gráfico PNG del viento de las últimas 2 h (QuickChart). Devuelve una URL corta o null si no se pudo.
+const CHART_WINDOW_MS = 2 * 3600 * 1000;
+const CHART_MAX_POINTS = 60;
+
+export function buildWindChartConfig(readings) {
+    // Submuestreo para no mandar cientos de puntos
+    const step = Math.max(1, Math.ceil(readings.length / CHART_MAX_POINTS));
+    const points = readings.filter((_, i) => i % step === 0 || i === readings.length - 1);
+    const labels = points.map(p => new Date(p.ms).toLocaleTimeString('es-AR', {
+        timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }));
+    return {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Viento (kts)', data: points.map(p => Math.round(p.v * 10) / 10), borderColor: '#0284c7', backgroundColor: 'rgba(2,132,199,0.15)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 3 },
+                { label: `Mínimo ${WIND_THRESHOLD} kts`, data: points.map(() => WIND_THRESHOLD), borderColor: '#f97316', borderDash: [6, 6], pointRadius: 0, borderWidth: 2, fill: false }
+            ]
+        },
+        options: {
+            plugins: {
+                title: { display: true, text: 'La Bajada · viento últimas 2 h', font: { size: 18 } },
+                legend: { position: 'bottom' }
+            },
+            scales: { y: { beginAtZero: true, title: { display: true, text: 'kts' } } }
+        }
+    };
+}
+
+async function buildWindChartUrl(db) {
+    try {
+        const since = admin.firestore.Timestamp.fromMillis(Date.now() - CHART_WINDOW_MS);
+        const snap  = await db.collection('wind_history').where('t', '>=', since).orderBy('t', 'asc').get();
+        const readings = snap.docs.map(d => ({ v: d.data().v || 0, ms: d.data().t.toMillis() }));
+        if (readings.length < 2) return null;
+
+        const res = await fetch('https://quickchart.io/chart/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chart: buildWindChartConfig(readings), width: 800, height: 450, backgroundColor: 'white', version: '4', format: 'png' })
+        });
+        const json = await res.json();
+        return res.ok && json.success ? json.url : null;
+    } catch (e) {
+        console.error('Error generando gráfico de viento:', e.message);
+        return null;
+    }
 }
 
 async function getLastAlertTime(db) {
@@ -217,21 +290,31 @@ export default async function handler(req, res) {
 ${isEpic ? '🚀 ¡ESTO ES LO QUE ESPERABAS!' : '🔥 ¡Momento de salir!'}
 🔗 <a href="https://labajadakite.app">Ver cámara en vivo →</a>`;
 
+    // Gráfico de las últimas 2 h; si no se puede generar, la alerta sale como texto
+    const chartUrl = await buildWindChartUrl(db);
+
     // Telegram
-    try { await sendToChannel(msg); } catch(e) {
-        return res.status(500).json({ error: 'Error enviando mensaje a Telegram', detail: e.message });
+    let telegramPhoto = false;
+    if (chartUrl) {
+        try { telegramPhoto = await sendPhotoToChannel(chartUrl, msg); }
+        catch (e) { console.error('Telegram sendPhoto falló, se envía texto:', e.message); }
+    }
+    if (!telegramPhoto) {
+        try { await sendToChannel(msg); } catch(e) {
+            return res.status(500).json({ error: 'Error enviando mensaje a Telegram', detail: e.message });
+        }
     }
 
     // WhatsApp — texto plano (sin HTML)
     const waMsg = msg.replace(/<b>/g,'*').replace(/<\/b>/g,'*').replace(/<[^>]+>/g,'');
 
     // WhatsApp grupos, contactos y suscriptores (Green API)
-    const groupSent = await sendToGreenAPITargets(db, waMsg);
+    const groupSent = await sendToGreenAPITargets(db, waMsg, chartUrl);
 
     await saveLastAlertTime(db);
     return res.status(200).json({ ok: true, sent: true,
         wind: { speed: wind.speed.toFixed(1), cardinal, avg: consistency.avg, readings: consistency.count },
-        telegram: true,
+        telegram: true, chart: Boolean(chartUrl),
         whatsapp: { sent: groupSent }
     });
 }
