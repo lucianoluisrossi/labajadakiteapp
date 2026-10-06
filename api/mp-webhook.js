@@ -5,6 +5,7 @@ import { initFirebase } from './_firebase.js';
 import admin from 'firebase-admin';
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+const MP_PLAN_ID = process.env.MP_PLAN_ID;
 const VIP_COLLECTION = 'kiter_vip';
 
 // null si el recurso no existe (4xx permanente); lanza error si la falla es transitoria
@@ -26,6 +27,11 @@ async function getSubscriptionStatus(preapprovalId) {
 
 async function getPaymentDetails(paymentId) {
     return mpGet(`/v1/payments/${paymentId}`);
+}
+
+// Factura de un cobro recurrente (data.id de subscription_authorized_payment)
+async function getAuthorizedPayment(invoiceId) {
+    return mpGet(`/authorized_payments/${invoiceId}`);
 }
 
 async function getPayerEmail(payerId) {
@@ -51,6 +57,43 @@ async function saveLog(db, entry) {
     }
 }
 
+// Cada resolver devuelve { subscription, payment? }, { notSubscription: payment } o null si el id no existe.
+async function fromPreapproval(id) {
+    const subscription = await getSubscriptionStatus(id);
+    return subscription ? { subscription } : null;
+}
+
+async function fromPayment(id) {
+    const payment = await getPaymentDetails(id);
+    if (!payment) return null;
+    const subscriptionId = payment.point_of_interaction?.transaction_data?.subscription_id;
+    if (!subscriptionId) return { notSubscription: payment };
+    const subscription = await getSubscriptionStatus(subscriptionId);
+    return subscription ? { subscription, payment } : null;
+}
+
+async function fromInvoice(id) {
+    const invoice = await getAuthorizedPayment(id);
+    if (!invoice?.preapproval_id) return null;
+    const subscription = await getSubscriptionStatus(invoice.preapproval_id);
+    return subscription ? { subscription } : null;
+}
+
+// MP a veces manda un tipo de id distinto al del tópico: se prueba primero el esperado
+const RESOLVERS = {
+    subscription_preapproval: [fromPreapproval, fromPayment, fromInvoice],
+    payment: [fromPayment, fromInvoice, fromPreapproval],
+    subscription_authorized_payment: [fromInvoice, fromPayment, fromPreapproval],
+};
+
+async function resolveSubscription(type, id) {
+    for (const resolve of RESOLVERS[type]) {
+        const result = await resolve(id);
+        if (result) return result;
+    }
+    return null;
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
 
@@ -60,117 +103,38 @@ export default async function handler(req, res) {
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase error' });
 
-    // Helper compartido para procesar un pago (payment o subscription_authorized_payment)
-    async function processPaymentEvent(eventType, rawId) {
-        let payment = await getPaymentDetails(rawId);
-        let usedFallback = false;
-
-        if (!payment) {
-            // MP a veces envía un preapproval ID en lugar de un payment ID — intentar como suscripción
-            const subscription = await getSubscriptionStatus(rawId);
-            if (subscription) {
-                const payerEmail = subscription.payer_email || await getPayerEmail(subscription.payer_id) || null;
-                const isActive = subscription.status === 'authorized' || subscription.status === 'active';
-                if (payerEmail) {
-                    const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
-                    if (isActive) {
-                        await db.collection(VIP_COLLECTION).doc(docId).set({
-                            email: payerEmail,
-                            preapproval_id: subscription.id,
-                            status: subscription.status,
-                            active: true,
-                            updated_at: admin.firestore.FieldValue.serverTimestamp()
-                        }, { merge: true });
-                    }
-                    await saveLog(db, { type: eventType, preapproval_id: String(rawId), payer_email: payerEmail, status: subscription.status, active: isActive, result: 'ok', reason: 'fallback a subscription API' });
-                    console.log(`✅ ${eventType} procesado via fallback subscription: ${payerEmail} → ${subscription.status}`);
-                    return;
-                }
-            }
-            await saveLog(db, { type: eventType, preapproval_id: rawId, result: 'error', reason: 'no payment data from MP API' });
-            return;
-        }
-
-        const payerEmail = payment.payer?.email || null;
-        const paymentStatus = payment.status;
-        const isApproved = paymentStatus === 'approved';
-
-        if (!payerEmail) {
-            await saveLog(db, { type: eventType, preapproval_id: rawId, status: paymentStatus, result: 'error', reason: 'no payer email en payment' });
-            return;
-        }
-
-        const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
-        if (isApproved) {
-            await db.collection(VIP_COLLECTION).doc(docId).set({
-                email: payerEmail,
-                payment_id: payment.id,
-                status: 'authorized',
-                active: true,
-                updated_at: admin.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-        }
-
-        await saveLog(db, { type: eventType, preapproval_id: String(payment.id), payer_email: payerEmail, status: paymentStatus, active: isApproved, result: 'ok' });
-        console.log(`✅ ${eventType} procesado: ${payerEmail} → ${paymentStatus}`);
-    }
-
-    // Pago de suscripción
-    if (type === 'payment') {
-        try {
-            await processPaymentEvent(type, data?.id);
-        } catch (error) {
-            console.error('Error procesando payment webhook:', error);
-            await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: error.message }).catch(() => {});
-            return res.status(500).json({ error: error.message });
-        }
-        return res.status(200).json({ ok: true });
-    }
-
-    // Pago autorizado de suscripción recurrente
-    if (type === 'subscription_authorized_payment') {
-        try {
-            await processPaymentEvent(type, data?.id);
-        } catch (error) {
-            console.error('Error procesando subscription_authorized_payment:', error);
-            await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: error.message }).catch(() => {});
-            return res.status(500).json({ error: error.message });
-        }
-        return res.status(200).json({ ok: true });
-    }
-
     // Tipos no manejados — logueamos para diagnóstico
-    if (type !== 'subscription_preapproval') {
+    if (!RESOLVERS[type]) {
         await saveLog(db, { type, preapproval_id: data?.id, result: 'ignored', reason: `tipo no manejado: ${type}` });
         return res.status(200).json({ ok: true, ignored: true });
     }
 
     try {
-        let subscription = await getSubscriptionStatus(data.id);
-        if (!subscription) {
-            // MP a veces envía un payment ID en lugar de preapproval ID — intentar como pago
-            const payment = await getPaymentDetails(data.id);
-            if (payment?.payer?.email && payment?.status) {
-                const payerEmail = payment.payer.email;
-                const isApproved = payment.status === 'approved';
-                const docId = payerEmail.replace(/[.#$[\]@]/g, '_');
-                if (isApproved) {
-                    await db.collection(VIP_COLLECTION).doc(docId).set({
-                        email: payerEmail, payment_id: payment.id,
-                        status: 'authorized', active: true,
-                        updated_at: admin.firestore.FieldValue.serverTimestamp()
-                    }, { merge: true });
-                }
-                await saveLog(db, { type, preapproval_id: String(data.id), payer_email: payerEmail, status: payment.status, active: isApproved, result: 'ok', reason: 'fallback a payment API' });
-                return res.status(200).json({ ok: true });
-            }
+        const resolved = await resolveSubscription(type, data?.id);
+
+        if (!resolved) {
             await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: 'no subscription data from MP API' });
             return res.status(200).json({ ok: true, ignored: 'no subscription data' });
         }
 
-        const { status, payer_id, id, next_payment_date } = subscription;
-        // Intentar obtener email: del campo directo o consultando al usuario de MP
-        const payer_email = subscription.payer_email || await getPayerEmail(payer_id) || '';
+        // Pago suelto (no de suscripción): no da VIP
+        if (resolved.notSubscription) {
+            const p = resolved.notSubscription;
+            await saveLog(db, { type, preapproval_id: String(p.id), payer_email: p.payer?.email || null, status: p.status, result: 'ignored', reason: 'pago sin suscripción asociada' });
+            return res.status(200).json({ ok: true, ignored: 'not a subscription payment' });
+        }
+
+        const { subscription, payment } = resolved;
+        const { status, payer_id, id, next_payment_date, preapproval_plan_id } = subscription;
+
+        // Suscripción de otro plan: no da VIP
+        if (MP_PLAN_ID && preapproval_plan_id && preapproval_plan_id !== MP_PLAN_ID) {
+            await saveLog(db, { type, preapproval_id: id, status, result: 'ignored', reason: `plan ajeno: ${preapproval_plan_id}` });
+            return res.status(200).json({ ok: true, ignored: 'other plan' });
+        }
+
+        // Intentar obtener email: del campo directo, consultando al usuario de MP o del pago
+        const payer_email = subscription.payer_email || await getPayerEmail(payer_id) || payment?.payer?.email || '';
         const isActive = status === 'authorized' || status === 'active';
 
         // Si no hay email, buscar el documento por preapproval_id en kiter_vip
@@ -197,11 +161,12 @@ export default async function handler(req, res) {
             status,
             active: isActive,
             next_payment_date: next_payment_date || null,
+            ...(payment ? { payment_id: payment.id } : {}),
             updated_at: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        await saveLog(db, { type, preapproval_id: id, payer_email, status, active: isActive, result: 'ok' });
-        console.log(`✅ VIP actualizado: ${payer_email} → ${status}`);
+        await saveLog(db, { type, preapproval_id: id, payer_email, status, payment_status: payment?.status || null, active: isActive, result: 'ok' });
+        console.log(`✅ VIP actualizado (${type}): ${payer_email} → ${status}`);
         return res.status(200).json({ ok: true });
 
     } catch (error) {
