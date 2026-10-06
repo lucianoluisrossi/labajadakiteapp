@@ -3,9 +3,31 @@
 
 import { initFirebase } from './_firebase.js';
 import admin from 'firebase-admin';
+import crypto from 'node:crypto';
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 const MP_PLAN_ID = process.env.MP_PLAN_ID;
+
+// Valida x-signature igual que WebhookSignatureValidator del SDK oficial de MP (sdk-nodejs/src/utils/webhook).
+// Devuelve 'valid', 'no_secret' o el motivo de falla. Por ahora solo se registra, no se rechaza.
+export function verifySignature({ xSignature, xRequestId, dataId, secret }) {
+    if (!secret) return 'no_secret';
+    if (!xSignature) return 'missing_header';
+    let ts, v1;
+    for (const part of String(xSignature).split(',')) {
+        const eq = part.indexOf('=');
+        if (eq === -1) continue;
+        const key = part.slice(0, eq).trim().toLowerCase();
+        const value = part.slice(eq + 1).trim();
+        if (key === 'ts') ts = value;
+        else if (key === 'v1') v1 = value;
+    }
+    if (!ts || !/^\d+$/.test(ts) || !v1) return 'malformed_header';
+    const manifest = (dataId ? `id:${dataId};` : '') + (xRequestId ? `request-id:${xRequestId};` : '') + `ts:${ts};`;
+    const computed = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
+    if (computed.length !== v1.length) return 'mismatch';
+    return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(v1)) ? 'valid' : 'mismatch';
+}
 const VIP_COLLECTION = 'kiter_vip';
 
 // null si el recurso no existe (4xx permanente); lanza error si la falla es transitoria
@@ -113,6 +135,14 @@ export default async function handler(req, res) {
     const { type, data } = req.body || {};
     console.log('MP Webhook recibido:', type, data);
 
+    const signature = verifySignature({
+        xSignature: req.headers?.['x-signature'],
+        xRequestId: req.headers?.['x-request-id'],
+        dataId: req.query?.['data.id'] ?? data?.id,
+        secret: process.env.MP_WEBHOOK_SECRET
+    });
+    if (signature !== 'valid') console.warn('MP Webhook firma:', signature);
+
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase error' });
 
@@ -136,6 +166,7 @@ export default async function handler(req, res) {
                 action: req.body?.action || null,
                 data_id: data?.id != null ? String(data.id) : null,
                 request_id: req.headers?.['x-request-id'] || null,
+                signature,
                 raw: req.body,
                 response: body,
                 processed_at: admin.firestore.FieldValue.serverTimestamp()
