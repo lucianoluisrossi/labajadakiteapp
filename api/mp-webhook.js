@@ -7,20 +7,25 @@ import admin from 'firebase-admin';
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 const VIP_COLLECTION = 'kiter_vip';
 
-async function getSubscriptionStatus(preapprovalId) {
-    const res = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+// null si el recurso no existe (4xx permanente); lanza error si la falla es transitoria
+// (5xx, 429, 401/403, red) para que el handler responda 500 y MP reintente.
+async function mpGet(path) {
+    const res = await fetch(`https://api.mercadopago.com${path}`, {
         headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` }
     });
-    if (!res.ok) return null;
-    return await res.json();
+    if (res.ok) return await res.json();
+    if ([401, 403, 429].includes(res.status) || res.status >= 500) {
+        throw new Error(`MP API ${res.status} en ${path}`);
+    }
+    return null;
+}
+
+async function getSubscriptionStatus(preapprovalId) {
+    return mpGet(`/preapproval/${preapprovalId}`);
 }
 
 async function getPaymentDetails(paymentId) {
-    const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-        headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` }
-    });
-    if (!res.ok) return null;
-    return await res.json();
+    return mpGet(`/v1/payments/${paymentId}`);
 }
 
 async function getPayerEmail(payerId) {
@@ -117,6 +122,7 @@ export default async function handler(req, res) {
         } catch (error) {
             console.error('Error procesando payment webhook:', error);
             await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: error.message }).catch(() => {});
+            return res.status(500).json({ error: error.message });
         }
         return res.status(200).json({ ok: true });
     }
@@ -128,6 +134,7 @@ export default async function handler(req, res) {
         } catch (error) {
             console.error('Error procesando subscription_authorized_payment:', error);
             await saveLog(db, { type, preapproval_id: data?.id, result: 'error', reason: error.message }).catch(() => {});
+            return res.status(500).json({ error: error.message });
         }
         return res.status(200).json({ ok: true });
     }
