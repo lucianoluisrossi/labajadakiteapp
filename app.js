@@ -306,7 +306,7 @@ try {
 
     // --- LISTENER DE ESTADO DE AUTENTICACIÓN (dentro de DOMContentLoaded) ---
     let currentUserIsVip = false;
-    let vipUnsubscribe = null;
+    let vipUnsubscribers = [];
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
 		updateDeviceAnalytics(user);
@@ -314,13 +314,39 @@ try {
         updateVipUI(user);
         updateNovedadesAdminUI(user);
 
-        // Escuchar cambios en tiempo real del doc VIP del usuario
-        if (vipUnsubscribe) { vipUnsubscribe(); vipUnsubscribe = null; }
+        // Escuchar en tiempo real el doc VIP del email de login y, si el usuario vinculó
+        // otro email de MP (usuarios/{uid}.mp_email), también ese. Es VIP si alguno está activo.
+        vipUnsubscribers.forEach(unsub => unsub());
+        vipUnsubscribers = [];
         if (!user) { currentUserIsVip = false; return; }
         if (user?.email) {
-            const docId = user.email.replace(/[.#$[\]@]/g, '_');
-            vipUnsubscribe = onSnapshot(doc(db, 'kiter_vip', docId), (snap) => {
-                currentUserIsVip = snap.exists() && snap.data()?.active === true;
+            const watchedVipDocs = new Set();
+            const vipByDoc = {};
+            let usuarioLoaded = false;
+
+            const watchVipDoc = (email) => {
+                const docId = email.replace(/[.#$[\]@]/g, '_');
+                if (watchedVipDocs.has(docId)) return;
+                watchedVipDocs.add(docId);
+                vipUnsubscribers.push(onSnapshot(doc(db, 'kiter_vip', docId), (snap) => {
+                    vipByDoc[docId] = snap.exists() && snap.data()?.active === true;
+                    applyVipState();
+                }, () => { vipByDoc[docId] = false; applyVipState(); }));
+            };
+
+            vipUnsubscribers.push(onSnapshot(doc(db, 'usuarios', user.uid), (snap) => {
+                const mpEmail = snap.data()?.mp_email;
+                if (mpEmail) watchVipDoc(mpEmail);
+                usuarioLoaded = true;
+                applyVipState();
+            }, () => { usuarioLoaded = true; applyVipState(); }));
+
+            watchVipDoc(user.email);
+
+            function applyVipState() {
+                // Esperar a conocer todos los docs para no pisar el estado con un "no VIP" parcial
+                if (!usuarioLoaded || [...watchedVipDocs].some(id => !(id in vipByDoc))) return;
+                currentUserIsVip = Object.values(vipByDoc).some(Boolean);
                 if (vipBadge) {
                     vipBadge.classList.toggle('hidden', !currentUserIsVip);
                     vipBadge.classList.toggle('flex', currentUserIsVip);
@@ -340,7 +366,7 @@ try {
                         setTimeout(() => showVipModal(), 400);
                     }
                 }
-            });
+            }
         }
     });
 
