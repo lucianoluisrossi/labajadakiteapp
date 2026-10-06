@@ -307,12 +307,16 @@ try {
     // --- LISTENER DE ESTADO DE AUTENTICACIÓN (dentro de DOMContentLoaded) ---
     let currentUserIsVip = false;
     let vipUnsubscribers = [];
+    // Acceso al viento: 'live' (VIP o prueba) o 'delayed' (gratis, hasta 15 min de demora)
+    let windTier = 'delayed';
+    let windAccess = null; // { live, reason: 'vip'|'trial'|'none', trial_ends } que devuelve /api/data
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
 		updateDeviceAnalytics(user);
         updateAuthUI(user);
         updateVipUI(user);
         updateNovedadesAdminUI(user);
+        fetchWeatherData(true); // pasar a vivo o a demora según la nueva sesión
 
         // Escuchar en tiempo real el doc VIP del email de login y, si el usuario vinculó
         // otro email de MP (usuarios/{uid}.mp_email), también ese. Es VIP si alguno está activo.
@@ -391,6 +395,9 @@ try {
 
     async function showVipModal() {
         if (!vipModal) return;
+        const subtitle = document.getElementById('vip-modal-subtitle');
+        const trialEnded = windAccess?.reason === 'none' && windAccess.trial_ends && Date.parse(windAccess.trial_ends) < Date.now();
+        if (subtitle) subtitle.textContent = trialEnded ? 'Tu prueba VIP terminó · Seguí con el viento en vivo' : 'Viento en vivo, sin demora';
         vipModal.classList.remove('hidden');
         // Social proof: cargar count de VIPs activos
         const spEl = document.getElementById('vip-social-proof');
@@ -476,15 +483,13 @@ try {
         mpEmailFeedback.classList.remove('hidden');
     }
 
-    // --- MODAL VIP: mostrar 1 vez por día si no es VIP ---
+    // --- MODAL VIP: mostrar en cada apertura si no tiene viento en vivo (ni VIP ni prueba) ---
     let supportBannerInitialized = false;
     function initSupportBanner(isVip) {
         if (isVip || supportBannerInitialized) return;
         supportBannerInitialized = true;
-        const today = new Date().toISOString().slice(0, 10);
-        const lastShown = localStorage.getItem('vipModalLastShown');
-        if (lastShown === today) return;
         setTimeout(async () => {
+            if (windTier === 'live') return;
             // Doble chequeo: verificar Firestore antes de mostrar el modal
             if (currentUser?.email) {
                 const docId = currentUser.email.replace(/[.#$[\]@]/g, '_');
@@ -493,10 +498,7 @@ try {
                     if (snap.exists() && snap.data()?.active === true) return;
                 } catch(e) { /* si falla el chequeo, no mostrar el modal */ return; }
             }
-            if (vipModal) {
-                showVipModal();
-                localStorage.setItem('vipModalLastShown', today);
-            }
+            if (vipModal) showVipModal();
         }, 3000);
     }
     // Cerrar el modal no abre el link de alertas: las alertas son solo VIP
@@ -516,7 +518,7 @@ try {
             window._pendingAlertLink = url;
             window._openVipAfterLogin = true;
             showLoginModal();
-        } else if (currentUserIsVip) {
+        } else if (currentUserIsVip || windTier === 'live') {
             window.open(url, '_blank', 'noopener');
         } else {
             showVipModal();
@@ -1402,13 +1404,59 @@ try {
         }
     }
     
+    // Con sesión (email) se pide el vivo; si no hay acceso (403) o falla, se usa el público con demora
+    async function fetchWeatherJson() {
+        let access = null;
+        if (currentUser?.email) {
+            try {
+                const token = await currentUser.getIdToken();
+                const res = await fetch(`${weatherApiUrl}?live=1`, { headers: { Authorization: `Bearer ${token}` } });
+                if (res.ok) {
+                    const json = await res.json();
+                    setWindTier('live', json.access);
+                    return json;
+                }
+                if (res.status === 403) access = (await res.json().catch(() => ({}))).access || null;
+            } catch (e) { console.warn('Viento en vivo no disponible:', e); }
+        }
+        setWindTier('delayed', access);
+        return fetchWithBackoff(weatherApiUrl, {});
+    }
+
+    const windTierBanner = document.getElementById('wind-tier-banner');
+    function setWindTier(tier, access) {
+        const changed = tier !== windTier;
+        windTier = tier;
+        windAccess = access;
+        if (windTierBanner) {
+            let text = null;
+            if (tier === 'delayed') {
+                text = '🕒 Viento con hasta 15 min de demora · Verlo en vivo →';
+            } else if (access?.reason === 'trial') {
+                const days = Math.max(1, Math.ceil((Date.parse(access.trial_ends) - Date.now()) / 864e5));
+                text = `🟢 En vivo · Prueba VIP: te ${days === 1 ? 'queda 1 día' : `quedan ${days} días`}`;
+            }
+            windTierBanner.textContent = text || '';
+            windTierBanner.classList.toggle('hidden', !text);
+        }
+        if (changed) renderHistoryForTier();
+    }
+    if (windTierBanner) windTierBanner.addEventListener('click', () => {
+        if (!currentUser?.email) {
+            window._openVipAfterLogin = true;
+            showLoginModal();
+        } else {
+            showVipModal();
+        }
+    });
+
     async function fetchWeatherData(silent = false) {
         if (!silent) showSkeletons(true);
         errorEl.classList.add('hidden');
         let json;
         try {
             try {
-                json = await fetchWithBackoff(weatherApiUrl, {});
+                json = await fetchWeatherJson();
             } catch (e) {
                 console.warn("API real falló, usando MOCK.");
                 json = getMockWeatherData();
@@ -1477,7 +1525,7 @@ try {
                 if (stabilityDataEl) stabilityDataEl.textContent = stability.text;
 
                 // Historial de viento
-                if (windSpeedValue !== null) updateWindHistory(windSpeedValue);
+                if (windSpeedValue !== null) updateWindHistory(windSpeedValue, data.wind?.wind_speed?.time);
                 
                 // ⭐ MEJORAS UX: Actualizar barra, tendencia, timestamp
                 if (window.updateUXImprovements) {
@@ -1513,7 +1561,7 @@ try {
     
     // --- HISTORIAL DE VIENTO (Firebase) ---
     const windHistoryCollection = db ? collection(db, 'wind_history') : null;
-    let lastHistoryWrite = 0;
+    let lastHistoryKey = null;
 
     function windColor(spd) {
         if (spd <= 14) return '#93c5fd';
@@ -1587,15 +1635,24 @@ try {
             </svg>`;
     }
 
-    async function updateWindHistory(speed) {
-        if (!windHistoryCollection) return;
-        const now = Date.now();
-        // Escribir máximo una vez cada 25 segundos
-        if (now - lastHistoryWrite < 25000) return;
-        lastHistoryWrite = now;
+    // Un doc por lectura de la estación (id = hora de la lectura): sin duplicados entre usuarios,
+    // y los datos con demora de usuarios gratis quedan en su hora real.
+    async function updateWindHistory(speed, stationTime) {
+        if (!windHistoryCollection || !stationTime) return;
+        const key = String(stationTime);
+        if (key === lastHistoryKey) return;
+        lastHistoryKey = key;
         try {
-            await addDoc(windHistoryCollection, { v: speed, t: serverTimestamp() });
+            await setDoc(doc(windHistoryCollection, key), { v: speed, t: Timestamp.fromMillis(Number(stationTime) * 1000) });
         } catch(e) { console.warn('wind_history write error', e); }
+    }
+
+    // Usuarios sin vivo ven el gráfico sin los últimos 15 min
+    let lastHistoryDocs = [];
+    function renderHistoryForTier() {
+        const cutoff = Date.now() - 15 * 60000;
+        const docs = windTier === 'live' ? lastHistoryDocs : lastHistoryDocs.filter(d => (d.t?.toMillis?.() ?? 0) <= cutoff);
+        if (docs.length >= 2) renderWindChart(docs);
     }
 
     // Suscripción en tiempo real a las últimas 6 horas
@@ -1608,8 +1665,8 @@ try {
             limit(720)
         );
         onSnapshot(historyQuery, (snapshot) => {
-            const docs = snapshot.docs.map(d => ({ ...d.data() }));
-            if (docs.length >= 2) renderWindChart(docs);
+            lastHistoryDocs = snapshot.docs.map(d => ({ ...d.data() }));
+            renderHistoryForTier();
         });
     }
 

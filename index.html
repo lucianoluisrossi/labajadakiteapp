@@ -223,6 +223,9 @@
                     </div>
                 </div>
 
+                <!-- Aviso de acceso al viento: con demora (gratis) o prueba VIP -->
+                <button id="wind-tier-banner" type="button" class="hidden w-full mb-2 py-1.5 px-3 rounded-xl text-xs font-bold text-center bg-amber-100 text-amber-900 border border-amber-300"></button>
+
                 <!-- 2. STATUS DEL SPOT -->
                 <div id="verdict-card" class="mb-3 py-2 px-4 rounded-xl border border-gray-200 transition-colors duration-300 text-center">
                     <p class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-0.5">🪁 Estado del Spot</p>
@@ -1134,15 +1137,15 @@
                 <button id="vip-modal-close" class="absolute top-3 right-3 text-white/80 hover:text-white text-2xl font-bold leading-none">&times;</button>
                 <div class="text-5xl mb-2">🪁</div>
                 <h2 class="text-xl font-black">Kiter VIP</h2>
-                <p class="text-sky-100 text-sm mt-1">Apoyá la App</p>
+                <p id="vip-modal-subtitle" class="text-sky-100 text-sm mt-1">Viento en vivo, sin demora</p>
                 <p id="vip-social-proof" class="text-sky-200 text-xs mt-2 font-semibold hidden"></p>
             </div>
             <!-- Contenido -->
             <div class="p-6">
                 <ul class="space-y-2 mb-5">
-                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Mantenimiento de la estación meteorológica</li>
-                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Servidores Vercel y Firebase siempre activos</li>
-                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Fondo para sensores de backup</li>
+                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Viento y ráfagas en tiempo real (sin los 15 min de demora)</li>
+                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Alertas de viento por WhatsApp y Telegram</li>
+                    <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Apoyás el mantenimiento de la estación meteorológica</li>
                     <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Badge <span class="bg-amber-400 text-amber-900 text-[10px] font-black px-1.5 py-0.5 rounded-full">🪁 VIP</span> en tu perfil</li>
                 </ul>
                 <div class="text-center mb-4">
