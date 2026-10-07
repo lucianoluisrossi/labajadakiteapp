@@ -65,7 +65,8 @@ export function createVipKite(container) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
-    renderer.domElement.style.display = 'block';
+    // Tamaño CSS fijo al contenedor: setSize(..., false) no lo toca y con DPR > 1 el canvas se agrandaría
+    Object.assign(renderer.domElement.style, { display: 'block', width: '100%', height: '100%', pointerEvents: 'none' });
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);

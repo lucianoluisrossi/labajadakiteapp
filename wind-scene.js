@@ -46,7 +46,8 @@ export function createWindScene(container) {
     const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     container.appendChild(renderer.domElement);
-    renderer.domElement.style.display = 'block';
+    // Tamaño CSS fijo al contenedor: setSize(..., false) no lo toca y con DPR > 1 el canvas se agrandaría
+    Object.assign(renderer.domElement.style, { display: 'block', width: '100%', height: '100%' });
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xbfe3f5);
