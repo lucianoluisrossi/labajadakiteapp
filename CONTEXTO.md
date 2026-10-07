@@ -21,7 +21,9 @@
 | `GREENAPI_INSTANCE_ID` / `GREENAPI_TOKEN` | Green API (WhatsApp) |
 | `GREENAPI_GROUP_ID` | ID del grupo WhatsApp destino |
 | `MP_ACCESS_TOKEN` | MercadoPago — token de **producción** (`APP_USR-...`) |
-| `MP_PLAN_ID` | `947a5399fa3c4350b9e1e48ea33714e2` — plan producción $5.000/mes |
+| `MP_PLAN_ID` | `947a5399fa3c4350b9e1e48ea33714e2` — plan producción $5.000/mes. El webhook ignora suscripciones de otro plan |
+| `MP_WEBHOOK_SECRET` | Clave secreta de Webhooks de MP (Tus integraciones → Webhooks). Valida `x-signature`; por ahora solo se registra |
+| `CRON_SECRET` | Opcional. Si existe, `/api/vip-expire` la exige (Vercel la manda sola en los crons) |
 | `WINDY_API_KEY` | Pronóstico Windy |
 
 ---
@@ -33,11 +35,12 @@
 | `kiter_board` | Mensajes del chat comunitario |
 | `daily_gallery_meta` | Fotos de la galería diaria |
 | `classifieds` | Clasificados de equipos |
-| `wind_history` | Lecturas de viento (campo `v`: velocidad, `t`: timestamp) |
+| `wind_history` | Lecturas de viento (`v`: velocidad, `t`: hora de la lectura). **ID del doc = hora de la estación (unix seg)**: sin duplicados entre usuarios |
 | `telegram_alerts` | Control anti-spam alertas (`last_alert` doc) |
 | `telegram_subscribers` | Suscriptores bot Telegram individual |
 | `greenapi_subscribers` | Suscriptores WhatsApp on-demand (`chatId`, `name`, `active`, `subscribedAt`) |
-| `kiter_vip` | Suscriptores VIP (`email`, `active`, `status`, `preapproval_id`) |
+| `kiter_vip` | Suscriptores VIP (`email`, `active`, `status`, `preapproval_id`, `next_payment_date`, `vip_until`, `manual`). ID = email en minúsculas con `.@#$[]` → `_` |
+| `mpEvents` | Un doc por notificación de MP (id = `id` del body): deduplicación, body crudo, `request_id`, `signature`, `duplicates` |
 | `usuarios` | Perfiles de usuario (`role: "admin" | "editor"`, `mp_email`) |
 | `novedades` | Novedades del spot (`titulo`, `texto`, `fecha`, `creadoPor`) |
 | `mp_webhook_log` | Log de cada evento MP (`type`, `payer_email`, `status`, `active`, `result`, `reason`, `timestamp`) |
@@ -76,9 +79,9 @@
 - **Panel admin JS completo**: acordeones con carga lazy, stats (VIPs, suscriptores TG/WA, mensajes, fotos, clasificados, visitantes únicos, usuarios registrados), gestión VIP, historial pagos MP, moderación chat/galería/clasificados, suscriptores con nombre y fecha, botón recordatorio VIP individual por WA
 
 ### `/sw.js`
-- Service Worker v4 (`labajada-cache-v4`)
-- Cache-first para assets estáticos (HTML, JS, CSS, logos, imágenes)
-- Network-first para `/api/*`
+- Service Worker v6 (`labajada-cache-v6`)
+- Cache-first solo para imágenes
+- Network-first para todo lo demás (HTML, JS, CSS, APIs): los deploys se ven sin borrar datos de la app
 - Caché de: `index.html`, `app.js`, `style.css`, `manifest.json`, `logo.png`, `logo-mariana.png`, `logo3.jpg`, `ux-improvements.js`
 - **No tiene push notifications** — sistema web push fue eliminado
 
@@ -99,7 +102,9 @@
 - Condiciones: promedio ≥14 kts en últimas 30min, dirección on-shore, hora 9-19hs AR (UTC-3)
 - Anti-spam: 1 alerta cada 3hs (doc `telegram_alerts/last_alert`)
 - Envía a: canal Telegram + grupo/contactos WhatsApp via Green API + suscriptores `greenapi_subscribers`
-- `?test=true` bypasea todas las condiciones
+- La alerta lleva un **gráfico PNG de las últimas 2 h** (QuickChart `/chart/create`): Telegram `sendPhoto`, WhatsApp `sendFileByUrl`, texto como epígrafe. Si el gráfico o el envío con imagen falla, sale texto
+- En cada corrida escribe su lectura en `wind_history` (id = hora de la estación)
+- `?test=true` bypasea todas las condiciones y **envía a todos** (canal, grupos, suscriptores). Sin `ALERT_API_KEY` es público
 - Mensaje EPICOOO si dirección es E o ESE
 
 ### `/api/greenapi-webhook.js`
@@ -116,37 +121,55 @@
 - Busca en `kiter_vip` por email de la app
 - Si tiene `uid`, lee `usuarios/{uid}.mp_email` y chequea ese email también
 - Consulta MP API si no encuentra en Firestore, y si encuentra crea el doc automáticamente
+- Ojo: si se quita el VIP a mano a alguien con suscripción MP `authorized`, se reactiva en su próximo login
 
 ### `/api/mp-webhook.js`
-- Recibe notificaciones de MercadoPago
-- Maneja 4 tipos de eventos:
-  - `payment` — pago individual: obtiene email, activa VIP si `status: approved`
-  - `subscription_authorized_payment` — pago recurrente de suscripción: igual que `payment`
-  - `subscription_preapproval` — alta/baja/modificación de suscripción: actualiza `kiter_vip` con `status`, `active`, `next_payment_date`
-  - Cualquier otro tipo — logueado como `result: "ignored"` para diagnóstico
-- Funciones auxiliares: `getSubscriptionStatus(id)`, `getPaymentDetails(id)`, `getPayerEmail(payerId)` (consulta `GET /users/{id}`)
-- Si `payer_email` está vacío en `subscription_preapproval`: intenta `getPayerEmail(payer_id)`, luego busca por `preapproval_id` en `kiter_vip`, finalmente crea doc `payer_{id}`
+- Recibe notificaciones de MercadoPago. **Fuente de verdad = estado de la suscripción** (`GET /preapproval/{id}`), nunca el pago suelto:
+  - `subscription_preapproval` — `data.id` = suscripción
+  - `subscription_authorized_payment` — `data.id` = factura → `GET /authorized_payments/{id}` → `preapproval_id`
+  - `payment` — `GET /v1/payments/{id}` → `point_of_interaction.transaction_data.subscription_id`. Pago sin suscripción: ignorado
+  - Si el id no existe con la API esperada, prueba las otras dos (MP a veces manda otro tipo de id)
+  - Suscripción con `preapproval_plan_id` distinto de `MP_PLAN_ID`: ignorada
+- `active`: `authorized` → true. `paused`/`cancelled` → true hasta `vip_until` (último cobro + período), si no hay cobros → false
+- Errores transitorios de MP (5xx, 429, 401/403, red) → responde **500** para que MP reintente (cada 15 min). 4xx permanente → 200
+- Deduplica por `id` de la notificación en `mpEvents` (si no viene `id`, procesa siempre)
+- Valida `x-signature` (HMAC-SHA256 igual que el SDK oficial) en modo **solo registrar** (`mpEvents.signature`). Fase 2 pendiente: rechazar con 401
+- Emails normalizados (trim + minúsculas) antes de armar el ID del doc
 - Guarda log en `mp_webhook_log` con resultado de cada evento
-- **Nota**: `email: payer_email || null` (no `|| undefined` — Firestore no acepta undefined)
+
+### `/api/vip-expire.js`
+- Cron diario `0 9 * * *` (06:00 AR): desactiva VIP `paused`/`cancelled` con `vip_until` vencido
+- No toca docs sin `vip_until` (VIP manuales) ni `authorized`
+
+### `/api/data.js`
+- `GET /api/data` — público, datos Ecowitt cacheados **15 min** en el CDN de Vercel (`s-maxage=900`)
+- `GET /api/data?live=1` + `Authorization: Bearer <Firebase ID token>` — dato en vivo para VIP (email de login o `mp_email`) o cuenta en **prueba de 7 días**. 401 sin token, 403 sin acceso (devuelve `access.trial_ends`)
+- Prueba: desde la creación de la cuenta; cuentas previas desde el 2026-10-07. Cuentas anónimas no tienen vivo
+- Acceso cacheado 5 min en memoria por uid
+- Ojo: las claves Ecowitt están hardcodeadas en este archivo y el sitio sirve el código fuente de `api/*.js` (pendiente de seguridad)
 
 ---
 
 ## Features implementadas
 
 ### Datos de viento
-- Estación Ecowitt en tiempo real, refresh cada 30s (silencioso)
-- Historial 6hs con gráfico SVG y etiquetas horarias reales
+- Estación Ecowitt, refresh cada 30s (silencioso)
+- **VIP / prueba**: en vivo (`/api/data?live=1`). **Gratis**: hasta 15 min de demora (`/api/data` cacheado)
+- Aviso sobre "Estado del Spot" (`#wind-tier-banner`): demora → "Verlo en vivo" (login o modal VIP); prueba → días restantes
+- Historial 6hs con gráfico SVG; usuarios sin vivo lo ven sin los últimos 15 min
+- Cámara en vivo: embed de YouTube de Radio Claromecó (contenido de terceros, gratis para todos). Cambiar el ID en `index.html` (`#live-camera`) cuando reinician el vivo
 - Refresh silencioso al volver al foco (sin skeletons)
 
 ### Autenticación
 - Google Sign-In via Firebase Auth
 - Botón **ÚNITE** en topbar — obliga login, luego decide si mostrar modal VIP
-- Botones de alertas (WhatsApp/Telegram): si es VIP abre el link directo, si no abre modal VIP
+- Botones de alertas (WhatsApp/Telegram): VIP o prueba abre el link; si no, modal VIP (cerrarlo ya **no** abre el link)
 
 ### Kiter VIP
 - Suscripción $5.000/mes via MercadoPago (plan producción con crédito + débito + account_money)
-- Badge `🪁 VIP` en topbar, actualizado en tiempo real vía `onSnapshot`
-- Modal VIP: 1 vez/día para no-VIP, nunca para VIP (verificado en Firestore antes de mostrar)
+- Beneficios: viento en vivo, alertas WA/TG, badge
+- Badge `🪁 VIP` en topbar en tiempo real: escucha el doc del email de login **y** el de `usuarios/{uid}.mp_email`
+- Modal VIP: en **cada apertura** para quien no tiene vivo (ni VIP ni prueba); muestra "Tu prueba VIP terminó" cuando corresponde
 - Sección de email alternativo de MP siempre visible en el modal
 - Al volver del checkout sin VIP activo: campo resaltado con mensaje específico
 - Logs de webhooks en `mp_webhook_log` para diagnóstico
@@ -188,11 +211,21 @@
 
 ---
 
+## Tests y scripts
+
+- `npm test` — `node:test` con mocks de módulos (Node 24, sin dependencias extra). Cubre `mp-webhook`, `vip-expire`, `data` y `telegram-alert` (`tests/`)
+- `scripts/audit-vip-emails.mjs` — auditoría **solo lectura** de emails sin normalizar en `kiter_vip` y `usuarios.mp_email`:
+```powershell
+$env:GOOGLE_APPLICATION_CREDENTIALS="C:\ruta\service-account.json"; node scripts/audit-vip-emails.mjs
+```
+
+---
+
 ## Diagnóstico de pagos MP
 
 Si un usuario pagó y no se activó el VIP:
 
-1. Revisar **Firestore → `mp_webhook_log`**: ¿hay un doc reciente?
+1. Revisar **Firestore → `mpEvents`** (body crudo y firma) y **`mp_webhook_log`**: ¿hay un doc reciente?
    - `result: "error"` → ver campo `reason`
    - Sin docs → el webhook nunca llegó
 2. Si no llegó: buscar el `preapproval_id` del usuario vía MP API y ejecutar manualmente:
@@ -239,7 +272,7 @@ Campos: email, active: true, status: "authorized"
 | Servicio | Estado | Detalle |
 |---|---|---|
 | Firebase Auth | ✅ | `labajadakite.app` en Authorized Domains |
-| Green API webhook | ✅ | `https://labajadakite.app/api/greenapi-webhook` |
+| Green API webhook | ✅ | `https://www.labajadakite.app/api/greenapi-webhook` (con www: sin www hay redirect 307). Si el Status queda "Not Authorized", re-vincular con QR |
 | MercadoPago webhooks | ✅ | URL: `https://www.labajadakite.app/api/mp-webhook` (con www) + eventos: Planes y suscripciones + Pagos |
 | MercadoPago credenciales | ✅ | Token y plan de producción configurados en Vercel |
 | Vercel dominio | ✅ | `labajadakite.app` activo |
