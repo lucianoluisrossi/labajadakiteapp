@@ -104,6 +104,7 @@ export function createWindScene(container) {
     let dir = { x: 0, z: -1 };   // hacia dónde va el viento (unitario)
     let speed = 0;               // kts
     let gustRatio = 1;
+    let live = true;             // false = dato con demora: la escena queda congelada
 
     function writeStreaks() {
         const len = speed * KTS_TO_UNITS * STREAK_SECONDS;
@@ -155,7 +156,7 @@ export function createWindScene(container) {
         rafId = requestAnimationFrame(frame);
     }
     function syncLoop() {
-        const shouldRun = onScreen && document.visibilityState === 'visible' && !reducedMotion && speed > 0;
+        const shouldRun = live && onScreen && document.visibilityState === 'visible' && !reducedMotion && speed > 0;
         if (shouldRun && rafId === null) { last = performance.now(); rafId = requestAnimationFrame(frame); }
         if (!shouldRun && rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
     }
@@ -166,8 +167,9 @@ export function createWindScene(container) {
     resize();
 
     return {
-        // { speed, gust, direction (grados, de dónde viene) }
-        update({ speed: kts, gust, direction }) {
+        // { speed, gust, direction (grados, de dónde viene), live (false = congelada) }
+        update({ speed: kts, gust, direction, live: isLive = true }) {
+            live = isLive;
             speed = Math.max(0, kts || 0);
             gustRatio = gust && kts ? Math.min(Math.max(gust / kts, 1), 2) : 1;
             if (direction !== null && direction !== undefined) {

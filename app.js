@@ -393,12 +393,24 @@ try {
     const vipModal = document.getElementById('vip-modal');
     const vipModalClose = document.getElementById('vip-modal-close');
 
+    // Kite 3D del modal: se carga una sola vez, la primera vez que se abre. Sin WebGL queda el emoji.
+    let vipKiteLoaded = false;
+    function loadVipKite() {
+        const el = document.getElementById('vip-kite-3d');
+        if (vipKiteLoaded || !el) return;
+        vipKiteLoaded = true;
+        import('./vip-kite.js')
+            .then(m => { if (m.createVipKite(el)) document.getElementById('vip-kite-fallback')?.remove(); })
+            .catch(e => console.warn('Kite 3D no disponible:', e));
+    }
+
     async function showVipModal() {
         if (!vipModal) return;
         const subtitle = document.getElementById('vip-modal-subtitle');
         const trialEnded = windAccess?.reason === 'none' && windAccess.trial_ends && Date.parse(windAccess.trial_ends) < Date.now();
         if (subtitle) subtitle.textContent = trialEnded ? 'Tu prueba VIP terminó · Seguí con el viento en vivo' : 'Viento en vivo, sin demora';
         vipModal.classList.remove('hidden');
+        loadVipKite();
         // Social proof: cargar count de VIPs activos
         const spEl = document.getElementById('vip-social-proof');
         if (spEl) {
@@ -1416,7 +1428,10 @@ try {
                 .catch(e => { console.warn('Escena 3D no disponible:', e); return null; })
                 .then(scene => { if (!scene) el.classList.add('hidden'); return scene; });
         }
-        windScenePromise.then(scene => scene?.update(state));
+        // Con demora la escena queda congelada: el movimiento en vivo es parte del VIP
+        const live = windTier === 'live';
+        document.getElementById('wind-scene-paused')?.classList.toggle('hidden', live);
+        windScenePromise.then(scene => scene?.update({ ...state, live }));
     }
 
     // Con sesión (email) se pide el vivo; si no hay acceso (403) o falla, se usa el público con demora
@@ -1456,14 +1471,18 @@ try {
         }
         if (changed) renderHistoryForTier();
     }
-    if (windTierBanner) windTierBanner.addEventListener('click', () => {
+    // Invitación al vivo: sin sesión pide login; con sesión abre el modal VIP
+    function openLiveUpsell() {
         if (!currentUser?.email) {
             window._openVipAfterLogin = true;
             showLoginModal();
         } else {
             showVipModal();
         }
-    });
+    }
+    if (windTierBanner) windTierBanner.addEventListener('click', openLiveUpsell);
+    const windScenePaused = document.getElementById('wind-scene-paused');
+    if (windScenePaused) windScenePaused.addEventListener('click', openLiveUpsell);
 
     async function fetchWeatherData(silent = false) {
         if (!silent) showSkeletons(true);
