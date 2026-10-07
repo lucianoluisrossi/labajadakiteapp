@@ -157,6 +157,7 @@
 - **VIP / prueba**: en vivo (`/api/data?live=1`). **Gratis**: hasta 15 min de demora (`/api/data` cacheado)
 - Aviso sobre "Estado del Spot" (`#wind-tier-banner`): demora → "Verlo en vivo" (login o modal VIP); prueba → días restantes
 - Historial 6hs con gráfico SVG; usuarios sin vivo lo ven sin los últimos 15 min
+- **Escena 3D del spot** (`wind-scene.js`, Three.js r170 por CDN, carga diferida tras el primer dato): costa low-poly orientada (tierra N, mar S, vista desde la playa), estelas por dirección/velocidad con la escala de `windColor`, offshore en rojo. Debajo de la tarjeta de viento (`#wind-scene`). Con vivo se anima; con demora queda congelada con botón "Verlo en vivo". Loop solo visible en pantalla; respeta `prefers-reduced-motion`; sin WebGL se oculta
 - Cámara en vivo: embed de YouTube de Radio Claromecó (contenido de terceros, gratis para todos). Cambiar el ID en `index.html` (`#live-camera`) cuando reinician el vivo
 - Refresh silencioso al volver al foco (sin skeletons)
 
@@ -169,6 +170,8 @@
 - Suscripción $5.000/mes via MercadoPago (plan producción con crédito + débito + account_money)
 - Beneficios: viento en vivo, alertas WA/TG, badge
 - Badge `🪁 VIP` en topbar en tiempo real: escucha el doc del email de login **y** el de `usuarios/{uid}.mp_email`
+- Kite 3D dorado en el encabezado del modal (`vip-kite.js`, se carga al abrir el modal; sin WebGL queda el emoji)
+- Ojo 3D: los canvas llevan `width/height: 100%` en CSS; `renderer.setSize(w, h, false)` no lo setea y con DPR > 1 el canvas se agranda
 - Modal VIP: en **cada apertura** para quien no tiene vivo (ni VIP ni prueba); muestra "Tu prueba VIP terminó" cuando corresponde
 - Sección de email alternativo de MP siempre visible en el modal
 - Al volver del checkout sin VIP activo: campo resaltado con mensaje específico
