@@ -226,6 +226,12 @@
                 <!-- Aviso de acceso al viento: con demora (gratis) o prueba VIP -->
                 <button id="wind-tier-banner" type="button" class="hidden w-full mb-2 py-1.5 px-3 rounded-xl text-xs font-bold text-center bg-amber-100 text-amber-900 border border-amber-300"></button>
 
+                <!-- Escena 3D del spot con el viento (wind-scene.js, carga diferida) -->
+                <div id="wind-scene" class="hidden relative w-full h-44 mb-2 rounded-xl overflow-hidden border border-gray-200 bg-sky-100" aria-label="Vista 3D del spot con la dirección e intensidad del viento" role="img">
+                    <span class="absolute top-1.5 left-2 text-[9px] font-bold text-white/90 bg-black/30 px-1.5 py-0.5 rounded pointer-events-none">← E · O →</span>
+                    <span class="absolute bottom-1.5 right-2 text-[9px] font-bold text-white/90 bg-black/30 px-1.5 py-0.5 rounded pointer-events-none">Mirando al mar (S)</span>
+                </div>
+
                 <!-- 2. STATUS DEL SPOT -->
                 <div id="verdict-card" class="mb-3 py-2 px-4 rounded-xl border border-gray-200 transition-colors duration-300 text-center">
                     <p class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-0.5">🪁 Estado del Spot</p>

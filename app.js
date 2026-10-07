@@ -1404,6 +1404,21 @@ try {
         }
     }
     
+    // Escena 3D del spot: se carga recién con el primer dato (Three.js ~170 KB). Si falla, queda la tarjeta de siempre.
+    let windScenePromise = null;
+    function updateWindScene(state) {
+        const el = document.getElementById('wind-scene');
+        if (!el) return;
+        if (!windScenePromise) {
+            el.classList.remove('hidden');
+            windScenePromise = import('./wind-scene.js')
+                .then(m => m.createWindScene(el))
+                .catch(e => { console.warn('Escena 3D no disponible:', e); return null; })
+                .then(scene => { if (!scene) el.classList.add('hidden'); return scene; });
+        }
+        windScenePromise.then(scene => scene?.update(state));
+    }
+
     // Con sesión (email) se pide el vivo; si no hay acceso (403) o falla, se usa el público con demora
     async function fetchWeatherJson() {
         let access = null;
@@ -1489,6 +1504,7 @@ try {
                 
                 const [verdictText, verdictColors] = getSpotVerdict(windSpeedValue, windGustValue, windDirDegrees);
                 updateCardColors(verdictCardEl, verdictColors);
+                updateWindScene({ speed: windSpeedValue, gust: windGustValue, direction: windDirDegrees });
                 verdictDataEl.textContent = verdictText;
                 
                 if (windArrowEl && windDirDegrees !== null) {
