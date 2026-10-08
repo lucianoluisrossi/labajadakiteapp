@@ -582,15 +582,23 @@ try {
         } catch(e) { console.warn('Error leyendo rol usuario:', e); }
     }
 
+    document.getElementById('novedad-home-hint')?.addEventListener('click', (e) => {
+        if (e.currentTarget.dataset.id) window.verNovedadCompleta(e.currentTarget.dataset.id);
+    });
+
     function updateNovedadBadge(docs) {
         const badge = document.getElementById('novedad-badge');
         if (!badge || docs.length === 0) return;
         const lastSeen = localStorage.getItem('novedadLastSeen');
         const latest = docs[0].data().fecha?.toDate?.()?.getTime?.() || 0;
-        if (!lastSeen || Number(lastSeen) < latest) {
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
+        const unread = !lastSeen || Number(lastSeen) < latest;
+        badge.classList.toggle('hidden', !unread);
+        // Inicio: acceso compacto a la última novedad sin leer (la lista completa está en Comunidad)
+        const homeHint = document.getElementById('novedad-home-hint');
+        if (homeHint) {
+            homeHint.textContent = `📣 Novedad: ${docs[0].data().titulo || 'Ver novedad'} →`;
+            homeHint.dataset.id = docs[0].id;
+            homeHint.classList.toggle('hidden', !unread);
         }
     }
 
@@ -765,10 +773,7 @@ try {
     const topbarAdminBtn = document.getElementById('topbar-admin-btn');
     const backToHomeBtn = document.getElementById('back-to-home');
     const backToHomeClassifieds = document.getElementById('back-to-home-classifieds');
-    const fabContainer = document.getElementById('fab-container');
-    const fabCommunity = document.getElementById('fab-community');
-    const fabClasificados = document.getElementById('fab-clasificados');
-    const fabBackWeather = document.getElementById('fab-back-weather');
+    const tabButtons = document.querySelectorAll('#tab-bar .tab-btn');
     const newMessageToast = document.getElementById('new-message-toast');
     const newPhotoToast = document.getElementById('new-photo-toast');
     const newClassifiedToast = document.getElementById('new-classified-toast');
@@ -804,39 +809,52 @@ try {
         console.log('PWA instalada correctamente');
     });
 
-    function switchView(viewName) {
+    // Vistas navegables y su dirección (#hash) para que el botón "atrás" del celular vuelva a la pestaña anterior
+    const VIEWS = {
+        dashboard:   { el: viewDashboard, hash: '' },
+        forecast:    { el: document.getElementById('view-forecast'), hash: '#pronostico' },
+        community:   { el: viewCommunity, hash: '#comunidad' },
+        classifieds: { el: viewClassifieds, hash: '#clasificados' },
+        more:        { el: document.getElementById('view-more'), hash: '#mas' },
+        admin:       { el: viewAdmin, hash: '#admin' },
+    };
+    const viewFromHash = (hash) => Object.keys(VIEWS).find(name => VIEWS[name].hash === hash && hash !== '') || null;
+
+    function switchView(viewName, { fromHistory = false } = {}) {
+        if (!VIEWS[viewName]) viewName = 'dashboard';
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        // Ocultar todas las vistas
-        if(viewDashboard) viewDashboard.classList.add('hidden');
-        if(viewCommunity) viewCommunity.classList.add('hidden');
-        if(viewClassifieds) viewClassifieds.classList.add('hidden');
-        if(viewAdmin) viewAdmin.classList.add('hidden');
+        Object.values(VIEWS).forEach(v => v.el?.classList.add('hidden'));
+        VIEWS[viewName].el?.classList.remove('hidden');
 
-        if (viewName === 'dashboard') {
-            if(viewDashboard) viewDashboard.classList.remove('hidden');
-            // Mostrar FABs de comunidad y clasificados, ocultar boton volver
-            if(fabContainer) fabContainer.classList.remove('hidden');
-            if(fabBackWeather) fabBackWeather.classList.add('hidden');
-        } else if (viewName === 'community') {
-            if(viewCommunity) viewCommunity.classList.remove('hidden');
-            // Ocultar FABs, mostrar boton volver verde
-            if(fabContainer) fabContainer.classList.add('hidden');
-            if(fabBackWeather) fabBackWeather.classList.remove('hidden');
-            markMessagesAsRead();
-        } else if (viewName === 'classifieds') {
-            if(viewClassifieds) viewClassifieds.classList.remove('hidden');
-            // Ocultar FABs, mostrar boton volver verde
-            if(fabContainer) fabContainer.classList.add('hidden');
-            if(fabBackWeather) fabBackWeather.classList.remove('hidden');
-            markClassifiedsAsRead();
-        } else if (viewName === 'admin') {
-            if(viewAdmin) viewAdmin.classList.remove('hidden');
-            if(fabContainer) fabContainer.classList.add('hidden');
-            if(fabBackWeather) fabBackWeather.classList.add('hidden');
-            initAdminPanel();
+        // Pestaña activa (admin no tiene pestaña)
+        tabButtons.forEach(btn => {
+            const active = btn.dataset.view === viewName;
+            btn.classList.toggle('text-sky-600', active);
+            btn.classList.toggle('text-gray-500', !active);
+            btn.setAttribute('aria-current', active ? 'page' : 'false');
+        });
+
+        if (!fromHistory) {
+            const target = VIEWS[viewName].hash || location.pathname + location.search;
+            if ((VIEWS[viewName].hash || '') !== location.hash) history.pushState({ view: viewName }, '', target);
         }
+
+        // Pronóstico: abrir Windguru (su widget se carga recién al abrir el desplegable)
+        if (viewName === 'forecast') {
+            const windguru = document.querySelector('#view-forecast details');
+            if (windguru && !windguru.open) windguru.open = true;
+        }
+        if (viewName === 'community') markMessagesAsRead();
+        else if (viewName === 'classifieds') markClassifiedsAsRead();
+        else if (viewName === 'admin') initAdminPanel();
     }
+
+    tabButtons.forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
+    // Vista inicial según la dirección (#pronostico, #comunidad…); admin no se abre por link
+    const initialView = viewFromHash(location.hash);
+    switchView(initialView && initialView !== 'admin' ? initialView : 'dashboard', { fromHistory: true });
+    window.addEventListener('popstate', () => switchView(viewFromHash(location.hash) || 'dashboard', { fromHistory: true }));
     
     // Marcar clasificados como leidos
     function markClassifiedsAsRead() {
@@ -854,11 +872,6 @@ try {
     if (topbarAdminBtn) topbarAdminBtn.addEventListener('click', () => switchView('admin'));
     const adminBackBtn = document.getElementById('admin-back-btn');
     if (adminBackBtn) adminBackBtn.addEventListener('click', () => switchView('dashboard'));
-    if (fabCommunity) fabCommunity.addEventListener('click', () => switchView('community'));
-    const notifBadge = document.getElementById('notification-badge');
-    if (notifBadge) notifBadge.addEventListener('click', () => switchView('community'));
-    if (fabClasificados) fabClasificados.addEventListener('click', () => switchView('classifieds'));
-    if (fabBackWeather) fabBackWeather.addEventListener('click', () => switchView('dashboard'));
     if (newMessageToast) newMessageToast.addEventListener('click', () => switchView('community'));
     if (newClassifiedToast) newClassifiedToast.addEventListener('click', () => switchView('classifieds'));
     if (newPhotoToast) {
@@ -1415,22 +1428,58 @@ try {
         }
     }
     
-    // Escena 3D del spot: se carga recién con el primer dato (Three.js ~170 KB). Si falla, queda la tarjeta de siempre.
+    // Cámara y escena 3D comparten el mismo lugar (selector "Cámara | Vista 3D").
+    // La escena (Three.js ~170 KB) se carga recién cuando alguien la elige; si falla, vuelve la cámara.
+    const windSceneEl = document.getElementById('wind-scene');
+    const cameraPanel = document.getElementById('camera-panel');
+    const liveCameraFrame = document.getElementById('live-camera');
+    const mediaButtons = document.querySelectorAll('#media-toggle .media-btn');
     let windScenePromise = null;
-    function updateWindScene(state) {
-        const el = document.getElementById('wind-scene');
-        if (!el) return;
-        if (!windScenePromise) {
-            el.classList.remove('hidden');
+    let lastWindState = null;
+
+    function ensureWindScene() {
+        if (!windScenePromise && windSceneEl) {
             windScenePromise = import('./wind-scene.js')
-                .then(m => m.createWindScene(el))
+                .then(m => m.createWindScene(windSceneEl))
                 .catch(e => { console.warn('Escena 3D no disponible:', e); return null; })
-                .then(scene => { if (!scene) el.classList.add('hidden'); return scene; });
+                .then(scene => { if (!scene) setMediaView('camera'); return scene; });
         }
+        return windScenePromise || Promise.resolve(null);
+    }
+
+    function setMediaView(view) {
+        const showScene = view === 'scene';
+        cameraPanel?.classList.toggle('hidden', showScene);
+        windSceneEl?.classList.toggle('hidden', !showScene);
+        // Sin la cámara visible se corta el video (ahorra datos); al volver se restaura
+        if (liveCameraFrame) {
+            if (showScene && liveCameraFrame.src !== 'about:blank') {
+                liveCameraFrame.dataset.src = liveCameraFrame.src;
+                liveCameraFrame.src = 'about:blank';
+            } else if (!showScene && liveCameraFrame.dataset.src) {
+                liveCameraFrame.src = liveCameraFrame.dataset.src;
+            }
+        }
+        mediaButtons.forEach(btn => {
+            const active = btn.dataset.media === view;
+            btn.classList.toggle('bg-sky-500', active);
+            btn.classList.toggle('text-white', active);
+            btn.classList.toggle('text-gray-600', !active);
+        });
+        try { localStorage.setItem('mediaView', view); } catch (e) { /* sin storage */ }
+        if (showScene) ensureWindScene().then(scene => { if (lastWindState) updateWindScene(lastWindState); });
+    }
+    mediaButtons.forEach(btn => btn.addEventListener('click', () => setMediaView(btn.dataset.media)));
+    let savedMediaView = 'camera';
+    try { savedMediaView = localStorage.getItem('mediaView') || 'camera'; } catch (e) { /* sin storage */ }
+    setMediaView(savedMediaView === 'scene' ? 'scene' : 'camera');
+
+    function updateWindScene(state) {
+        lastWindState = state;
         // Con demora la escena queda congelada: el movimiento en vivo es parte del VIP
         const live = windTier === 'live';
         document.getElementById('wind-scene-paused')?.classList.toggle('hidden', live);
-        windScenePromise.then(scene => scene?.update({ ...state, live }));
+        windScenePromise?.then(scene => scene?.update({ ...state, live }));
     }
 
     // Con sesión (email) se pide el vivo; si no hay acceso (403) o falla, se usa el público con demora
@@ -1975,35 +2024,6 @@ try {
         ? (c.category === 'perdido' ? 'Perdido' : 'Encontrado')
         : `${c.currency === 'USD' ? 'U$D' : '$'} ${Number(c.price || 0).toLocaleString('es-AR')}`;
 
-    // Carrusel "En venta" del panel principal: destacados primero, luego los más nuevos; solo con foto
-    const classifiedsStripSection = document.getElementById('classifieds-strip-section');
-    const classifiedsStrip = document.getElementById('classifieds-strip');
-    function renderClassifiedsStrip() {
-        if (!classifiedsStrip || !classifiedsStripSection) return;
-        const items = allClassifieds
-            .filter(c => (c.status || 'disponible') !== 'vendido' && c.photoURL)
-            .sort((a, b) => (b.featured === true) - (a.featured === true))
-            .slice(0, 8);
-        classifiedsStripSection.classList.toggle('hidden', items.length === 0);
-        classifiedsStrip.innerHTML = items.map(c => `
-            <button type="button" data-id="${escapeHtml(c.id)}" class="classified-strip-card snap-start flex-shrink-0 w-36 text-left bg-white rounded-xl overflow-hidden border ${c.featured ? 'border-amber-400 ring-1 ring-amber-300' : 'border-gray-200'} shadow-sm">
-                <div class="relative">
-                    <img src="${escapeHtml(c.photoURL)}" alt="${escapeHtml(c.title)}" loading="lazy" class="w-36 h-24 object-cover">
-                    ${c.featured ? '<span class="absolute top-1 left-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-900 font-bold">⭐</span>' : ''}
-                </div>
-                <div class="p-2">
-                    <p class="text-xs font-bold text-gray-800 truncate">${escapeHtml(c.title)}</p>
-                    <p class="text-sm font-black ${isLostFoundCategory(c) ? 'text-red-600' : 'text-green-600'}">${escapeHtml(formatClassifiedPrice(c))}</p>
-                </div>
-            </button>`).join('') + `
-            <button type="button" id="classifieds-strip-more" class="snap-start flex-shrink-0 w-28 rounded-xl border-2 border-dashed border-orange-300 text-orange-600 text-xs font-bold flex items-center justify-center">Ver todos →</button>`;
-    }
-    if (classifiedsStrip) classifiedsStrip.addEventListener('click', (e) => {
-        const card = e.target.closest('.classified-strip-card');
-        if (card) openClassified(card.dataset.id);
-        else if (e.target.closest('#classifieds-strip-more')) switchView('classifieds');
-    });
-    document.getElementById('classifieds-strip-all')?.addEventListener('click', () => switchView('classifieds'));
     document.getElementById('flojo-classifieds-hint')?.addEventListener('click', () => switchView('classifieds'));
 
     // Abre la vista de clasificados y resalta un aviso (carrusel o link compartido /c/:id)
@@ -2167,7 +2187,6 @@ try {
             
             if (classifiedsLoading) classifiedsLoading.classList.add('hidden');
             renderClassifieds();
-            renderClassifiedsStrip();
             openSharedClassifiedOnce();
 
             // Verificar si hay nuevos clasificados

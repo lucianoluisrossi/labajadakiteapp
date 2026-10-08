@@ -51,8 +51,13 @@
 ## Archivos principales
 
 ### `/index.html`
-- SPA principal
-- Secciones: viento hero, historial 6hs, novedades, alertas, escuelas kite, comunidad, galería, clasificados, windguru
+- SPA principal con **barra de pestañas inferior** (`#tab-bar`, reemplaza los botones flotantes). Cada vista tiene su `#hash` y el botón "atrás" vuelve a la pestaña anterior (`switchView` + `history.pushState`/`popstate`):
+  - 🌬️ **Viento** (`#view-dashboard`, sin hash): selector Cámara / Vista 3D en el mismo lugar (preferencia en `localStorage.mediaView`; la escena 3D carga solo si se elige y el video se corta mientras no se ve), aviso de demora, estado del spot, tarjeta de viento, historial 6 h y acceso a la última novedad sin leer (`#novedad-home-hint`)
+  - 📈 **Pronóstico** (`#pronostico`): Windguru (se abre y carga al entrar) y datos de la estación
+  - 💬 **Comunidad** (`#comunidad`): novedades completas, chat y galería
+  - 🏷️ **Clasificados** (`#clasificados`): con contador de nuevos en la pestaña
+  - ☰ **Más** (`#mas`): emergencias, alertas Telegram/WhatsApp y escuelas
+- El modal VIP y la campaña VIP solo se muestran en la pestaña Viento
 - Modales: VIP, novedad (crear/editar con checkbox de notificación WA), novedad completa (leer)
 - Botón MP tiene `onclick="localStorage.setItem('mpCheckoutStarted','true')"` para detectar retorno del checkout
 - **No tiene** panel VIP colapsable en el home (fue eliminado) — gestión VIP solo en panel admin
