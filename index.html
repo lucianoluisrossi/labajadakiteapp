@@ -1105,7 +1105,7 @@
             <div class="text-center text-xs text-gray-500">
                 <p>¿Sugerencias? <a href="https://wa.me/5492983500324" target="_blank" class="underline hover:text-gray-400 font-medium">Contactar desarrollador</a></p>
                 <!-- Botón oculto de modo test (5 toques) -->
-                <span id="dev-test-trigger" class="inline-block mt-3 text-gray-400 select-none cursor-default text-[10px]">v1.0</span>
+                <span id="dev-test-trigger" class="inline-block mt-3 text-gray-400 select-none cursor-default text-[10px]">v2.0</span>
             </div>
         </footer>
 
@@ -1145,6 +1145,38 @@
                     Enviar link de acceso
                 </button>
                 <p id="magic-link-status" class="hidden text-xs text-center"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL "¿QUÉ HAY DE NUEVO?" (una vez por dispositivo y versión; ver APP_VERSION en app.js) -->
+    <div id="whats-new-modal" class="hidden fixed inset-0 z-[160] bg-black/60 flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div class="relative bg-gradient-to-r from-sky-500 to-cyan-400 px-6 pt-6 pb-5 text-white text-center">
+                <button id="whats-new-close" type="button" class="absolute top-3 right-3 z-10 text-white/80 hover:text-white text-2xl font-bold leading-none" aria-label="Cerrar">&times;</button>
+                <div class="text-5xl mb-2">🪁</div>
+                <h2 class="text-xl font-black">¡Nos renovamos!</h2>
+                <p class="text-sky-100 text-sm mt-1">Nueva versión de La Bajada App</p>
+            </div>
+            <div class="p-6">
+                <ul class="space-y-4 mb-6">
+                    <li class="flex gap-3">
+                        <span class="text-2xl leading-none">🌬️</span>
+                        <p class="text-sm text-gray-700"><b class="text-gray-900">Todo el viento en una pantalla.</b> Cámara, estado del spot y viento, sin scrollear.</p>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-2xl leading-none">🌐</span>
+                        <div class="text-sm text-gray-700">
+                            <p><b class="text-gray-900">Nueva Vista 3D del spot.</b> Mirá de dónde entra el viento.</p>
+                            <button id="whats-new-try3d" type="button" class="mt-1.5 text-sky-600 font-bold hover:underline">Probarla ahora →</button>
+                        </div>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="text-2xl leading-none">👇</span>
+                        <p class="text-sm text-gray-700"><b class="text-gray-900">Usá las pestañas de abajo:</b> Pronóstico, Comunidad, Clasificados y Más.</p>
+                    </li>
+                </ul>
+                <button id="whats-new-ok" type="button" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3 rounded-xl transition-colors">¡Vamos!</button>
             </div>
         </div>
     </div>
@@ -1211,7 +1243,7 @@
     </div>
 
     <script src="/_vercel/insights/script.js"></script>
-    <script type="module" src="/app.js?v=4"></script>
+    <script type="module" src="/app.js?v=5"></script>
 
     <!-- Service Worker Registration para PWA -->
     <script>

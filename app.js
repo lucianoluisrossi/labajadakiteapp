@@ -385,7 +385,7 @@ try {
         if (campaignTs <= lastShown) return;
         localStorage.setItem('vipCampaignLastShown', String(campaignTs));
         setTimeout(() => {
-            if (currentUserIsVip || viewDashboard?.classList.contains('hidden')) return;
+            if (currentUserIsVip || whatsNewShownThisSession || viewDashboard?.classList.contains('hidden')) return;
             showVipModal();
         }, 800);
     });
@@ -498,13 +498,48 @@ try {
         mpEmailFeedback.classList.remove('hidden');
     }
 
+    // --- "¿QUÉ HAY DE NUEVO?": una vez por dispositivo y versión ---
+    // Para un próximo lanzamiento: subir APP_VERSION y cambiar el texto de #whats-new-modal.
+    const APP_VERSION = '2.0';
+    const whatsNewModal = document.getElementById('whats-new-modal');
+    let whatsNewShownThisSession = false; // ese día no se muestra además el modal VIP
+
+    function showWhatsNewIfNeeded() {
+        if (!whatsNewModal || viewDashboard?.classList.contains('hidden')) return;
+        let seen = null;
+        try { seen = localStorage.getItem('seenAppVersion'); } catch (e) { return; }
+        if (seen === APP_VERSION) return;
+        whatsNewShownThisSession = true;
+        vipModal?.classList.add('hidden');
+        whatsNewModal.classList.remove('hidden');
+    }
+
+    function closeWhatsNew() {
+        whatsNewModal?.classList.add('hidden');
+        try { localStorage.setItem('seenAppVersion', APP_VERSION); } catch (e) { /* sin storage */ }
+        // Señalar la barra de pestañas unos segundos
+        const tabBar = document.getElementById('tab-bar');
+        tabBar?.classList.add('animate-pulse');
+        setTimeout(() => tabBar?.classList.remove('animate-pulse'), 3000);
+    }
+
+    document.getElementById('whats-new-ok')?.addEventListener('click', closeWhatsNew);
+    document.getElementById('whats-new-close')?.addEventListener('click', closeWhatsNew);
+    whatsNewModal?.addEventListener('click', (e) => { if (e.target === whatsNewModal) closeWhatsNew(); });
+    document.getElementById('whats-new-try3d')?.addEventListener('click', () => {
+        closeWhatsNew();
+        switchView('dashboard');
+        setMediaView('scene');
+    });
+    setTimeout(showWhatsNewIfNeeded, 1200);
+
     // --- MODAL VIP: mostrar en cada apertura si no tiene viento en vivo (ni VIP ni prueba) ---
     let supportBannerInitialized = false;
     function initSupportBanner(isVip) {
         if (isVip || supportBannerInitialized) return;
         supportBannerInitialized = true;
         setTimeout(async () => {
-            if (windTier === 'live') return;
+            if (windTier === 'live' || whatsNewShownThisSession) return;
             // Solo en el panel principal: no tapar un aviso abierto desde un link compartido
             if (viewDashboard?.classList.contains('hidden')) return;
             // Doble chequeo: verificar Firestore antes de mostrar el modal
