@@ -223,16 +223,17 @@
 
 ## Endpoints protegidos y emails
 
--  → : exige  y  en . El cliente usa  (app.js)
-- Solo admin: , , , , , , . Admin o editor: - : email "Nueva versión" (v2) a todos los usuarios registrados.  se envía al admin;  manda el siguiente lote de 90 (Resend ). Registra envíos en  y saltea . Panel admin → "📣 Email Nueva versión"
-- : link de baja firmado (HMAC) + one-click (). La invitación VIP también respeta las bajas
-- Pendiente:  sigue público
+- `api/_auth.js` → `requireRole(req, res, db, roles)`: exige `Authorization: Bearer <ID token de Firebase>` y `usuarios/{uid}.role` dentro de `roles`. El cliente usa `authFetch()` (app.js)
+- Solo admin: `admin-mp-subscriptions`, `admin-nonvip-users`, `admin-resolve-payer-docs`, `admin-send-vip-email`, `admin-subscribe-wa`, `admin-send-campaign`, `send-whatsapp`. Admin o editor: `notify-novedades`
+- `api/admin-send-campaign.js`: email "Nueva versión" (v2) a todos los usuarios registrados. `{ mode: 'test' }` se envía al admin; `{ mode: 'send' }` manda el siguiente lote de 90 (Resend `/emails/batch`). Registra envíos en `email_campaigns/v2-lanzamiento/sent` y saltea `email_unsubscribes`. Panel admin → "📣 Email Nueva versión"
+- `api/email-unsubscribe.js`: link de baja firmado (HMAC) + one-click (`List-Unsubscribe`). La invitación VIP también respeta las bajas
+- Pendiente: `/api/telegram-alert?test=true` sigue público
 
 ---
 
 ## Tests y scripts
 
-- `npm test` — `node:test` con mocks de módulos (Node 24, sin dependencias extra). Cubre `mp-webhook`, `vip-expire`, `data` y `telegram-alert` (`tests/`)
+- `npm test` — `node:test` con mocks de módulos (Node 24, sin dependencias extra). Cubre `mp-webhook`, `vip-expire`, `data`, `telegram-alert`, clasificados y permisos/emails de admin (`tests/`)
 - `scripts/audit-vip-emails.mjs` — auditoría **solo lectura** de emails sin normalizar en `kiter_vip` y `usuarios.mp_email`:
 ```powershell
 $env:GOOGLE_APPLICATION_CREDENTIALS="C:\ruta\service-account.json"; node scripts/audit-vip-emails.mjs
