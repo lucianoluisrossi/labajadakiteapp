@@ -41,6 +41,9 @@
       ]
     }
   ],
+  "rewrites": [
+    { "source": "/c/:id", "destination": "/api/classified-share?id=:id" }
+  ],
   "crons": [
     {
       "path": "/api/telegram-alert",
@@ -49,6 +52,10 @@
     {
       "path": "/api/vip-expire",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/classifieds-digest",
+      "schedule": "0 21 * * *"
     }
   ]
 }
