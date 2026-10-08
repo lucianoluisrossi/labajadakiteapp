@@ -384,7 +384,10 @@ try {
         const lastShown = parseInt(localStorage.getItem('vipCampaignLastShown') || '0', 10);
         if (campaignTs <= lastShown) return;
         localStorage.setItem('vipCampaignLastShown', String(campaignTs));
-        setTimeout(() => { if (!currentUserIsVip) showVipModal(); }, 800);
+        setTimeout(() => {
+            if (currentUserIsVip || viewDashboard?.classList.contains('hidden')) return;
+            showVipModal();
+        }, 800);
     });
 
     // --- VIP SUBSCRIPTION ---
@@ -502,6 +505,8 @@ try {
         supportBannerInitialized = true;
         setTimeout(async () => {
             if (windTier === 'live') return;
+            // Solo en el panel principal: no tapar un aviso abierto desde un link compartido
+            if (viewDashboard?.classList.contains('hidden')) return;
             // Doble chequeo: verificar Firestore antes de mostrar el modal
             if (currentUser?.email) {
                 const docId = currentUser.email.replace(/[.#$[\]@]/g, '_');
@@ -1519,6 +1524,9 @@ try {
                 updateCardColors(verdictCardEl, verdictColors);
                 updateWindScene({ speed: windSpeedValue, gust: windGustValue, direction: windDirDegrees });
                 verdictDataEl.textContent = verdictText;
+                // Sin viento: invitar a mirar clasificados (si hay alguno disponible)
+                document.getElementById('flojo-classifieds-hint')?.classList.toggle('hidden',
+                    !(verdictText.startsWith('FLOJO') && allClassifieds.some(c => (c.status || 'disponible') !== 'vendido')));
                 
                 if (windArrowEl && windDirDegrees !== null) {
                     windArrowEl.dataset.degrees = windDirDegrees;
@@ -1959,10 +1967,89 @@ try {
         });
     });
 
+    const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, ch => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+    ));
+    const isLostFoundCategory = (c) => c.category === 'perdido' || c.category === 'encontrado';
+    const formatClassifiedPrice = (c) => isLostFoundCategory(c)
+        ? (c.category === 'perdido' ? 'Perdido' : 'Encontrado')
+        : `${c.currency === 'USD' ? 'U$D' : '$'} ${Number(c.price || 0).toLocaleString('es-AR')}`;
+
+    // Carrusel "En venta" del panel principal: destacados primero, luego los más nuevos; solo con foto
+    const classifiedsStripSection = document.getElementById('classifieds-strip-section');
+    const classifiedsStrip = document.getElementById('classifieds-strip');
+    function renderClassifiedsStrip() {
+        if (!classifiedsStrip || !classifiedsStripSection) return;
+        const items = allClassifieds
+            .filter(c => (c.status || 'disponible') !== 'vendido' && c.photoURL)
+            .sort((a, b) => (b.featured === true) - (a.featured === true))
+            .slice(0, 8);
+        classifiedsStripSection.classList.toggle('hidden', items.length === 0);
+        classifiedsStrip.innerHTML = items.map(c => `
+            <button type="button" data-id="${escapeHtml(c.id)}" class="classified-strip-card snap-start flex-shrink-0 w-36 text-left bg-white rounded-xl overflow-hidden border ${c.featured ? 'border-amber-400 ring-1 ring-amber-300' : 'border-gray-200'} shadow-sm">
+                <div class="relative">
+                    <img src="${escapeHtml(c.photoURL)}" alt="${escapeHtml(c.title)}" loading="lazy" class="w-36 h-24 object-cover">
+                    ${c.featured ? '<span class="absolute top-1 left-1 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400 text-amber-900 font-bold">⭐</span>' : ''}
+                </div>
+                <div class="p-2">
+                    <p class="text-xs font-bold text-gray-800 truncate">${escapeHtml(c.title)}</p>
+                    <p class="text-sm font-black ${isLostFoundCategory(c) ? 'text-red-600' : 'text-green-600'}">${escapeHtml(formatClassifiedPrice(c))}</p>
+                </div>
+            </button>`).join('') + `
+            <button type="button" id="classifieds-strip-more" class="snap-start flex-shrink-0 w-28 rounded-xl border-2 border-dashed border-orange-300 text-orange-600 text-xs font-bold flex items-center justify-center">Ver todos →</button>`;
+    }
+    if (classifiedsStrip) classifiedsStrip.addEventListener('click', (e) => {
+        const card = e.target.closest('.classified-strip-card');
+        if (card) openClassified(card.dataset.id);
+        else if (e.target.closest('#classifieds-strip-more')) switchView('classifieds');
+    });
+    document.getElementById('classifieds-strip-all')?.addEventListener('click', () => switchView('classifieds'));
+    document.getElementById('flojo-classifieds-hint')?.addEventListener('click', () => switchView('classifieds'));
+
+    // Abre la vista de clasificados y resalta un aviso (carrusel o link compartido /c/:id)
+    function openClassified(id) {
+        switchView('classifieds');
+        const show = () => {
+            const el = document.getElementById(`classified-${id}`);
+            if (!el) return false;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('ring-4', 'ring-orange-400');
+            setTimeout(() => el.classList.remove('ring-4', 'ring-orange-400'), 2500);
+            return true;
+        };
+        if (!show()) {
+            // El aviso puede estar oculto por un filtro de categoría: volver a "Todos"
+            document.querySelector('.filter-btn[data-filter="todos"]')?.click();
+            setTimeout(show, 300);
+        }
+    }
+
+    // Link propio del aviso con vista previa (foto, título, precio) — ver api/classified-share.js
+    async function shareClassified(id) {
+        const c = allClassifieds.find(x => x.id === id);
+        if (!c) return;
+        const url = `${location.origin}/c/${id}`;
+        const text = `${c.title} · ${formatClassifiedPrice(c)} — en La Bajada Kite App`;
+        if (navigator.share) {
+            try { await navigator.share({ title: c.title, text, url }); return; }
+            catch (e) { if (e.name === 'AbortError') return; }
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, '_blank', 'noopener');
+    }
+    window.shareClassified = shareClassified;
+
     // Renderizar clasificados
     function renderClassifieds() {
         if (!classifiedsList) return;
-        
+
+        // Prueba social: equipos vendidos entre los avisos cargados
+        const soldProof = document.getElementById('classifieds-sold-proof');
+        const soldCount = allClassifieds.filter(c => c.status === 'vendido' && !isLostFoundCategory(c)).length;
+        if (soldProof) {
+            soldProof.textContent = `🤝 ${soldCount} equipo${soldCount === 1 ? '' : 's'} ya se vendi${soldCount === 1 ? 'ó' : 'eron'} por La Bajada`;
+            soldProof.classList.toggle('hidden', soldCount === 0);
+        }
+
         const filtered = currentFilter === 'todos' 
             ? allClassifieds 
             : allClassifieds.filter(c => c.category === currentFilter);
@@ -2017,13 +2104,15 @@ try {
                 ? encodeURIComponent('Hola! Vi tu anuncio de "' + c.title + '" (' + (isPerdido ? 'perdido' : 'encontrado') + ') en La Bajada App')
                 : encodeURIComponent('Hola! Vi tu anuncio de "' + c.title + '" en La Bajada App');
             
+            const isFeatured = c.featured === true && !isVendido;
             return `
-            <div class="bg-gray-50 rounded-lg p-3 border ${isPerdido ? 'border-red-300 bg-red-50' : isEncontrado ? 'border-green-300 bg-green-50' : 'border-gray-200'} flex gap-3 ${isVendido ? 'opacity-60' : ''}" data-category="${c.category}" data-id="${c.id}">
+            <div id="classified-${c.id}" class="bg-gray-50 rounded-lg p-3 border ${isPerdido ? 'border-red-300 bg-red-50' : isEncontrado ? 'border-green-300 bg-green-50' : isFeatured ? 'border-amber-400 ring-1 ring-amber-300' : 'border-gray-200'} flex gap-3 transition-shadow ${isVendido ? 'opacity-60' : ''}" data-category="${c.category}" data-id="${c.id}">
                 ${c.photoURL ? `<img src="${c.photoURL}" alt="${c.title}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0 cursor-pointer ${isVendido ? 'grayscale' : ''}" onclick="document.getElementById('modal-img').src='${c.photoURL}';document.getElementById('image-modal').classList.remove('hidden');">` : '<div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center text-gray-300 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>'}
                 <div class="flex-grow min-w-0">
                     <div class="flex items-start justify-between gap-2">
                         <h4 class="font-bold text-gray-800 text-sm ${isVendido ? 'line-through' : ''}">${c.title}</h4>
                         <div class="flex gap-1 flex-shrink-0">
+                            ${isFeatured ? '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-400 text-amber-900 font-bold">⭐ Destacado</span>' : ''}
                             <span class="text-xs px-2 py-0.5 rounded-full ${statusColors[status]} font-medium">${statusLabels[status]}</span>
                             <span class="text-xs px-2 py-0.5 rounded-full ${categoryColors[c.category] || 'bg-orange-100 text-orange-700'} font-medium">${categoryLabels[c.category] || c.category}</span>
                         </div>
@@ -2043,6 +2132,7 @@ try {
                             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                             WhatsApp
                         </a>` : '<span class="text-xs text-gray-400 italic">' + (isLostFound ? 'Objeto recuperado' : 'Anuncio finalizado') + '</span>'}
+                        ${!isVendido ? `<button onclick="shareClassified('${c.id}')" class="bg-white text-gray-700 border border-gray-300 px-3 py-1 rounded-full text-xs font-bold hover:bg-gray-100 transition-colors">🔗 Compartir</button>` : ''}
                         ${isOwner ? `<div class="flex items-center gap-2">
                             <button onclick="openEditClassified('${c.id}')" class="text-blue-500 hover:text-blue-700 text-xs font-medium flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -2077,7 +2167,9 @@ try {
             
             if (classifiedsLoading) classifiedsLoading.classList.add('hidden');
             renderClassifieds();
-            
+            renderClassifiedsStrip();
+            openSharedClassifiedOnce();
+
             // Verificar si hay nuevos clasificados
             checkNewClassifieds();
         }, (error) => {
@@ -2089,6 +2181,17 @@ try {
         });
     }
     
+    // Link compartido (/c/:id redirige a /#clasificado=ID): abrir ese aviso una vez cargados los datos
+    let sharedClassifiedHandled = false;
+    function openSharedClassifiedOnce() {
+        if (sharedClassifiedHandled) return;
+        sharedClassifiedHandled = true;
+        const match = /^#clasificado=([A-Za-z0-9]{1,40})$/.exec(location.hash);
+        if (!match) return;
+        history.replaceState(null, '', location.pathname + location.search);
+        openClassified(match[1]);
+    }
+
     // Verificar nuevos clasificados y mostrar notificacion
     function checkNewClassifieds() {
         if (allClassifieds.length === 0) return;
@@ -2101,7 +2204,12 @@ try {
             // Hay nuevos clasificados y no estamos en la vista de clasificados
             if (viewClassifieds && viewClassifieds.classList.contains('hidden')) {
                 if (newClassifiedToast) newClassifiedToast.classList.remove('hidden');
-                if (clasificadosBadge) clasificadosBadge.classList.remove('hidden');
+                if (clasificadosBadge) {
+                    // Cantidad de avisos nuevos en vez de "!"
+                    const newCount = allClassifieds.filter(c => (c.createdAt?.toDate?.()?.getTime() || 0) > lastReadTime).length;
+                    clasificadosBadge.textContent = newCount > 9 ? '9+' : String(newCount);
+                    clasificadosBadge.classList.remove('hidden');
+                }
                 if (clasificadosMenuBadge) clasificadosMenuBadge.classList.remove('hidden');
             } else {
                 markClassifiedsAsRead();
@@ -2326,6 +2434,8 @@ try {
                     userName: currentUser.displayName || 'Usuario',
                     userPhoto: currentUser.photoURL || null,
                     status: 'disponible',
+                    // Avisos de VIP: destacados (primero en el carrusel, borde dorado)
+                    featured: currentUserIsVip === true,
                     createdAt: serverTimestamp()
                 });
 
