@@ -7,7 +7,7 @@ const RADIUS = 1.6;        // radio del arco del kite
 const ARC = 2.4;           // apertura del arco (rad)
 const CHORD = 0.9;         // profundidad del ala
 
-function buildKite() {
+export function buildKite() {
     const kite = new THREE.Group();
 
     // Canopy: segmento de cilindro abierto, girado para que el arco quede de frente (forma de C invertida)
