@@ -1272,12 +1272,6 @@ try {
             return ["¡ÉPICO! 👑", ['bg-gradient-to-r', 'from-yellow-400', 'to-amber-500', 'border-yellow-600', 'shadow-xl']];
         }
 
-        // Si está en condición épica pero aún no sostenida, mostrar que se está formando
-        if (isEpicCondition(speed, degrees) && epicConsecutiveCount > 0) {
-            const minutesLeft = Math.ceil((EPIC_SUSTAINED_READINGS - epicConsecutiveCount) * 30 / 60);
-            return ["ÉPICO en " + minutesLeft + "min...", ['bg-gradient-to-r', 'from-yellow-200', 'to-amber-300', 'border-yellow-400']];
-        }
-
         // Offshore siempre peligroso
         if (degrees !== null && (degrees > 292.5 || degrees <= 67.5)) return ["VIENTO OFFSHORE!", ['bg-red-400', 'border-red-600']];
         if (speed === null) return ["Calculando...", ['bg-gray-100', 'border-gray-300']];
