@@ -1,5 +1,5 @@
 // Escena 3D del spot La Bajada (Claromecó): costa low-poly con partículas de viento,
-// manga de viento, kites según las condiciones y luz según la hora.
+// bandera argentina que flamea con el viento, kites según las condiciones y luz según la hora.
 // Se carga de forma diferida desde app.js cuando se elige "Vista 3D".
 //
 // Orientación real del spot: tierra al norte, mar al sur (offshore = viento del sector N).
@@ -71,34 +71,65 @@ function lowPolyPlane(width, depth, segX, segZ, color, roughness, seed) {
     return new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color, flatShading: true }));
 }
 
-// Manga de viento: mástil + manga a franjas rojas/blancas. La manga apunta hacia donde va el viento.
-function buildWindsock() {
+const FLAG_W = 1.2;
+const FLAG_H = 0.75;
+
+// Textura de la bandera argentina: celeste, blanca y celeste con el Sol de Mayo
+function argentinaFlagTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+    const stripe = canvas.height / 3;
+    ctx.fillStyle = '#74acdf';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, stripe, canvas.width, stripe);
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    ctx.strokeStyle = ctx.fillStyle = '#f6b40e';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        const r = i % 2 ? 19 : 23;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 10, cy + Math.sin(a) * 10);
+        ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+    ctx.fill();
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+}
+
+// Bandera argentina en su mástil. La tela apunta hacia donde va el viento y flamea más con más viento.
+function buildFlag() {
     const root = new THREE.Group();
     const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.04, 0.05, 2, 8),
-        new THREE.MeshLambertMaterial({ color: 0x9ca3af })
+        new THREE.CylinderGeometry(0.035, 0.045, 2.4, 8),
+        new THREE.MeshLambertMaterial({ color: 0xd1d5db })
     );
-    pole.position.y = 1;
-    root.add(pole);
+    pole.position.y = 1.2;
+    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshLambertMaterial({ color: 0xf6b40e }));
+    finial.position.y = 2.43;
+    root.add(pole, finial);
 
     const yaw = new THREE.Group();     // gira hacia donde va el viento
-    yaw.position.y = 1.95;
-    const pitch = new THREE.Group();   // cae cuando hay poco viento
+    yaw.position.y = 2.32;
+    const pitch = new THREE.Group();   // la tela cae cuando hay poco viento
     yaw.add(pitch);
     root.add(yaw);
 
-    const segments = 4;
-    for (let i = 0; i < segments; i++) {
-        const rStart = 0.2 - i * 0.03;
-        const seg = new THREE.Mesh(
-            new THREE.CylinderGeometry(rStart - 0.03, rStart, 0.32, 12, 1, true),
-            new THREE.MeshLambertMaterial({ color: i % 2 ? 0xffffff : 0xef4444, side: THREE.DoubleSide })
-        );
-        seg.rotation.z = -Math.PI / 2;  // eje de la manga sobre +X local
-        seg.position.x = 0.16 + i * 0.32;
-        pitch.add(seg);
-    }
-    return { root, yaw, pitch };
+    // Tela: el borde izquierdo (x = 0) queda atado al mástil, el derecho libre
+    const geo = new THREE.PlaneGeometry(FLAG_W, FLAG_H, 16, 6);
+    geo.translate(FLAG_W / 2, -FLAG_H / 2, 0);
+    const cloth = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: argentinaFlagTexture(), side: THREE.DoubleSide }));
+    pitch.add(cloth);
+    const base = Float32Array.from(geo.attributes.position.array);
+    return { root, yaw, pitch, geo, base };
 }
 
 export function createWindScene(container) {
@@ -143,10 +174,10 @@ export function createWindScene(container) {
     scene.add(land, beach, sea);
     const seaBaseY = Float32Array.from(sea.geometry.attributes.position.array.filter((_, i) => i % 3 === 1));
 
-    // Manga de viento en la playa, a la derecha de la vista
-    const windsock = buildWindsock();
-    windsock.root.position.set(-2.6, 0.05, -2.4);
-    scene.add(windsock.root);
+    // Bandera argentina en la playa, a la derecha de la vista
+    const flag = buildFlag();
+    flag.root.position.set(-2.6, 0.05, -2.4);
+    scene.add(flag.root);
 
     // Kites en el agua (reutiliza el kite del modal VIP, en escala chica) con su rider
     const kiteMax = isMobile ? 4 : 6;
@@ -223,12 +254,24 @@ export function createWindScene(container) {
         seaPos.needsUpdate = true;
     }
 
-    function writeWindsock() {
-        windsock.yaw.rotation.y = Math.atan2(-dir.z, dir.x);
-        // 0 kts: colgando; 15+ kts: horizontal, temblando más con ráfagas
-        const droop = (1 - Math.min(speed / 15, 1)) * 1.35;
-        const flutter = speed > 3 ? Math.sin(t * (6 + speed * 0.3)) * 0.05 * gustRatio : 0;
-        windsock.pitch.rotation.z = -droop + flutter;
+    function writeFlag() {
+        flag.yaw.rotation.y = Math.atan2(-dir.z, dir.x);
+        // 0 kts: cae pegada al mástil; desde ~12 kts queda extendida
+        flag.pitch.rotation.z = -(1 - Math.min(speed / 12, 1)) * 1.3;
+        // Flameo: ondas que crecen hacia el borde libre; más amplias y rápidas con más viento y ráfagas
+        const strength = Math.min(speed / 20, 1);
+        const amp = speed > 1 ? (0.04 + 0.12 * strength) * gustRatio : 0;
+        const freq = 3 + speed * 0.35;
+        const pos = flag.geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+            const x = flag.base[i * 3];
+            const y = flag.base[i * 3 + 1];
+            const u = x / FLAG_W;
+            pos.setZ(i, Math.sin(u * 5.5 - t * freq + y * 1.5) * amp * u);
+            pos.setX(i, x * (1 - 0.06 * amp * Math.abs(Math.sin(t * freq))));
+        }
+        pos.needsUpdate = true;
+        flag.geo.computeVertexNormals();
     }
 
     function writeKites(dt) {
@@ -279,7 +322,7 @@ export function createWindScene(container) {
             if (p.z > BOX.zMax) p.z -= BOX.zMax - BOX.zMin; else if (p.z < BOX.zMin) p.z += BOX.zMax - BOX.zMin;
         }
         writeSea();
-        writeWindsock();
+        writeFlag();
         writeKites(dt);
         writeStreaks();
     }
@@ -330,7 +373,7 @@ export function createWindScene(container) {
             activeKites = Math.min(kitesForConditions(speed, direction), kiteMax);
             applyTimeOfDay(hour ?? argentinaHour());
             paintStreaks(offshore ? 0xef4444 : windColor(speed));
-            // Un paso de 0 s acomoda manga, mar y kites aunque la escena esté congelada
+            // Un paso de 0 s acomoda bandera, mar y kites aunque la escena esté congelada
             step(0);
             renderer.render(scene, camera);
             syncLoop();

@@ -59,7 +59,7 @@ export function launchEmailHtml({ name, email }) {
     <p style="margin:0 0 12px;line-height:1.6">Hola ${nombre}, rediseñamos la app para que en un vistazo sepas si hay viento en La Bajada:</p>
     <table style="border-collapse:collapse;width:100%">
       ${item('🌬️', 'Todo el viento en una pantalla.', 'Cámara, estado del spot y viento, sin scrollear.')}
-      ${item('🌐', 'Nueva Vista 3D del spot.', 'Mirá de dónde entra el viento, la manga y los kites en el agua.')}
+      ${item('🌐', 'Nueva Vista 3D del spot.', 'Mirá de dónde entra el viento, la bandera flameando y los kites en el agua.')}
       ${item('👇', 'Pestañas abajo:', 'Pronóstico, Comunidad, Clasificados y Más, todo a un toque.')}
       ${item('🏷️', 'Clasificados renovados:', 'compartí tu aviso con un link y vendé más rápido.')}
     </table>
