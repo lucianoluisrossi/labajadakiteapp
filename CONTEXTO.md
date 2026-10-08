@@ -52,7 +52,7 @@
 
 ### `/index.html`
 - SPA principal con **barra de pestañas inferior** (`#tab-bar`, reemplaza los botones flotantes). Cada vista tiene su `#hash` y el botón "atrás" vuelve a la pestaña anterior (`switchView` + `history.pushState`/`popstate`):
-  - 🌬️ **Viento** (`#view-dashboard`, sin hash): selector Cámara / Vista 3D en el mismo lugar (preferencia en `localStorage.mediaView`; la escena 3D carga solo si se elige y el video se corta mientras no se ve), aviso de demora, estado del spot, tarjeta de viento, historial 6 h y acceso a la última novedad sin leer (`#novedad-home-hint`)
+  - 🌬️ **Viento** (`#view-dashboard`, sin hash): selector Cámara / Vista 3D en el mismo lugar (al abrir la app siempre arranca en Cámara; la escena 3D carga solo si se elige y el video se corta mientras no se ve). Escena: manga de viento, kites según el estado del spot y luz según la hora, aviso de demora, estado del spot, tarjeta de viento, historial 6 h y acceso a la última novedad sin leer (`#novedad-home-hint`)
   - 📈 **Pronóstico** (`#pronostico`): Windguru (se abre y carga al entrar) y datos de la estación
   - 💬 **Comunidad** (`#comunidad`): novedades completas, chat y galería
   - 🏷️ **Clasificados** (`#clasificados`): con contador de nuevos en la pestaña

@@ -1501,13 +1501,11 @@ try {
             btn.classList.toggle('text-white', active);
             btn.classList.toggle('text-gray-600', !active);
         });
-        try { localStorage.setItem('mediaView', view); } catch (e) { /* sin storage */ }
         if (showScene) ensureWindScene().then(scene => { if (lastWindState) updateWindScene(lastWindState); });
     }
     mediaButtons.forEach(btn => btn.addEventListener('click', () => setMediaView(btn.dataset.media)));
-    let savedMediaView = 'camera';
-    try { savedMediaView = localStorage.getItem('mediaView') || 'camera'; } catch (e) { /* sin storage */ }
-    setMediaView(savedMediaView === 'scene' ? 'scene' : 'camera');
+    // Al abrir la app siempre se muestra la cámara
+    setMediaView('camera');
 
     function updateWindScene(state) {
         lastWindState = state;

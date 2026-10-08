@@ -1,5 +1,5 @@
 // Escena 3D del spot La Bajada (Claromecó): costa low-poly con partículas de viento,
-// manga de viento, mar que reacciona al viento, kites según las condiciones y luz según la hora.
+// manga de viento, kites según las condiciones y luz según la hora.
 // Se carga de forma diferida desde app.js cuando se elige "Vista 3D".
 //
 // Orientación real del spot: tierra al norte, mar al sur (offshore = viento del sector N).
@@ -148,18 +148,6 @@ export function createWindScene(container) {
     windsock.root.position.set(-2.6, 0.05, -2.4);
     scene.add(windsock.root);
 
-    // Espuma (borreguitos): aparece a partir de ~15 kts, más cantidad cuanto más viento
-    const foamMax = isMobile ? 40 : 70;
-    const foam = Array.from({ length: foamMax }, () => ({
-        x: (Math.random() * 2 - 1) * 11, z: 1.5 + Math.random() * 13, phase: Math.random() * Math.PI * 2,
-    }));
-    const foamPositions = new Float32Array(foamMax * 3);
-    const foamGeo = new THREE.BufferGeometry();
-    foamGeo.setAttribute('position', new THREE.BufferAttribute(foamPositions, 3));
-    const foamMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.28, transparent: true, opacity: 0.9 });
-    const foamPoints = new THREE.Points(foamGeo, foamMat);
-    scene.add(foamPoints);
-
     // Kites en el agua (reutiliza el kite del modal VIP, en escala chica) con su rider
     const kiteMax = isMobile ? 4 : 6;
     const riderMat = new THREE.MeshLambertMaterial({ color: 0x111827 });
@@ -214,13 +202,10 @@ export function createWindScene(container) {
     let offshore = false;
     let live = true;             // false = dato con demora: la escena queda congelada
     let activeKites = 0;
-    let activeFoam = 0;
     let t = 0;                   // tiempo de animación (s)
 
-    // Oleaje: más alto y rápido con más viento; con offshore el mar se ve más planchado
-    const waveAmp = () => Math.min(0.04 + speed * 0.007, 0.26) * (offshore ? 0.45 : 1);
-    const waveSpeed = () => 1 + speed * 0.04;
-    const waveY = (x, zLocal) => Math.sin(t * waveSpeed() + x * 0.6 + zLocal * 0.9) * waveAmp();
+    // Oleaje suave constante
+    const waveY = (x, zLocal) => Math.sin(t * 1.2 + x * 0.6 + zLocal * 0.9) * 0.06;
 
     function writeStreaks() {
         const len = speed * KTS_TO_UNITS * STREAK_SECONDS;
@@ -236,17 +221,6 @@ export function createWindScene(container) {
         const seaPos = sea.geometry.attributes.position;
         for (let i = 0; i < seaPos.count; i++) seaPos.setY(i, seaBaseY[i] + waveY(seaPos.getX(i), seaPos.getZ(i)));
         seaPos.needsUpdate = true;
-    }
-
-    function writeFoam() {
-        for (let i = 0; i < activeFoam; i++) {
-            const f = foam[i];
-            // Cada borreguito "rompe" y desaparece: se baja bajo el agua en la fase apagada
-            const on = Math.sin(t * 2.2 + f.phase) > 0.2;
-            foamPositions.set([f.x, on ? 0.05 + waveY(f.x, f.z - SEA_Z) : -5, f.z], i * 3);
-        }
-        foamGeo.setDrawRange(0, activeFoam);
-        foamGeo.attributes.position.needsUpdate = true;
     }
 
     function writeWindsock() {
@@ -305,7 +279,6 @@ export function createWindScene(container) {
             if (p.z > BOX.zMax) p.z -= BOX.zMax - BOX.zMin; else if (p.z < BOX.zMin) p.z += BOX.zMax - BOX.zMin;
         }
         writeSea();
-        writeFoam();
         writeWindsock();
         writeKites(dt);
         writeStreaks();
@@ -355,10 +328,9 @@ export function createWindScene(container) {
                 dir = { x: Math.sin(toward), z: -Math.cos(toward) };
             }
             activeKites = Math.min(kitesForConditions(speed, direction), kiteMax);
-            activeFoam = speed < 15 ? 0 : Math.min(Math.round((speed - 14) * 6), foamMax);
             applyTimeOfDay(hour ?? argentinaHour());
             paintStreaks(offshore ? 0xef4444 : windColor(speed));
-            // Un paso de 0 s acomoda manga, mar, espuma y kites aunque la escena esté congelada
+            // Un paso de 0 s acomoda manga, mar y kites aunque la escena esté congelada
             step(0);
             renderer.render(scene, camera);
             syncLoop();
