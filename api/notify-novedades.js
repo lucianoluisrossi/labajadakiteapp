@@ -1,6 +1,7 @@
 // api/notify-novedades.js
 // Envía una novedad del spot a todos los suscriptores de WhatsApp (Green API)
 
+import { requireRole } from './_auth.js';
 import { initFirebase } from './_firebase.js';
 import admin from 'firebase-admin';
 
@@ -23,6 +24,10 @@ async function sendViaGreenAPI(chatId, text) {
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    // Solo admin o editor (sesión de Firebase + usuarios/{uid}.role)
+    const caller = await requireRole(req, res, initFirebase(), ['admin','editor']);
+    if (!caller) return;
 
     const { titulo, texto } = req.body || {};
     if (!titulo || !texto) return res.status(400).json({ error: 'Faltan titulo o texto' });

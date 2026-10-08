@@ -1,12 +1,17 @@
 // api/admin-mp-subscriptions.js
 // Lista suscriptores activos en MercadoPago y cruza con kiter_vip en Firestore
 
+import { requireRole } from './_auth.js';
 import { initFirebase } from './_firebase.js';
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 
 export default async function handler(req, res) {
     if (req.method !== 'GET') return res.status(405).end();
+
+    // Solo admin (sesión de Firebase + usuarios/{uid}.role)
+    const caller = await requireRole(req, res, initFirebase(), ['admin']);
+    if (!caller) return;
     if (!MP_ACCESS_TOKEN) return res.status(500).json({ error: 'MP_ACCESS_TOKEN no configurado' });
 
     const db = initFirebase();

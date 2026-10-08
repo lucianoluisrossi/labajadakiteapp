@@ -1,8 +1,15 @@
 // api/send-whatsapp.js
 // Envía un mensaje de recordatorio VIP a un suscriptor de WhatsApp
 
+import { initFirebase } from './_firebase.js';
+import { requireRole } from './_auth.js';
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    // Solo admin (sesión de Firebase + usuarios/{uid}.role)
+    const caller = await requireRole(req, res, initFirebase(), ['admin']);
+    if (!caller) return;
 
     const { chatId, nombre } = req.body || {};
     if (!chatId) return res.status(400).json({ error: 'Falta chatId' });

@@ -1,11 +1,16 @@
 // api/admin-nonvip-users.js
 // Retorna usuarios autenticados en Firebase que NO son VIP activos
 
+import { requireRole } from './_auth.js';
 import { initFirebase } from './_firebase.js';
 import admin from 'firebase-admin';
 
 export default async function handler(req, res) {
     if (req.method !== 'GET') return res.status(405).end();
+
+    // Solo admin (sesión de Firebase + usuarios/{uid}.role)
+    const caller = await requireRole(req, res, initFirebase(), ['admin']);
+    if (!caller) return;
 
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase no disponible' });

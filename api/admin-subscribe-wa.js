@@ -3,6 +3,7 @@
 // Body: { phone: "2983123456", name: "Juan" }
 // chatId resultante: 5492983123456@c.us
 
+import { requireRole } from './_auth.js';
 import { initFirebase } from './_firebase.js';
 import admin from 'firebase-admin';
 
@@ -25,6 +26,10 @@ Para dejar de recibir alertas mandá *STOP*.`;
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
+
+    // Solo admin (sesión de Firebase + usuarios/{uid}.role)
+    const caller = await requireRole(req, res, initFirebase(), ['admin']);
+    if (!caller) return;
 
     const { phone, name } = req.body || {};
     if (!phone) return res.status(400).json({ error: 'Falta phone' });

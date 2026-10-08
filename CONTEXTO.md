@@ -23,6 +23,8 @@
 | `MP_ACCESS_TOKEN` | MercadoPago — token de **producción** (`APP_USR-...`) |
 | `MP_PLAN_ID` | `947a5399fa3c4350b9e1e48ea33714e2` — plan producción $5.000/mes. El webhook ignora suscripciones de otro plan |
 | `MP_WEBHOOK_SECRET` | Clave secreta de Webhooks de MP (Tus integraciones → Webhooks). Valida `x-signature`; por ahora solo se registra |
+| `RESEND_API_KEY` | Emails (Resend): invitación VIP y campañas. Plan gratis: 100/día, 3.000/mes |
+| `EMAIL_UNSUB_SECRET` | Opcional. Firma de los links de baja de emails (si falta, se usa `RESEND_API_KEY`) |
 | `CRON_SECRET` | Opcional. Si existe, `/api/vip-expire` la exige (Vercel la manda sola en los crons) |
 | `WINDY_API_KEY` | Pronóstico Windy |
 
@@ -216,6 +218,15 @@
 - Chat en tiempo real (Firestore `kiter_board`)
 - Galería de fotos diaria
 - Clasificados de equipos
+
+---
+
+## Endpoints protegidos y emails
+
+-  → : exige  y  en . El cliente usa  (app.js)
+- Solo admin: , , , , , , . Admin o editor: - : email "Nueva versión" (v2) a todos los usuarios registrados.  se envía al admin;  manda el siguiente lote de 90 (Resend ). Registra envíos en  y saltea . Panel admin → "📣 Email Nueva versión"
+- : link de baja firmado (HMAC) + one-click (). La invitación VIP también respeta las bajas
+- Pendiente:  sigue público
 
 ---
 

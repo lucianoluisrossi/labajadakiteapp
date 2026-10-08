@@ -2,6 +2,7 @@
 // Resuelve docs huérfanos en kiter_vip con id payer_{payerId}
 // Para cada uno: consulta MP por preapproval_id → obtiene email → migra doc → borra el huérfano
 
+import { requireRole } from './_auth.js';
 import { initFirebase } from './_firebase.js';
 import admin from 'firebase-admin';
 
@@ -29,6 +30,10 @@ async function getPayerEmail(payerId) {
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
+
+    // Solo admin (sesión de Firebase + usuarios/{uid}.role)
+    const caller = await requireRole(req, res, initFirebase(), ['admin']);
+    if (!caller) return;
 
     const db = initFirebase();
     if (!db) return res.status(500).json({ error: 'Firebase no disponible' });

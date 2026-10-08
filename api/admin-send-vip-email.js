@@ -2,11 +2,19 @@
 // Envía email de invitación VIP a usuarios autenticados no-suscriptos
 // Usa Resend (resend.com) via fetch nativo — sin SDK adicional
 
+import { initFirebase } from './_firebase.js';
+import { requireRole } from './_auth.js';
+import { loadUnsubscribed, unsubscribeUrl, unsubscribeHeaders } from './_email.js';
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = 'La Bajada App <noreply@labajadakite.app>';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
+
+    // Solo admin (sesión de Firebase + usuarios/{uid}.role)
+    const caller = await requireRole(req, res, initFirebase(), ['admin']);
+    if (!caller) return;
     if (!RESEND_API_KEY) return res.status(500).json({ error: 'RESEND_API_KEY no configurada' });
 
     const { users } = req.body || {};
@@ -17,8 +25,10 @@ export default async function handler(req, res) {
     let sent = 0;
     const errors = [];
 
+    const unsubscribed = await loadUnsubscribed(initFirebase());
+
     for (const { email, name } of users) {
-        if (!email) continue;
+        if (!email || unsubscribed.has(email.trim().toLowerCase())) continue;
         const nombre = name || 'Kiter';
         const html = `
 <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#1f2937">
@@ -33,7 +43,7 @@ export default async function handler(req, res) {
     Suscribirme como Kiter VIP
   </a>
   <p style="margin-top:24px;font-size:12px;color:#6b7280">
-    La Bajada · Claromecó, Buenos Aires · Para darte de baja respondé este mail con "baja".
+    La Bajada · Claromecó, Buenos Aires · <a href="${unsubscribeUrl(email)}" style="color:#6b7280">Darme de baja</a>
   </p>
 </div>`;
 
@@ -48,6 +58,7 @@ export default async function handler(req, res) {
                     from: FROM_EMAIL,
                     to: email,
                     subject: '🪁 Hacete Kiter VIP y mantené La Bajada en pie',
+                    headers: unsubscribeHeaders(email),
                     html
                 })
             });

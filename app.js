@@ -719,7 +719,7 @@ try {
                 if (novedadNotifyWa?.checked) {
                     novedadSaveBtn.textContent = 'Enviando WA...';
                     try {
-                        const r = await fetch('/api/notify-novedades', {
+                        const r = await authFetch('/api/notify-novedades', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ titulo, texto })
@@ -799,6 +799,15 @@ try {
     };
 
     console.log("🚀 App iniciada.");
+
+    // fetch a endpoints protegidos (admin/editor): agrega el ID token de Firebase (ver api/_auth.js)
+    async function authFetch(url, options = {}) {
+        const token = await currentUser?.getIdToken();
+        return fetch(url, {
+            ...options,
+            headers: { ...(options.headers || {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        });
+    }
 
     // --- ELEMENTOS DE NAVEGACIÓN ---
     const viewDashboard = document.getElementById('view-dashboard');
@@ -2511,6 +2520,39 @@ try {
     // PANEL DE ADMINISTRADOR
     // ============================================
 
+    // Campaña de email "Nueva versión": prueba al admin y envío por lotes (api/admin-send-campaign.js)
+    const campaignMsg = document.getElementById('admin-campaign-msg');
+    function showCampaignMsg(text, isError = false) {
+        if (!campaignMsg) return;
+        campaignMsg.textContent = text;
+        campaignMsg.classList.toggle('text-red-600', isError);
+        campaignMsg.classList.remove('hidden');
+    }
+    async function runCampaign(mode, btn) {
+        btn.disabled = true;
+        showCampaignMsg(mode === 'test' ? 'Enviando prueba…' : 'Enviando lote…');
+        try {
+            const r = await authFetch('/api/admin-send-campaign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode }),
+            });
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+            showCampaignMsg(mode === 'test'
+                ? `✅ Prueba enviada a ${data.to}. Revisá tu casilla (y spam).`
+                : `✅ Enviados ${data.sent}. Faltan ${data.remaining} de ${data.total} usuarios (${data.unsubscribed} dados de baja).`);
+        } catch (e) {
+            showCampaignMsg(`❌ ${e.message}`, true);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+    document.getElementById('admin-campaign-test')?.addEventListener('click', (e) => runCampaign('test', e.currentTarget));
+    document.getElementById('admin-campaign-send')?.addEventListener('click', (e) => {
+        if (confirm('¿Enviar el email "Nueva versión" al siguiente lote de hasta 90 usuarios?')) runCampaign('send', e.currentTarget);
+    });
+
     // Acordeones del panel admin — carga lazy al abrir
     document.querySelectorAll('.admin-toggle').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2761,7 +2803,7 @@ try {
         if (!el) return;
         el.innerHTML = '<p class="text-xs text-gray-400">Consultando MercadoPago...</p>';
         try {
-            const r = await fetch('/api/admin-mp-subscriptions');
+            const r = await authFetch('/api/admin-mp-subscriptions');
             const json = await r.json();
             if (!json.ok) throw new Error(json.error);
 
@@ -2813,7 +2855,7 @@ try {
         if (!listEl) return;
         listEl.innerHTML = '<p class="text-xs text-gray-400">Cargando...</p>';
         try {
-            const r = await fetch('/api/admin-nonvip-users');
+            const r = await authFetch('/api/admin-nonvip-users');
             const json = await r.json();
             if (!json.ok) throw new Error(json.error);
             if (!json.nonVip.length) {
@@ -2859,7 +2901,7 @@ try {
                 const btn = document.getElementById('admin-nonvip-send-btn');
                 btn.disabled = true; btn.textContent = '⏳ Enviando...';
                 try {
-                    const res = await fetch('/api/admin-send-vip-email', {
+                    const res = await authFetch('/api/admin-send-vip-email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ users: selected })
@@ -2936,7 +2978,7 @@ try {
         btn.disabled = true;
         btn.textContent = '⏳';
         try {
-            const r = await fetch('/api/send-whatsapp', {
+            const r = await authFetch('/api/send-whatsapp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ chatId, nombre })
@@ -2959,7 +3001,7 @@ try {
         adminWaSubscribeBtn.textContent = '⏳';
         if (msgEl) { msgEl.textContent = ''; msgEl.classList.add('hidden'); }
         try {
-            const r = await fetch('/api/admin-subscribe-wa', {
+            const r = await authFetch('/api/admin-subscribe-wa', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone, name: nameInput?.value?.trim() || '' })
@@ -3006,7 +3048,7 @@ try {
         adminResolvePayerBtn.textContent = '⏳ Consultando MP...';
         if (resultEl) { resultEl.innerHTML = ''; resultEl.classList.add('hidden'); }
         try {
-            const r = await fetch('/api/admin-resolve-payer-docs', { method: 'POST' });
+            const r = await authFetch('/api/admin-resolve-payer-docs', { method: 'POST' });
             const json = await r.json();
             if (resultEl) {
                 const lines = [];
