@@ -1,5 +1,5 @@
 // Escena 3D del spot La Bajada (Claromecó): costa low-poly con partículas de viento,
-// bandera argentina que flamea con el viento, kites según las condiciones y luz según la hora.
+// bandera que flamea con el viento, kites según las condiciones y luz según la hora.
 // Se carga de forma diferida desde app.js cuando se elige "Vista 3D".
 //
 // Orientación real del spot: tierra al norte, mar al sur (offshore = viento del sector N).
@@ -71,8 +71,8 @@ function lowPolyPlane(width, depth, segX, segZ, color, roughness, seed) {
     return new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color, flatShading: true }));
 }
 
-const FLAG_W = 1.2;
-const FLAG_H = 0.75;
+const FLAG_W = 1.5;
+const FLAG_H = 0.94;
 
 // Textura de la bandera argentina: celeste, blanca y celeste con el Sol de Mayo
 function argentinaFlagTexture() {
@@ -105,20 +105,48 @@ function argentinaFlagTexture() {
     return texture;
 }
 
-// Bandera argentina en su mástil. La tela apunta hacia donde va el viento y flamea más con más viento.
+// Bandera de la app: amarilla con borde negro (como el cartel del logo) y la palmera al viento.
+// La silueta es flag-palmera.png (15 KB); se dibuja cuando carga.
+function appFlagTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f5cf14';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 7;
+    ctx.strokeRect(9, 9, canvas.width - 18, canvas.height - 18);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const palm = new Image();
+    palm.onload = () => {
+        const h = 132;
+        const w = palm.width * h / palm.height;
+        ctx.drawImage(palm, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+        texture.needsUpdate = true;
+    };
+    palm.src = new URL('./flag-palmera.png', import.meta.url).href;
+    return texture;
+}
+
+// Diseño de la bandera: 'app' (amarilla con la palmera) o 'argentina'
+const FLAG_STYLE = 'app';
+
+// Bandera en su mástil. La tela apunta hacia donde va el viento y flamea más con más viento.
 function buildFlag() {
     const root = new THREE.Group();
     const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.035, 0.045, 2.4, 8),
+        new THREE.CylinderGeometry(0.04, 0.05, 2.7, 8),
         new THREE.MeshLambertMaterial({ color: 0xd1d5db })
     );
-    pole.position.y = 1.2;
+    pole.position.y = 1.35;
     const finial = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshLambertMaterial({ color: 0xf6b40e }));
-    finial.position.y = 2.43;
+    finial.position.y = 2.73;
     root.add(pole, finial);
 
     const yaw = new THREE.Group();     // gira hacia donde va el viento
-    yaw.position.y = 2.32;
+    yaw.position.y = 2.62;
     const pitch = new THREE.Group();   // la tela cae cuando hay poco viento
     yaw.add(pitch);
     root.add(yaw);
@@ -126,7 +154,11 @@ function buildFlag() {
     // Tela: el borde izquierdo (x = 0) queda atado al mástil, el derecho libre
     const geo = new THREE.PlaneGeometry(FLAG_W, FLAG_H, 16, 6);
     geo.translate(FLAG_W / 2, -FLAG_H / 2, 0);
-    const cloth = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: argentinaFlagTexture(), side: THREE.DoubleSide }));
+    // Brillo propio (emissive) para que los colores se vean vivos aunque la tela quede a contraluz
+    const texture = FLAG_STYLE === 'app' ? appFlagTexture() : argentinaFlagTexture();
+    const cloth = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
+        map: texture, emissive: 0xffffff, emissiveMap: texture, emissiveIntensity: 0.55, side: THREE.DoubleSide,
+    }));
     pitch.add(cloth);
     const base = Float32Array.from(geo.attributes.position.array);
     return { root, yaw, pitch, geo, base };
@@ -174,7 +206,7 @@ export function createWindScene(container) {
     scene.add(land, beach, sea);
     const seaBaseY = Float32Array.from(sea.geometry.attributes.position.array.filter((_, i) => i % 3 === 1));
 
-    // Bandera argentina en la playa, a la derecha de la vista
+    // Bandera en la playa, a la derecha de la vista
     const flag = buildFlag();
     flag.root.position.set(-2.6, 0.05, -2.4);
     scene.add(flag.root);
