@@ -1948,10 +1948,10 @@ try {
                 windguruLoaded = true;
                 // El widget de Windguru usa un solo modelo: el viento sale de WRF 12 km (m=29)
                 // y las olas de IFS-WAM 9 km (m=118, ECMWF). GFS-Wave 16/9 km no tienen datos en este punto de la costa.
-                // hrsm = intervalo mínimo entre columnas: 1 → todas las horas.
+                // hrsm = intervalo mínimo entre columnas: 1 → todas las horas. La marea va solo en el de olas.
                 const widgets = [
-                    { model: 29, title: '💨 Viento', params: 'WINDSPD,GUST,MWINDSPD,SMER,TMPE,FLHGT,CDC,APCP1s,RATING' },
-                    { model: 118, title: '🌊 Olas · altura (m), período (s) y dirección', params: 'HTSGW,PERPW,DIRPW' },
+                    { model: 29, title: '💨 Viento', params: 'WINDSPD,GUST,MWINDSPD,SMER,TMPE,FLHGT,CDC,APCP1s,RATING', tides: false },
+                    { model: 118, title: '🌊 Olas · altura (m), período (s) y dirección', params: 'HTSGW,PERPW,DIRPW', tides: true },
                 ];
                 windguruContainer.innerHTML = widgets.map(w => `
                     <p class="text-xs font-bold text-gray-600 mt-3 mb-1">${w.title}</p>
@@ -1966,7 +1966,7 @@ try {
                         "s=1312667", `m=${w.model}`, `uid=${uid}`,
                         "wj=knots", "tj=c", "waj=m", "tij=cm",
                         "odh=0", "doh=24", "fhours=240", "hrsm=1",
-                        "vt=forecasts", "lng=es", "ts=1", "idbs=1",
+                        "vt=forecasts", "lng=es", `ts=${w.tides ? 1 : 0}`, "idbs=1", // ts = curva de marea
                         `p=${w.params}`
                     ];
                     const script = document.createElement('script');

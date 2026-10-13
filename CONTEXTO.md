@@ -55,7 +55,7 @@
 ### `/index.html`
 - SPA principal con **barra de pestañas inferior** (`#tab-bar`, reemplaza los botones flotantes). Cada vista tiene su `#hash` y el botón "atrás" vuelve a la pestaña anterior (`switchView` + `history.pushState`/`popstate`):
   - 🌬️ **Viento** (`#view-dashboard`, sin hash): selector Cámara / Vista 3D en el mismo lugar (al abrir la app siempre arranca en Cámara; la escena 3D carga solo si se elige y el video se corta mientras no se ve). Escena: bandera de la app (amarilla con la palmera, `flag-palmera.png`; `FLAG_STYLE` en wind-scene.js permite volver a la argentina) que flamea con el viento, kites según el estado del spot y luz según la hora, aviso de demora, estado del spot, tarjeta de viento, historial 6 h y acceso a la última novedad sin leer (`#novedad-home-hint`)
-  - 📈 **Pronóstico** (`#pronostico`): Windguru (se abre y carga al entrar) con dos widgets hora por hora (`hrsm=1`): viento WRF 12 km (`m=29`) y olas IFS-WAM 9 km (`m=118`; GFS-Wave 16/9 km no tiene datos en este punto), y datos de la estación
+  - 📈 **Pronóstico** (`#pronostico`): Windguru (se abre y carga al entrar) con dos widgets hora por hora (`hrsm=1`): viento WRF 12 km (`m=29`, sin marea: `ts=0`) y olas IFS-WAM 9 km con marea (`m=118`; GFS-Wave 16/9 km no tiene datos en este punto), y datos de la estación
   - 💬 **Comunidad** (`#comunidad`): novedades completas, chat y galería
   - 🏷️ **Clasificados** (`#clasificados`): con contador de nuevos en la pestaña
   - ☰ **Más** (`#mas`): emergencias, alertas Telegram/WhatsApp y escuelas
