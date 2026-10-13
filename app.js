@@ -310,8 +310,11 @@ try {
     // Acceso al viento: 'live' (VIP o prueba) o 'delayed' (gratis, hasta 15 min de demora)
     let windTier = 'delayed';
     let windAccess = null; // { live, reason: 'vip'|'trial'|'none', trial_ends } que devuelve /api/data
+    // Hasta que Firebase confirma la sesión no se sabe si es VIP: no mostrar avisos de demora antes de tiempo
+    let authResolved = false;
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
+        authResolved = true;
 		updateDeviceAnalytics(user);
         updateAuthUI(user);
         updateVipUI(user);
@@ -1520,7 +1523,7 @@ try {
         lastWindState = state;
         // Con demora la escena queda congelada: el movimiento en vivo es parte del VIP
         const live = windTier === 'live';
-        document.getElementById('wind-scene-paused')?.classList.toggle('hidden', live);
+        document.getElementById('wind-scene-paused')?.classList.toggle('hidden', live || !authResolved);
         windScenePromise?.then(scene => scene?.update({ ...state, live }));
     }
 
@@ -1551,7 +1554,7 @@ try {
         if (windTierBanner) {
             let text = null;
             if (tier === 'delayed') {
-                text = '🕒 Viento con hasta 15 min de demora · Verlo en vivo →';
+                if (authResolved) text = '🕒 Viento con hasta 15 min de demora · Verlo en vivo →';
             } else if (access?.reason === 'trial') {
                 const days = Math.max(1, Math.ceil((Date.parse(access.trial_ends) - Date.now()) / 864e5));
                 text = `🟢 En vivo · Prueba VIP: te ${days === 1 ? 'queda 1 día' : `quedan ${days} días`}`;
