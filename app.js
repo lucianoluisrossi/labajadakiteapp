@@ -1946,45 +1946,38 @@ try {
         windguruDetails.addEventListener('toggle', () => {
             if (windguruDetails.open && !windguruLoaded) {
                 windguruLoaded = true;
-                // Crear el widget con un ID único basado en timestamp
-                const uid = 'wg_fwdg_1312667_29_' + Date.now();
-                const arg = [
-                    "s=1312667",
-                    "m=29",
-                    "uid=" + uid,
-                    "wj=knots",
-                    "tj=c",
-                    "waj=m",
-                    "tij=cm",
-                    "odh=0",
-                    "doh=24",
-                    "fhours=240",
-                    "hrsm=2",
-                    "vt=forecasts",
-                    "lng=es",
-                    "ts=1",
-                    "idbs=1",
-                    "p=WINDSPD,GUST,MWINDSPD,SMER,TMPE,FLHGT,CDC,APCP1s,RATING"
+                // El widget de Windguru usa un solo modelo: el viento sale de WRF 12 km (m=29)
+                // y las olas de IFS-WAM 9 km (m=118, ECMWF). GFS-Wave 16/9 km no tienen datos en este punto de la costa.
+                // hrsm = intervalo mínimo entre columnas: 1 → todas las horas.
+                const widgets = [
+                    { model: 29, title: '💨 Viento', params: 'WINDSPD,GUST,MWINDSPD,SMER,TMPE,FLHGT,CDC,APCP1s,RATING' },
+                    { model: 118, title: '🌊 Olas · altura (m), período (s) y dirección', params: 'HTSGW,PERPW,DIRPW' },
                 ];
-                
-                // Limpiar contenedor y agregar wrapper con scroll optimizado
-                windguruContainer.innerHTML = '<div class="windguru-scroll-wrapper" style="overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;"><script id="' + uid + '"></script></div>';
-                
-                // Cargar el widget
-                const script = document.createElement('script');
-                script.async = true;
-                script.src = 'https://www.windguru.cz/js/widget.php?' + arg.join('&');
-                document.head.appendChild(script);
-                
-                // Aplicar estilos al contenido generado después de cargar
-                script.onload = () => {
-                    setTimeout(() => {
-                        const tables = windguruContainer.querySelectorAll('table');
-                        tables.forEach(t => {
-                            t.style.touchAction = 'pan-x pan-y';
-                        });
+                windguruContainer.innerHTML = widgets.map(w => `
+                    <p class="text-xs font-bold text-gray-600 mt-3 mb-1">${w.title}</p>
+                    <div class="windguru-scroll-wrapper" style="overflow-x:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;"><div id="wg-slot-${w.model}"></div></div>`).join('');
+
+                widgets.forEach(w => {
+                    const uid = `wg_fwdg_1312667_${w.model}_${Date.now()}`;
+                    const anchor = document.createElement('script');
+                    anchor.id = uid;
+                    document.getElementById(`wg-slot-${w.model}`).appendChild(anchor);
+                    const arg = [
+                        "s=1312667", `m=${w.model}`, `uid=${uid}`,
+                        "wj=knots", "tj=c", "waj=m", "tij=cm",
+                        "odh=0", "doh=24", "fhours=240", "hrsm=1",
+                        "vt=forecasts", "lng=es", "ts=1", "idbs=1",
+                        `p=${w.params}`
+                    ];
+                    const script = document.createElement('script');
+                    script.async = true;
+                    script.src = 'https://www.windguru.cz/js/widget.php?' + arg.join('&');
+                    // Permitir scroll horizontal y vertical sobre las tablas generadas
+                    script.onload = () => setTimeout(() => {
+                        windguruContainer.querySelectorAll('table').forEach(t => { t.style.touchAction = 'pan-x pan-y'; });
                     }, 500);
-                };
+                    document.head.appendChild(script);
+                });
             }
         });
     }
