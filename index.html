@@ -33,33 +33,15 @@
 
     <!-- Tailwind CSS -->
     <link rel="stylesheet" href="style.css">
-    <!-- Fuente deportiva para velocidad de viento -->
+    <!-- Tipografía del sistema de diseño (DESIGN.md): cartel, texto y datos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 
     <style>
         .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Fuente deportiva para el número de viento */
-        #highlight-wind-speed-data {
-            font-family: 'Bebas Neue', sans-serif;
-            font-weight: 400;
-            letter-spacing: 0.05em;
-        }
-
-        /* Textura líneas de viento en el hero card */
-        .wind-lines-bg {
-            background-image: repeating-linear-gradient(
-                -60deg,
-                transparent,
-                transparent 22px,
-                rgba(255,255,255,0.055) 22px,
-                rgba(255,255,255,0.055) 23px
-            );
-            pointer-events: none;
-        }
 
         /* Estilo para quitar el triángulo por defecto del details */
         details > summary { list-style: none; }
@@ -128,6 +110,8 @@
         /* Logos de escuelas: lectura mode fondo blanco (debe ir después de html.lectura .bg-white) */
         html.lectura .logo-circle { background-color: white !important; }
     </style>
+    <!-- Sistema de diseño v3 "instrumento náutico táctil" (DESIGN.md). Va después de los temas para ganarles. -->
+    <link rel="stylesheet" href="design-v3.css">
 
     <!-- Aplicar tema antes del primer render para evitar flash -->
     <script>
@@ -147,7 +131,7 @@
             <a href="https://labajada.com.ar/" target="_blank" rel="noopener" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
                 <img src="logo_palmera.png" alt="La Bajada" class="h-12 w-auto" onerror="this.style.display='none'">
                 <div>
-                    <p class="text-base font-black text-gray-900 leading-tight">La Bajada</p>
+                    <p class="ds-brand-title text-gray-900">La Bajada</p>
                     <p class="text-[11px] text-gray-500 font-bold leading-tight tracking-wide">Claromecó Kitesurf Spot</p>
                 </div>
             </a>
@@ -197,114 +181,85 @@
         <!-- VISTA DASHBOARD (CLIMA) -->
         <div id="view-dashboard" class="fade-in">
             
-            <!-- CONTENEDOR PRINCIPAL — WIND COCKPIT -->
-            <div id="wind-highlight-card" class="mt-3 p-4 md:p-5 rounded-2xl shadow-xl transition-all duration-300 bg-gray-100 border border-gray-300 relative">
+            <!-- PANTALLA VIENTO — INSTRUMENTO ELEVADO (ver DESIGN.md) -->
+            <div id="wind-highlight-card" class="ds-hero relative mt-2">
 
-                <!-- Textura viento (decorativa) -->
-                <div class="wind-lines-bg absolute inset-0 rounded-2xl z-0"></div>
+                <!-- El aviso de mensajes nuevos está en la pestaña Comunidad (#notification-badge) -->
 
-                <!-- Badge mensajes nuevos (flotante) -->
-                <button id="notification-badge"
-                        class="absolute top-3 right-3 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full shadow-lg z-20 hidden transition-all duration-300 hover:scale-110"
-                        title="Ver mensajes nuevos">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-1M15 3H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l4-4h4a2 2 0 002-2V5a2 2 0 00-2-2z"/>
-                    </svg>
-                    <span class="absolute -top-1 -right-1 bg-white text-blue-600 text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center animate-pulse">!</span>
-                </button>
-
-                <!-- Selector Cámara / Vista 3D: comparten el mismo lugar -->
-                <div id="media-toggle" class="flex gap-1 mb-2 p-1 bg-white/60 rounded-full w-fit mx-auto text-xs font-bold">
-                    <button type="button" data-media="camera" class="media-btn px-3 py-1 rounded-full">📷 Cámara</button>
-                    <button type="button" data-media="scene" class="media-btn px-3 py-1 rounded-full">🌐 Vista 3D</button>
-                </div>
-                <!-- 1. CÁMARA EN VIVO -->
-                <div id="camera-panel" class="relative bg-black rounded-xl overflow-hidden shadow-lg mb-3 border border-gray-400/50">
-                    <iframe id="live-camera" class="w-full aspect-video" src="https://www.youtube.com/embed/4pYrCR-Sz8M?autoplay=1&mute=1&controls=0" title="YouTube Live Camera" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    <!-- Badge En vivo -->
-                    <div class="absolute top-2 left-2 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
-                        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                        <span class="text-[10px] text-white font-bold uppercase tracking-wide">En vivo</span>
+                <!-- Escena: cámara en vivo o Vista 3D en el mismo lugar, con el selector encima -->
+                <div class="ds-stage">
+                    <div id="media-toggle" class="ds-seg">
+                        <button type="button" data-media="camera" class="media-btn">📷 Cámara</button>
+                        <button type="button" data-media="scene" class="media-btn">🌐 3D</button>
+                    </div>
+                    <div id="camera-panel" class="ds-stage-media relative bg-black">
+                        <iframe id="live-camera" class="w-full aspect-video" src="https://www.youtube.com/embed/4pYrCR-Sz8M?autoplay=1&mute=1&controls=0" title="YouTube Live Camera" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        <span class="ds-live">En vivo</span>
+                    </div>
+                    <div id="wind-scene" class="hidden ds-stage-media relative bg-sky-100" aria-label="Vista 3D del spot con la dirección e intensidad del viento" role="img">
+                        <span class="absolute top-1.5 left-2 text-[9px] font-bold text-white/90 bg-black/30 px-1.5 py-0.5 rounded pointer-events-none">← E · O →</span>
+                        <span class="absolute bottom-1.5 right-2 text-[9px] font-bold text-white/90 bg-black/30 px-1.5 py-0.5 rounded pointer-events-none">Mirando al mar (S)</span>
+                        <!-- Usuarios con demora: escena congelada -->
+                        <button id="wind-scene-paused" type="button" class="hidden absolute inset-0 m-auto h-fit w-fit px-3 py-1.5 rounded-full text-xs font-bold bg-white/90 text-gray-900 shadow-lg border border-amber-300">⏸ Viento con demora · Verlo en vivo →</button>
                     </div>
                 </div>
 
-                <!-- Escena 3D del spot con el viento (wind-scene.js, carga diferida) -->
-                <div id="wind-scene" class="hidden relative w-full aspect-video mb-3 rounded-xl overflow-hidden border border-gray-200 bg-sky-100" aria-label="Vista 3D del spot con la dirección e intensidad del viento" role="img">
-                    <span class="absolute top-1.5 left-2 text-[9px] font-bold text-white/90 bg-black/30 px-1.5 py-0.5 rounded pointer-events-none">← E · O →</span>
-                    <span class="absolute bottom-1.5 right-2 text-[9px] font-bold text-white/90 bg-black/30 px-1.5 py-0.5 rounded pointer-events-none">Mirando al mar (S)</span>
-                    <!-- Usuarios con demora: escena congelada -->
-                    <button id="wind-scene-paused" type="button" class="hidden absolute inset-0 m-auto h-fit w-fit px-3 py-1.5 rounded-full text-xs font-bold bg-white/90 text-gray-900 shadow-lg border border-amber-300">⏸ Viento con demora · Verlo en vivo →</button>
+                <!-- Instrumento elevado: veredicto, viento, brújula 3D y datos -->
+                <div id="unified-wind-data-card" class="ds-instrument">
+                    <div id="verdict-card" class="ds-verdict">
+                        <div class="min-w-0">
+                            <p class="ds-label">Estado del spot</p>
+                            <div id="verdict-data-loader" class="skeleton-loader skeleton-text-xl" style="width: 60%;"></div>
+                            <p id="verdict-data" class="data-content ds-verdict-text">Calculando...</p>
+                        </div>
+                        <span class="ds-verdict-icon" aria-hidden="true">🪁</span>
+                    </div>
+
+                    <div class="ds-readout">
+                        <div class="min-w-0">
+                            <div id="highlight-wind-speed-data-loader" class="skeleton-loader w-28 h-16 mt-1 rounded-lg"></div>
+                            <p id="highlight-wind-speed-data" class="ds-big data-content">--</p>
+                            <!-- Escala 0–30 kts: la marca se ubica en el valor actual -->
+                            <div id="wind-intensity-container" class="ds-scale data-content">
+                                <div id="wind-intensity-bar" class="ds-scale-marker" style="width: 0%"></div>
+                                <span id="wind-percentage" class="sr-only">--%</span>
+                            </div>
+                        </div>
+                        <div class="ds-compass-wrap">
+                            <div id="wind-compass" class="ds-compass" role="img" aria-label="Dirección del viento">
+                                <div class="ds-compass-face"></div>
+                                <div class="ds-compass-card"><b class="ds-n">N</b><b class="ds-e">E</b><b class="ds-s">S</b><b class="ds-o">O</b></div>
+                                <svg id="wind-arrow" class="ds-needle text-gray-900" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L6 8h3v12h6V8h3l-6-6z"/></svg>
+                                <div class="ds-compass-hub"></div>
+                            </div>
+                            <div id="highlight-wind-dir-data-loader" class="skeleton-loader skeleton-text-sm w-10 mx-auto mt-1"></div>
+                            <p id="highlight-wind-dir-data" class="ds-dir data-content">N/A</p>
+                            <button id="wind-view-toggle" type="button" class="ds-chip" title="Cambiar vista de la brújula">📷 Vista cámara</button>
+                        </div>
+                    </div>
+
+                    <div class="ds-stats">
+                        <div id="gust-info-container" class="ds-stat">
+                            <span id="gust-label" class="ds-label">Racha:</span>
+                            <div id="highlight-gust-data-loader" class="skeleton-loader skeleton-text-sm w-8"></div>
+                            <span id="highlight-gust-data" class="ds-stat-value data-content">--</span>
+                        </div>
+                        <div id="stability-card" class="ds-stat">
+                            <span class="ds-label">Estabilidad</span>
+                            <div id="stability-data-loader" class="skeleton-loader skeleton-text-sm w-16"></div>
+                            <span id="stability-data" class="ds-stat-value data-content">--</span>
+                        </div>
+                        <div class="ds-stat">
+                            <span class="ds-label">Actualizado</span>
+                            <span class="ds-stat-value">hace <span id="time-since-update">--</span></span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Aviso de acceso al viento: con demora (gratis) o prueba VIP -->
                 <button id="wind-tier-banner" type="button" class="hidden w-full mb-2 py-1.5 px-3 rounded-xl text-xs font-bold text-center bg-amber-100 text-amber-900 border border-amber-300"></button>
-
-                <!-- 2. STATUS DEL SPOT -->
-                <div id="verdict-card" class="mb-3 py-2 px-4 rounded-xl border border-gray-200 transition-colors duration-300 text-center">
-                    <p class="text-gray-500 text-[9px] font-bold uppercase tracking-widest mb-0.5">🪁 Estado del Spot</p>
-                    <div id="verdict-data-loader" class="skeleton-loader skeleton-text-xl mx-auto" style="width: 60%;"></div>
-                    <p id="verdict-data" class="data-content text-xl font-black text-gray-900">Calculando...</p>
-                </div>
                 <!-- Sin viento: sugerencia de clasificados -->
                 <button id="flojo-classifieds-hint" type="button" class="hidden w-full -mt-1 mb-3 py-1.5 px-3 rounded-xl text-xs font-bold text-orange-800 bg-orange-50 border border-orange-200">🏷️ ¿Sin viento hoy? Mirá equipos en venta →</button>
-
-                <!-- 2. INSTRUMENTOS DE VIENTO -->
-                <div id="unified-wind-data-card" class="p-4 rounded-xl border border-gray-200 transition-colors duration-300 bg-white/40">
-                    <div class="flex flex-row items-center justify-between">
-
-                        <!-- Columna Dirección (35%) -->
-                        <div class="flex flex-col items-center justify-center w-[35%] border-r border-gray-300/50 pr-3">
-                            <p class="text-gray-500 text-[9px] uppercase font-bold mb-1 tracking-wider">Dirección</p>
-                            <button id="wind-view-toggle" class="px-2 py-0.5 mb-1 text-[9px] font-bold uppercase tracking-wider rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 transition-all active:scale-95 select-none" title="Cambiar vista de la flecha">📷 Vista cámara</button>
-                            <svg id="wind-arrow" class="w-20 h-20 text-gray-900 transition-transform duration-500 drop-shadow-md" style="stroke: currentColor; stroke-width: 0.5px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L6 8h3v12h6V8h3l-6-6z"/></svg>
-                            <div id="highlight-wind-dir-data-loader" class="skeleton-loader skeleton-text-xl w-12 mt-1"></div>
-                            <p class="text-4xl font-black text-gray-900 data-content mt-1" id="highlight-wind-dir-data">N/A</p>
-                        </div>
-
-                        <!-- Columna Velocidad (65%) -->
-                        <div class="flex flex-col items-center justify-center w-[65%] pl-3">
-                            <p class="text-gray-500 text-[9px] uppercase font-bold tracking-wider mb-1">💨 Viento</p>
-                            <div id="highlight-wind-speed-data-loader" class="skeleton-loader w-28 h-16 mt-1 rounded-lg"></div>
-                            <div class="flex items-end gap-1.5 leading-none">
-                                <p class="text-7xl font-black text-gray-900 data-content leading-none tracking-tighter" id="highlight-wind-speed-data">--</p>
-                                <span class="text-xl font-bold text-gray-500 mb-1 data-content">kts</span>
-                            </div>
-
-                            <!-- Barra de intensidad -->
-                            <div class="w-full max-w-[160px] mt-2 data-content" id="wind-intensity-container">
-                                <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                                    <div id="wind-intensity-bar" class="h-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-500 transition-all duration-500 rounded-full" style="width: 0%"></div>
-                                </div>
-                                <div class="flex justify-between text-[8px] text-gray-400 mt-0.5 px-0.5">
-                                    <span>0</span>
-                                    <span id="wind-percentage" class="font-bold">--%</span>
-                                    <span>30kts</span>
-                                </div>
-                            </div>
-
-                            <!-- Ráfaga -->
-                            <div id="gust-info-container" class="mt-2.5 flex items-center gap-2 bg-white/50 px-3 py-1.5 rounded-full border border-gray-200/60 transition-colors duration-300">
-                                <span id="gust-label" class="text-[10px] text-gray-700 font-bold uppercase">Racha:</span>
-                                <div id="highlight-gust-data-loader" class="skeleton-loader skeleton-text-sm w-8 inline-block"></div>
-                                <span class="text-base font-black text-gray-900 data-content" id="highlight-gust-data">--</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Estabilidad -->
-                    <div id="stability-card" class="mt-3 flex items-center justify-center gap-3 py-1.5 px-3 rounded-lg border border-gray-200 transition-colors duration-300 bg-white/40">
-                        <span class="text-gray-500 text-[10px] font-bold uppercase tracking-wider">Estabilidad:</span>
-                        <div id="stability-data-loader" class="skeleton-loader skeleton-text-sm w-16 inline-block"></div>
-                        <span class="text-base font-extrabold text-gray-900 data-content" id="stability-data">--</span>
-                    </div>
-
-                    <!-- Timestamp -->
-                    <p class="text-[9px] text-gray-400 text-center mt-2 data-content">
-                        🕐 Actualizado hace <span id="time-since-update" class="font-semibold">--</span>
-                    </p>
-                </div>
-
-
 
                 <div id="error-message" class="hidden mt-4 p-4 bg-red-600 text-white rounded-xl text-center">Error al cargar los datos del clima.</div>
             </div>

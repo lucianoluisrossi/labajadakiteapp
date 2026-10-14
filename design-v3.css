@@ -1,0 +1,294 @@
+/* ==========================================================================
+   La Bajada — Sistema de diseño v3 "instrumento náutico táctil"
+   Fuente de verdad: DESIGN.md. Se carga después de style.css y de los temas
+   del <style> de index.html, así que sus reglas tienen prioridad.
+   ========================================================================== */
+
+:root {
+    --paper: #F4F1E8;
+    --paper-2: #EAE5D6;
+    --surface: #FFFDF7;
+    --ink: #0B1B2B;
+    --ink-2: #4A5866;
+    --line: #D9D2BE;
+    --signal: #F5CF14;
+    --signal-ink: #1A1500;
+    --signal-edge: #B89400;
+    --ocean: #0B3D5C;
+    --danger: #E5484D;
+    --warn: #C2410C;
+    --ok: #1F8A50;
+
+    --w1: #4FA3E0; --w2: #22B8CF; --w3: #2FBF71; --w4: #F2C200; --w5: #F2811D; --w6: #E5484D;
+
+    /* Profundidad: hundido / apoyado / elevado */
+    --shadow-press: inset 0 1px 2px rgba(11, 27, 43, .18);
+    --shadow-1: inset 0 1px 0 rgba(255, 255, 255, .7), 0 1px 2px rgba(11, 27, 43, .10), 0 4px 10px rgba(11, 27, 43, .08);
+    --shadow-2: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 4px rgba(11, 27, 43, .12), 0 12px 28px rgba(11, 27, 43, .16);
+
+    --r-sm: 6px; --r-md: 12px; --r-lg: 20px;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+
+    --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+    --font-body: 'Instrument Sans', system-ui, sans-serif;
+    --font-data: 'IBM Plex Mono', ui-monospace, monospace;
+
+    --chart: rgba(11, 61, 92, .045);
+    --compass-face: radial-gradient(circle at 35% 30%, #ffffff, #e9e4d4 60%, #cfc6ad);
+}
+
+/* Modo noche (tema "Oscuro" existente): instrumentos retroiluminados */
+html.dark {
+    --paper: #07121D;
+    --paper-2: #0C1B2A;
+    --surface: #102335;
+    --ink: #EAF1F7;
+    --ink-2: #9FB2C3;
+    --line: #1E3449;
+    --ocean: #5FB4E8;
+    --shadow-press: inset 0 1px 2px rgba(0, 0, 0, .5);
+    --shadow-1: inset 0 1px 0 rgba(255, 255, 255, .06), 0 2px 6px rgba(0, 0, 0, .45);
+    --shadow-2: inset 0 1px 0 rgba(255, 255, 255, .08), 0 4px 10px rgba(0, 0, 0, .5), 0 16px 32px rgba(0, 0, 0, .45);
+    --chart: rgba(95, 180, 232, .05);
+    --compass-face: radial-gradient(circle at 35% 30%, #23425c, #13283b 65%, #0b1a28);
+}
+
+/* ---------- Base: papel de carta náutica ---------- */
+body {
+    font-family: var(--font-body);
+    background-color: var(--paper) !important;
+    color: var(--ink);
+    background-image: repeating-radial-gradient(circle at 18% 8%, transparent 0 46px, var(--chart) 46px 47px);
+    background-attachment: fixed;
+}
+.ds-brand-title { font-family: var(--font-display) !important; font-size: 24px !important; letter-spacing: .01em; text-transform: uppercase; line-height: 1 !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
+
+/* Superficies existentes (Tailwind) → tokens del sistema, en día y noche. El tema Lectura conserva su sepia. */
+html:not(.lectura) .bg-white,
+html:not(.lectura) .bg-gray-50 { background-color: var(--surface) !important; }
+html:not(.lectura) .bg-gray-100 { background-color: var(--paper-2) !important; }
+html:not(.lectura) .border-gray-200,
+html:not(.lectura) .border-gray-300 { border-color: var(--line) !important; }
+html:not(.lectura) .text-gray-900 { color: var(--ink) !important; }
+html:not(.lectura) .text-gray-500 { color: var(--ink-2) !important; }
+html.dark details { background-color: var(--surface) !important; border-color: var(--line) !important; }
+html:not(.lectura) .rounded-2xl.shadow-sm { box-shadow: var(--shadow-1) !important; border-color: transparent !important; }
+
+/* ---------- Escena: cámara o 3D ---------- */
+.ds-stage {
+    position: relative;
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: #000;
+    box-shadow: var(--shadow-2);
+}
+.ds-stage-media { width: 100%; aspect-ratio: 16 / 9; }
+.ds-stage-media iframe { display: block; }
+.ds-live {
+    position: absolute; z-index: 2; top: 10px; left: 10px;
+    font: 700 10px var(--font-body); letter-spacing: .08em; text-transform: uppercase;
+    color: #fff; background: rgba(0, 0, 0, .5); padding: 4px 8px; border-radius: 999px; pointer-events: none;
+}
+.ds-live::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: var(--danger); }
+
+/* Selector Cámara | 3D sobre la escena */
+.ds-seg {
+    position: absolute; z-index: 5; top: 10px; right: 10px;
+    display: flex; gap: 2px; padding: 3px;
+    background: rgba(244, 241, 232, .94); border-radius: 999px; box-shadow: var(--shadow-1);
+}
+.ds-seg .media-btn {
+    font: 700 11px var(--font-body); padding: 5px 10px; border-radius: 999px;
+    color: #0B1B2B !important; background: transparent !important;
+    transition: background-color .2s var(--ease), color .2s var(--ease);
+}
+.ds-seg .media-btn.bg-sky-500 { background: #0B1B2B !important; color: #F4F1E8 !important; }
+
+/* ---------- Instrumento elevado ---------- */
+.ds-instrument {
+    position: relative; z-index: 3;
+    margin: -34px 10px 0;
+    padding: 12px;
+    background: var(--surface) !important;
+    border: 0 !important;
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-2);
+    transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+    transition: transform .4s var(--ease);
+}
+
+.ds-label {
+    margin: 0;
+    font: 700 10px var(--font-body); letter-spacing: .1em; text-transform: uppercase;
+    color: var(--ink-2);
+}
+
+/* Placa del veredicto. Los colores que asigna app.js (bg-*) se traducen al sistema:
+   neutro con viento flojo, amarillo señal cuando se puede salir, rojo con peligro. */
+.ds-verdict {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 12px;
+    border: 0 !important; border-radius: var(--r-md);
+    background: var(--paper-2) !important; color: var(--ink);
+    box-shadow: var(--shadow-press);
+    transition: background-color .3s var(--ease), box-shadow .3s var(--ease);
+}
+.ds-verdict-text {
+    margin: 0;
+    font: 900 30px/1 var(--font-display); text-transform: uppercase; letter-spacing: .01em;
+    color: inherit !important;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ds-verdict-icon { font-size: 26px; line-height: 1; flex-shrink: 0; }
+.ds-verdict .ds-label { color: inherit; opacity: .7; }
+
+.ds-verdict.bg-cyan-300, .ds-verdict.bg-green-300, .ds-verdict.bg-green-400,
+.ds-verdict.bg-yellow-300, .ds-verdict.bg-orange-300, .ds-verdict.bg-gradient-to-r {
+    background: var(--signal) !important; color: var(--signal-ink);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -2px 0 rgba(0, 0, 0, .12), 0 3px 8px rgba(160, 120, 0, .25);
+}
+.ds-verdict.bg-gradient-to-r { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .12), 0 0 18px rgba(245, 207, 20, .55); }
+.ds-verdict.bg-red-400, .ds-verdict.bg-purple-400 {
+    background: var(--danger) !important; color: #fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 0 -2px 0 rgba(0, 0, 0, .15), 0 3px 8px rgba(229, 72, 77, .3);
+}
+
+/* Lectura principal: número de cartel + escala + brújula */
+.ds-readout {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center;
+    margin-top: 10px;
+}
+.ds-big {
+    margin: 0;
+    font-family: var(--font-display) !important; font-weight: 900; letter-spacing: -.01em;
+    font-size: clamp(72px, 24vw, 104px); line-height: .82;
+    color: var(--ink) !important; font-variant-numeric: tabular-nums;
+}
+.ds-big span {
+    font: 800 22px var(--font-display) !important;
+    vertical-align: top !important; margin-left: 4px;
+    color: var(--ink-2); text-transform: uppercase;
+}
+.ds-scale {
+    position: relative; height: 6px; margin-top: 12px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--w1), var(--w2), var(--w3), var(--w4), var(--w5), var(--w6));
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .2);
+    transition: opacity .3s var(--ease);
+}
+/* app.js/ux-improvements.js fijan el ancho: el borde derecho funciona como marca del valor */
+.ds-scale-marker {
+    height: 14px; margin-top: -4px; min-width: 4px;
+    background: transparent !important;
+    border-right: 4px solid var(--ink); border-radius: 2px;
+    transition: width .6s var(--ease);
+}
+
+/* Brújula 3D. --rot (app.js) gira la rosa según la vista: mapa (N arriba) o cámara. */
+.ds-compass-wrap { text-align: center; }
+.ds-compass {
+    --s: 108px; --rot: 0deg;
+    position: relative; width: var(--s); height: var(--s); margin: 0 auto;
+    perspective: 400px;
+}
+.ds-compass-face {
+    position: absolute; inset: 0; border-radius: 50%;
+    transform: rotateX(16deg);
+    background: var(--compass-face);
+    box-shadow: 0 10px 18px rgba(11, 27, 43, .28), 0 0 0 3px var(--ink),
+        inset 0 -6px 12px rgba(0, 0, 0, .18), inset 0 4px 8px rgba(255, 255, 255, .6);
+}
+.ds-compass-card { position: absolute; inset: 0; transform: rotate(var(--rot)); transition: transform .6s var(--ease); }
+.ds-compass-card b {
+    position: absolute; transform: translate(-50%, -50%) rotate(calc(-1 * var(--rot)));
+    font: 800 13px var(--font-display); color: var(--ink-2);
+}
+.ds-compass-card .ds-n { left: 50%; top: 13%; color: var(--danger); }
+.ds-compass-card .ds-e { left: 87%; top: 50%; }
+.ds-compass-card .ds-s { left: 50%; top: 87%; }
+.ds-compass-card .ds-o { left: 13%; top: 50%; }
+.ds-needle {
+    position: absolute; inset: 0; margin: auto;
+    width: 64%; height: 64%;
+    stroke: var(--ink); stroke-width: .6px;
+    filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .35));
+    transition: transform .6s var(--ease), color .3s var(--ease);
+}
+.ds-compass-hub {
+    position: absolute; left: 50%; top: 50%; width: 12px; height: 12px;
+    transform: translate(-50%, -50%); border-radius: 50%;
+    background: var(--signal); box-shadow: 0 0 0 2px var(--ink), 0 2px 3px rgba(0, 0, 0, .4);
+}
+.ds-dir { margin: 6px 0 0; font: 900 22px/1 var(--font-display); color: var(--ink); }
+.ds-chip {
+    margin-top: 6px; padding: 3px 9px; border-radius: 999px;
+    font: 700 10px var(--font-body); color: var(--ink-2);
+    background: var(--paper); box-shadow: var(--shadow-1);
+    transition: transform .08s ease-out, box-shadow .08s ease-out;
+}
+.ds-chip:active { transform: translateY(1px); box-shadow: var(--shadow-press); }
+
+/* Datos hundidos: racha, estabilidad, antigüedad */
+.ds-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.ds-stat {
+    display: flex; flex-direction: column; gap: 2px; min-width: 0;
+    padding: 6px 8px; border-radius: var(--r-sm);
+    background: var(--paper) !important; border: 0 !important;
+    box-shadow: var(--shadow-press);
+}
+.ds-stat-value {
+    font: 600 16px var(--font-data); font-variant-numeric: tabular-nums;
+    color: var(--ink) !important;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#gust-info-container.bg-orange-100 .ds-stat-value,
+#gust-label.text-orange-700 { color: var(--warn) !important; }
+#stability-card.bg-red-400 .ds-stat-value { color: var(--danger) !important; }
+#stability-card.bg-green-400 .ds-stat-value,
+#stability-card.bg-green-300 .ds-stat-value { color: var(--ok) !important; }
+#time-since-update.text-red-600 { color: var(--danger) !important; }
+#time-since-update.text-orange-600 { color: var(--warn) !important; }
+
+.ds-hero #wind-tier-banner,
+.ds-hero #flojo-classifieds-hint { margin: 12px 10px 0; width: calc(100% - 20px); border-radius: var(--r-md); box-shadow: var(--shadow-1); }
+
+/* ---------- Dock de pestañas elevado ---------- */
+#tab-bar {
+    left: 10px !important; right: 10px !important; margin: 0 auto;
+    bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    max-width: 560px;
+    padding-bottom: 2px !important;
+    background: var(--surface) !important; border: 0 !important;
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-2) !important;
+    backdrop-filter: none !important;
+}
+#tab-bar .tab-btn { color: var(--ink-2) !important; font-family: var(--font-body); transition: color .2s var(--ease); }
+#tab-bar .tab-btn span:first-child { transition: transform .2s var(--ease); }
+#tab-bar .tab-btn.text-sky-600 { color: var(--ink) !important; }
+#tab-bar .tab-btn.text-sky-600 span:first-child { transform: translateY(-2px); }
+#tab-bar .tab-btn.text-sky-600::after {
+    content: ''; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+    width: 18px; height: 3px; border-radius: 3px;
+    background: var(--signal); box-shadow: 0 0 0 1px rgba(11, 27, 43, .25);
+}
+
+/* ---------- Botones físicos (se hunden al tocarlos) ---------- */
+.ds-btn-primary {
+    background: var(--signal) !important; color: var(--signal-ink) !important; border: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -2px 0 rgba(0, 0, 0, .14), 0 4px 0 var(--signal-edge), 0 6px 12px rgba(160, 120, 0, .3);
+    transition: transform .08s ease-out, box-shadow .08s ease-out;
+}
+.ds-btn-primary:active { transform: translateY(3px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 1px 0 var(--signal-edge), 0 2px 4px rgba(160, 120, 0, .3); }
+
+/* ---------- Movimiento reducido: sin inclinación ni animaciones ---------- */
+@media (prefers-reduced-motion: reduce) {
+    .ds-instrument, .ds-needle, .ds-compass-card, .ds-scale-marker, .ds-verdict, #tab-bar .tab-btn span:first-child {
+        transition: none !important;
+    }
+    .ds-instrument { transform: none !important; }
+}
+
+/* El JS le sigue asignando bg-gray-100/border al contenedor: la pantalla Viento no lleva caja propia */
+#wind-highlight-card.ds-hero { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+#time-since-update { display: inline !important; }

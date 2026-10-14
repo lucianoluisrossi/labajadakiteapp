@@ -1236,6 +1236,47 @@ try {
         return degrees; // Vista mapa: norte = arriba
     }
 
+    // Brújula 3D: la rosa (N/E/S/O) gira con la vista elegida, así las letras coinciden con la aguja
+    const windCompassEl = document.getElementById('wind-compass');
+    function syncCompassCard() {
+        if (windCompassEl) windCompassEl.style.setProperty('--rot', `${getWindArrowRotation(0)}deg`);
+    }
+
+    // El número de viento cuenta hasta el valor nuevo (400 ms); instantáneo con "reducir movimiento"
+    let shownWindSpeed = null;
+    function renderWindSpeed(value) {
+        const el = document.getElementById('highlight-wind-speed-data');
+        if (!el) return;
+        const paint = (v) => { el.innerHTML = `${v} <span class="text-xl font-bold align-baseline">kts</span>`; };
+        if (value === null) { shownWindSpeed = null; el.innerHTML = 'N/A'; return; }
+        const from = shownWindSpeed;
+        shownWindSpeed = value;
+        if (from === null || from === value || matchMedia('(prefers-reduced-motion: reduce)').matches) { paint(value); return; }
+        const start = performance.now();
+        const step = (now) => {
+            if (shownWindSpeed !== value) return; // llegó un dato más nuevo
+            const p = Math.min((now - start) / 400, 1);
+            paint(p === 1 ? value : (from + (value - from) * (1 - Math.pow(1 - p, 3))).toFixed(1));
+            if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }
+
+    // Instrumento: inclinación sutil (hasta 4°) siguiendo la posición del teléfono
+    const instrumentEl = document.getElementById('unified-wind-data-card');
+    if (instrumentEl && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        let tiltFrame = null;
+        window.addEventListener('deviceorientation', (e) => {
+            if (e.beta === null || tiltFrame) return;
+            tiltFrame = requestAnimationFrame(() => {
+                tiltFrame = null;
+                const clamp = (v) => Math.max(-4, Math.min(4, v));
+                instrumentEl.style.setProperty('--tilt-x', `${clamp((e.beta - 45) / 10)}deg`);
+                instrumentEl.style.setProperty('--tilt-y', `${clamp(e.gamma / 10)}deg`);
+            });
+        });
+    }
+
     function updateWindViewToggle() {
         if (!windViewToggle) return;
         if (windViewMode === 'map') {
@@ -1258,8 +1299,10 @@ try {
                 const deg = parseFloat(windArrowEl.dataset.degrees);
                 windArrowEl.style.transform = 'rotate(' + getWindArrowRotation(deg) + 'deg)';
             }
+            syncCompassCard();
         });
     }
+    syncCompassCard();
     const gustInfoContainer = document.getElementById('gust-info-container');
     const verdictCardEl = document.getElementById('verdict-card');
     const verdictDataEl = document.getElementById('verdict-data');
@@ -1625,6 +1668,7 @@ try {
                 if (windArrowEl && windDirDegrees !== null) {
                     windArrowEl.dataset.degrees = windDirDegrees;
                     windArrowEl.style.transform = `rotate(${getWindArrowRotation(windDirDegrees)}deg)`;
+                    syncCompassCard();
                     const isOffshore = (windDirDegrees > 292.5 || windDirDegrees <= 67.5);
                     const isCross = (windDirDegrees > 67.5 && windDirDegrees <= 112.5) || (windDirDegrees > 247.5 && windDirDegrees <= 292.5);
                     const isOnshore = !isOffshore && !isCross;
@@ -1639,9 +1683,7 @@ try {
                 updateCardColors(unifiedWindDataCardEl, getUnifiedWindColorClasses(windSpeedValue, windDirDegrees));
                 if (gustInfoContainer) updateCardColors(gustInfoContainer, getUnifiedWindColorClasses(windGustValue, windDirDegrees));
 
-                highlightWindSpeedEl.innerHTML = (windSpeedValue !== null) 
-                    ? `${windSpeedValue} <span class="text-xl font-bold align-baseline">kts</span>` 
-                    : 'N/A';
+                renderWindSpeed(windSpeedValue);
                 highlightGustEl.textContent = windGustValue ?? 'N/A';
                 highlightWindDirEl.textContent = convertDegreesToCardinal(windDirDegrees); 
 
