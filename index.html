@@ -1212,9 +1212,18 @@
                     <li class="flex items-start gap-2 text-sm text-gray-700"><span class="text-sky-500 font-bold mt-0.5">✓</span> Badge <span class="bg-amber-400 text-amber-900 text-[10px] font-black px-1.5 py-0.5 rounded-full">🪁 VIP</span> en tu perfil</li>
                 </ul>
                 <div class="text-center mb-4">
-                    <span class="text-3xl font-black text-gray-900">$5.000</span>
+                    <span id="vip-price" class="text-3xl font-black text-gray-900">$5.000</span>
                     <span class="text-gray-400 text-sm">/mes</span>
                 </div>
+                <!-- App Android (TWA): pago con Google Play. Se muestra en lugar de MercadoPago -->
+                <div id="play-pay-block" class="hidden">
+                    <button id="btn-go-play" class="block w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3 rounded-xl text-center transition-colors shadow-md text-sm">
+                        Suscribirme con Google Play
+                    </button>
+                    <p class="text-[10px] text-gray-400 text-center mt-2">Podés cancelar cuando quieras desde Google Play</p>
+                    <p id="play-feedback" class="hidden text-[10px] text-center mt-1.5"></p>
+                </div>
+                <div id="mp-pay-block">
                 <a id="btn-go-mp" href="https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=947a5399fa3c4350b9e1e48ea33714e2&back_url=https://labajadakite.app" target="_blank" rel="noopener"
                    onclick="localStorage.setItem('mpCheckoutStarted','true')"
                    class="block w-full bg-sky-500 hover:bg-sky-600 text-white font-black py-3 rounded-xl text-center transition-colors shadow-md text-sm">
@@ -1233,6 +1242,7 @@
                         </button>
                     </div>
                     <p id="mp-email-feedback" class="hidden text-[10px] text-center mt-1.5"></p>
+                </div>
                 </div>
             </div>
         </div>

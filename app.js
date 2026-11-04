@@ -449,6 +449,7 @@ try {
             } else {
                 if (vipBadge) { vipBadge.classList.add('hidden'); vipBadge.classList.remove('flex'); }
                 initSupportBanner(false);
+                restorePlayPurchases();
             }
         } catch(e) {
             console.warn('VIP check error', e);
@@ -499,6 +500,73 @@ try {
         mpEmailFeedback.textContent = msg;
         mpEmailFeedback.className = `text-[10px] text-center mt-1.5 ${type === 'error' ? 'text-red-500' : 'text-green-600'}`;
         mpEmailFeedback.classList.remove('hidden');
+    }
+
+    // --- GOOGLE PLAY BILLING: solo dentro de la app Android (TWA); en la web sigue MercadoPago ---
+    const PLAY_BILLING = 'https://play.google.com/billing';
+    const PLAY_SKU = 'vip_mensual';
+    const playFeedback = document.getElementById('play-feedback');
+
+    const playServiceReady = (async () => {
+        if (!('getDigitalGoodsService' in window)) return null;
+        let service;
+        try { service = await window.getDigitalGoodsService(PLAY_BILLING); } catch (e) { return null; }
+        if (!service) return null;
+        // Política de Play: dentro de la app no se ofrece otro medio de pago
+        document.getElementById('mp-pay-block')?.classList.add('hidden');
+        document.getElementById('play-pay-block')?.classList.remove('hidden');
+        try {
+            const [item] = await service.getDetails([PLAY_SKU]);
+            const priceEl = document.getElementById('vip-price');
+            if (item && priceEl) {
+                priceEl.textContent = new Intl.NumberFormat('es-AR', { style: 'currency', currency: item.price.currency, maximumFractionDigits: 0 }).format(item.price.value);
+            }
+        } catch (e) { /* queda el precio por defecto */ }
+        return service;
+    })();
+
+    function showPlayFeedback(msg, type) {
+        if (!playFeedback) return;
+        playFeedback.textContent = msg;
+        playFeedback.className = `text-[10px] text-center mt-1.5 ${type === 'error' ? 'text-red-500' : 'text-green-600'}`;
+    }
+
+    // El servidor valida con Google y activa kiter_vip; la UI se actualiza sola por onSnapshot
+    async function verifyPlayPurchase(purchaseToken) {
+        const r = await authFetch('/api/play-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ purchaseToken }),
+        });
+        return r.ok && (await r.json()).active === true;
+    }
+
+    document.getElementById('btn-go-play')?.addEventListener('click', async () => {
+        if (!currentUser) { showPlayFeedback('Tenés que estar logueado', 'error'); return; }
+        try {
+            const request = new PaymentRequest(
+                [{ supportedMethods: PLAY_BILLING, data: { sku: PLAY_SKU } }],
+                { total: { label: 'Kiter VIP', amount: { currency: 'ARS', value: '0' } } } // Play usa su propio precio
+            );
+            const response = await request.show();
+            const ok = await verifyPlayPurchase(response.details.purchaseToken);
+            await response.complete(ok ? 'success' : 'fail');
+            showPlayFeedback(ok ? '¡Listo! Ya sos VIP 🪁' : 'No pudimos activar el VIP. Reabrí la app para reintentar.', ok ? 'ok' : 'error');
+        } catch (e) {
+            if (e.name !== 'AbortError') showPlayFeedback('No se pudo completar la compra', 'error');
+        }
+    });
+
+    // Restaurar compras (otro dispositivo, reinstalación o activación que falló)
+    async function restorePlayPurchases() {
+        const service = await playServiceReady;
+        if (!service || !currentUser) return;
+        try {
+            const purchases = await service.listPurchases();
+            for (const p of purchases) {
+                if (p.itemId === PLAY_SKU) await verifyPlayPurchase(p.purchaseToken);
+            }
+        } catch (e) { console.warn('Play restore error', e); }
     }
 
     // --- "¿QUÉ HAY DE NUEVO?": una vez por dispositivo y versión ---
