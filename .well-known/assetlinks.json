@@ -1,0 +1,13 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.labajadakite.twa",
+    "sha256_cert_fingerprints": [
+      "4A:F2:11:29:EB:42:77:BC:B5:0E:06:C7:89:71:5B:84:F4:57:48:30:3E:59:87:9D:36:10:C6:1E:D4:35:0D:F4",
+      "FD:F1:C9:42:5B:02:C3:08:CB:3C:A7:C4:CA:F3:71:51:D4:C1:11:FD:1F:B7:AF:B2:2E:50:72:BC:1A:F2:9A:26",
+      "7E:99:EB:6D:CC:ED:0A:0C:F7:37:9C:29:9E:1F:F3:B7:AC:92:09:CE:70:65:42:8A:28:F2:30:0E:F1:E1:43:59",
+      "69:FB:37:87:B2:83:EC:A8:10:F6:0F:75:4A:27:04:20:B7:DE:D8:5E:57:92:96:92:76:61:8D:07:07:56:EC:40"
+    ]
+  }
+}]
